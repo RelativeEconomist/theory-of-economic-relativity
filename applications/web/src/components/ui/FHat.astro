@@ -1,0 +1,30 @@
+---
+// Canonical rendering for TER's F̂ (perceived feasible set) in normal UI
+// text. Renders a real "F" plus a manually positioned, non-combining
+// circumflex glyph (U+02C6), sized in em so it scales with whatever
+// context it's dropped into. Deliberately avoids a combining Unicode
+// accent (unreliable at large display sizes on variable fonts) and
+// avoids CSS border-triangle hats (drawn independently per component,
+// and prone to clipping — see git history for both prior approaches).
+---
+<span class="fhat" aria-label="F hat">
+  <span class="fhat-mark" aria-hidden="true">ˆ</span>F
+</span>
+
+<style>
+  .fhat {
+    position: relative;
+    display: inline-block;
+    padding-top: 0.28em;
+  }
+
+  .fhat-mark {
+    position: absolute;
+    top: 0.02em;
+    left: 50%;
+    font-size: 0.75em;
+    line-height: 1;
+    color: currentColor;
+    transform: translateX(-50%);
+  }
+</style>

@@ -1,0 +1,488 @@
+---
+import SectionIntro from "../ui/SectionIntro.astro";
+import Button from "../ui/Button.astro";
+import FHat from "../ui/FHat.astro";
+---
+
+<section class="section architecture">
+  <div class="shell">
+    <SectionIntro
+      eyebrow="The common architecture"
+      title="A common architecture for economic behavior."
+      description="TER proposes that economically relevant agent decisions can be represented through a common agent centered architecture without requiring agents to use the same decision process."
+    />
+
+    <div class="equation-panel" data-reveal>
+      <span class="equation-label">Agent decision model</span>
+
+      <div class="equation" aria-label="TER agent decision model">
+        <span>C<sub>i,t</sub></span>
+        <span class="operator">=</span>
+        <span>
+          D<sub>i,t</sub> (
+          <FHat /><sub>i,t</sub><span class="eq-comma">, </span>
+          G<sub>i,t</sub><span class="eq-comma">, </span>
+          M<sub>i,t</sub><span class="eq-comma">, </span>
+          V<sub>i,t</sub><span class="eq-comma">, </span>
+          H<sub>i,t</sub>
+          )
+        </span>
+      </div>
+
+      <p class="equation-note">
+        An agent selects an action from what it perceives as feasible using its
+        objective, model of reality, valuations, time horizon, and decision process.
+      </p>
+
+      <p class="architecture-line">
+        (G, M, <FHat />, V, H, D)<sub>i,t</sub>
+        <span class="arrow">&rarr;</span>
+        C<sub>i,t</sub>
+        <span class="arrow">&rarr;</span>
+        (C, F, P, S)<sub>i,t</sub>
+        <span class="arrow">&rarr;</span>
+        O<sub>i,t</sub>
+      </p>
+    </div>
+
+    <div class="architecture-grid">
+      <section class="variables" data-reveal>
+        <div class="block-head">
+          <span>01</span>
+          <h3>The variables</h3>
+        </div>
+
+        <dl>
+          <div class="variable-row">
+            <dt>G</dt>
+            <dd>Objective pursued by the agent</dd>
+          </div>
+
+          <div class="variable-row">
+            <dt>M</dt>
+            <dd>Model of reality, including information, beliefs, assumptions, expectations, and interpretations</dd>
+          </div>
+
+          <div class="variable-row">
+            <dt>F</dt>
+            <dd>Actual feasible set available to the agent</dd>
+          </div>
+
+          <div class="variable-row">
+            <dt><FHat /></dt>
+            <dd>Feasible set the agent perceives as available</dd>
+          </div>
+
+          <div class="variable-row">
+            <dt>V</dt>
+            <dd>Valuation of actions relative to the agent's objective</dd>
+          </div>
+
+          <div class="variable-row">
+            <dt>H</dt>
+            <dd>Time horizon considered relevant to the decision</dd>
+          </div>
+
+          <div class="variable-row">
+            <dt>D</dt>
+            <dd>Decision process used to evaluate and select among perceived feasible actions</dd>
+          </div>
+
+          <div class="variable-row">
+            <dt>C</dt>
+            <dd>Action selected by the agent</dd>
+          </div>
+
+          <div class="variable-row">
+            <dt>O</dt>
+            <dd>Realized outcome associated with the selected action</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="distinction" data-reveal>
+        <div class="block-head">
+          <span>02</span>
+          <h3>The key distinction</h3>
+        </div>
+
+        <p class="distinction-lead">
+          <strong>D</strong> is not one universal algorithm.
+        </p>
+
+        <p class="distinction-copy">
+          Different agents, or the same agent under different conditions, may
+          use different decision processes.
+        </p>
+
+        <ul class="mechanisms">
+          <li>Optimization</li>
+          <li>Satisficing</li>
+          <li>Heuristics</li>
+          <li>Habits</li>
+          <li>Intuition</li>
+          <li>Strategic reasoning</li>
+        </ul>
+
+        <div class="notation mt-5">
+          <span class="notation-label">Notation</span>
+          <p>i — Agent</p>
+          <p>t — Time period</p>
+          <p>a — Potential action</p>
+        </div>
+      </section>
+    </div>
+
+    <div class="closing" data-reveal>
+      <span class="closing-marker" aria-hidden="true"></span>
+
+      <div>
+        <p class="closing-lead">
+          The common structure does not imply common behavior.
+        </p>
+
+        <p class="closing-note">
+          A common architecture makes heterogeneous economic behavior comparable without forcing agents into one model of rationality.
+
+Agents may pursue different objectives, hold different beliefs, face different constraints, and use different decision processes while still being represented within the same TER framework.
+        </p>
+      </div>
+    </div>
+
+    <div class="theory-cta-row">
+      <Button href="/theory/" variant="light" label="View the full theory" />
+    </div>
+  </div>
+</section>
+
+<style>
+  .architecture {
+    background: #0e100c;
+    color: #f5f5f5;
+  }
+
+  .architecture :global(.eyebrow),
+  .architecture :global(.lede) {
+    color: #a7ada0;
+  }
+
+  /* Equation */
+
+  .equation-panel {
+    margin-top: clamp(3.5rem, 7vw, 6rem);
+    padding: clamp(1rem, 2vw, 1.5rem);
+    border: 1px solid #30342c;
+    border-radius: var(--radius-lg);
+    background: #171a15;
+  }
+
+  .equation-label {
+    display: block;
+    margin-bottom: clamp(2rem, 4vw, 3rem);
+    color: #8d9387;
+    font-size: 0.72rem;
+    font-weight: 750;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .equation {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.15em 0.35em;
+    color: #f5f5f5;
+    font-size: clamp(1.75rem, 3.6vw, 3.4rem);
+    font-weight: 620;
+    line-height: 1.10;
+    letter-spacing: -0.045em;
+    text-align: center;
+  }
+
+  .equation .operator {
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .equation sub {
+    position: relative;
+    bottom: -0.05em;
+    font-size: 0.42em;
+    letter-spacing: 0;
+  }
+
+  .equation .eq-comma {
+    font-size: 0.55em;
+  }
+
+  .equation-note {
+    max-width: 52rem;
+    margin: clamp(1.5rem, 3vw, 2.5rem) auto 0;
+    padding-top: clamp(1.5rem, 3vw, 2rem);
+    border-top: 1px solid #30342c;
+    color: #a7ada0;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    text-align: center;
+  }
+
+  .architecture-line {
+    max-width: 52rem;
+    margin: 0.9rem auto 0;
+    color: #777d71;
+    font-size: 0.92rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    text-align: center;
+  }
+
+  .architecture-line sub {
+    position: relative;
+    bottom: -0.05em;
+    font-size: 0.65em;
+  }
+
+  .architecture-line .arrow {
+    margin: 0 0.35em;
+    color: #596052;
+  }
+
+  /* Lower architecture explanation */
+
+  .architecture-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(3rem, 7vw, 7rem);
+    margin-top: clamp(4rem, 8vw, 7rem);
+  }
+
+  .block-head {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #30342c;
+  }
+
+  .block-head > span {
+    color: var(--accent);
+    font-size: 0.78rem;
+    font-weight: 750;
+  }
+
+  .block-head h3 {
+    margin: 0;
+    color: #f5f5f5;
+    font-size: 1.35rem;
+    font-weight: 680;
+    letter-spacing: -0.025em;
+  }
+
+  /* Variables */
+
+  dl {
+    margin: 0;
+  }
+
+  .variable-row {
+    display: grid;
+    grid-template-columns: 4rem 1fr;
+    align-items: center;
+    min-height: 4.4rem;
+    border-bottom: 1px solid #252920;
+  }
+
+  .variable-row dt {
+    margin: 0;
+    color: #f5f5f5;
+    font-size: 1.6rem;
+    font-weight: 680;
+    line-height: 1;
+    letter-spacing: -0.04em;
+  }
+
+  .variable-row dd {
+    margin: 0;
+    color: #b4baae;
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+
+  /* Decision process distinction */
+
+  .distinction-lead {
+    margin: 0;
+    max-width: 30rem;
+    color: #f5f5f5;
+    font-size: clamp(1.75rem, 3vw, 2.6rem);
+    font-weight: 560;
+    line-height: 1.15;
+    letter-spacing: -0.04em;
+  }
+
+  .distinction-lead strong {
+    color: var(--accent);
+    font-weight: 680;
+  }
+
+  .distinction-copy {
+    max-width: 32rem;
+    margin: 1.25rem 0 0;
+    color: #a7ada0;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .mechanisms {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    margin: 2.5rem 0 0;
+    padding: 0;
+    border-top: 1px solid #30342c;
+    list-style: none;
+  }
+
+  .mechanisms li {
+    position: relative;
+    padding: 1.15rem 1rem 1.15rem 1.5rem;
+    border-bottom: 1px solid #30342c;
+    color: #d2d6ce;
+    font-size: 0.95rem;
+  }
+
+  .mechanisms li:nth-child(odd) {
+    border-right: 1px solid #30342c;
+  }
+
+  .mechanisms li::before {
+    position: absolute;
+    top: 50%;
+    left: 0.25rem;
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 50%;
+    background: #596052;
+    content: "";
+    transform: translateY(-50%);
+  }
+
+  /* Notation (i, t, a) -- secondary to the variables list, not part of it.
+     Label reuses .equation-label's type scale; row text reuses
+     .distinction-copy's readable body-copy color/size instead of the
+     dimmer, footnote-like tone used previously. */
+  .notation-label {
+    display: block;
+    margin-bottom: 1rem;
+    color: #8d9387;
+    font-size: 0.72rem;
+    font-weight: 750;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .notation p {
+    margin: 0;
+    color: #a7ada0;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .notation p + p {
+    margin-top: 0.4rem;
+  }
+
+  /* Closing */
+
+  .closing {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1.25rem;
+    margin-top: clamp(4rem, 8vw, 7rem);
+  }
+
+  .closing-marker {
+    width: 0.65rem;
+    height: 0.65rem;
+    margin-top: 0.55rem;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 5px
+      color-mix(in srgb, var(--accent) 15%, transparent);
+  }
+
+  .closing-lead {
+    max-width: 60rem;
+    margin: 0;
+    color: #f5f5f5;
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    font-weight: 560;
+    line-height: 1.2;
+    letter-spacing: -0.035em;
+  }
+
+  .closing-note {
+    max-width: 55rem;
+    margin: 1rem 0 0;
+    color: #a7ada0;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  /* Theory CTA */
+
+  .theory-cta-row {
+    margin-top: clamp(2.5rem, 5vw, 3.5rem);
+    text-align: right;
+  }
+
+  @media (max-width: 850px) {
+    .architecture-grid {
+      grid-template-columns: 1fr;
+      gap: 4rem;
+    }
+
+    .equation {
+      justify-content: flex-start;
+      text-align: left;
+    }
+
+    .equation-note {
+      margin-inline: 0;
+      text-align: left;
+    }
+
+    .architecture-line {
+      margin-inline: 0;
+      text-align: left;
+    }
+
+    .theory-cta-row {
+      text-align: left;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .equation-panel {
+      padding-inline: 1.25rem;
+    }
+
+    .equation {
+      font-size: clamp(1.5rem, 7.5vw, 2.25rem);
+    }
+
+    .mechanisms {
+      grid-template-columns: 1fr;
+    }
+
+    .mechanisms li:nth-child(odd) {
+      border-right: 0;
+    }
+
+    .variable-row {
+      grid-template-columns: 3rem 1fr;
+    }
+  }
+</style>

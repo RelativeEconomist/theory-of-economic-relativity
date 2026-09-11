@@ -1,0 +1,89 @@
+---
+import Logo from "./ui/Logo.astro";
+import { siteConfig } from "../config/site";
+
+interface Props {
+  /** Show the lime accent backdrop behind the footer's rounded top corners.
+   *  Only appropriate when the section immediately above the footer is
+   *  itself the lime accent color (currently just the homepage). */
+  accent?: boolean;
+}
+
+const { accent = false } = Astro.props;
+const year = new Date().getFullYear();
+---
+<div class:list={["footer-backdrop", { "footer-backdrop-accent": accent }]}>
+  <footer class="footer">
+    <div class="shell">
+      <div class="footer-cta" data-reveal>
+        <h2>An open economic <br>theory and framework.</h2>
+        <a class="circle-link" href="/contact/" aria-label="Get in touch">
+          <svg aria-hidden="true" viewBox="0 0 32 32"><path d="M6 16h19M17 8l8 8-8 8" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+        </a>
+      </div>
+      <div class="footer-grid">
+        <div class="brand-col">
+          <Logo variant="white" />
+          <p>An open, testable architecture for economic decision-making, interaction, and outcomes.</p>
+        </div>
+        <div>
+          <h3>Explore</h3>
+          {siteConfig.nav.map((item) => (
+            <a
+              href={item.href}
+              target={item.external ? "_blank" : undefined}
+              rel={item.external ? "noreferrer" : undefined}
+            >
+              {item.label}
+            </a>
+          ))}
+        </div>
+        <div>
+          <h3>Research</h3>
+          <a href="/foundations/">Foundations</a>
+          <a href="/faq/">FAQ</a>
+        </div>
+        <div>
+          <h3>Connect</h3>
+          <a href="/contact/">Contact</a>
+        </div>
+        <div>
+          <h3>Legal</h3>
+          <a href="/privacy/">Privacy</a>
+          <a href="/terms/">Terms</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© {year} Theory of Economic Relativity</span>
+        <span>TER v{siteConfig.version}</span>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<style>
+  .footer-backdrop { background: var(--bg); }
+  .footer-backdrop-accent { background: var(--accent); }
+  .footer { overflow: hidden; padding: clamp(5rem,10vw,9rem) 0 1.5rem; border-radius: 2.5rem 2.5rem 0 0; background: #0e100c; color: #f5f5f5; }
+  .footer-cta { position: relative; padding-bottom: clamp(5rem,10vw,9rem); }
+  .footer .eyebrow { color: #a7ada0; }
+  .footer h2 { max-width: 1000px; }
+  .circle-link { position: absolute; right: 0; bottom: clamp(4rem,8vw,7rem); width: clamp(3.25rem, 6.5vw, 5.5rem); aspect-ratio: 1; display: grid; place-items: center; border-radius: 50%; background: var(--accent); color: var(--accent-ink); transition: transform .4s var(--ease); }
+  .circle-link:hover { transform: rotate(-8deg) scale(1.05); }
+  .circle-link svg { width: 2rem; }
+  .footer-grid { display: grid; grid-template-columns: 2fr repeat(4,1fr); gap: 3rem; padding: 3rem 0; border-top: 1px solid #30342c; }
+  .brand-col p { max-width: 22rem; margin: 1.4rem 0 1rem; color: #a7ada0; }
+  .footer-grid h3 { margin: 0 0 1.1rem; color: #777d71; font-size: .7rem; font-family: inherit; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  .footer-grid > div:not(.brand-col) { display: flex; flex-direction: column; align-items: flex-start; gap: .65rem; }
+  .footer-grid a { color: #cdd1c8; font-size: .9rem; transition: color .2s; }
+  .footer-grid a:hover { color: var(--accent); }
+  .footer-bottom { display: flex; justify-content: space-between; gap: 1rem; padding-top: 1.5rem; border-top: 1px solid #30342c; color: #777d71; font-size: .75rem; }
+  @media (max-width: 780px) {
+    .footer { border-radius: 1.5rem 1.5rem 0 0; }
+    .footer-cta { padding-bottom: 8rem; }
+    .circle-link { right: auto; bottom: 2.5rem; left: 0; width: 5.5rem; }
+    .footer-grid { grid-template-columns: 1fr 1fr; }
+    .brand-col { grid-column: 1 / -1; }
+    .footer-bottom { flex-direction: column; }
+  }
+</style>

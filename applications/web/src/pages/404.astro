@@ -1,0 +1,8 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Button from "../components/ui/Button.astro";
+---
+<BaseLayout title="Page not found — Theory of Economic Relativity" description="The requested page could not be found." noindex>
+  <section class="not-found"><div class="orbit" aria-hidden="true"><span>404</span></div><div class="shell copy"><p class="eyebrow">Off course</p><h1>This page left<br/><span class="serif">the orbit.</span></h1><p class="lede">The link may be outdated, or the page may have moved.</p><div class="button-row"><Button href="/" label="Return home"/><Button href="/contact/" variant="ghost" label="Get in touch"/></div></div></section>
+</BaseLayout>
+<style>.not-found{position:relative;min-height:100svh;display:flex;align-items:center;overflow:hidden;padding:9rem 0 5rem}.copy{position:relative;z-index:2}.orbit{position:absolute;right:-8rem;width:min(58vw,48rem);aspect-ratio:1;display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;box-shadow:0 0 0 5rem transparent,0 0 0 calc(5rem + 1px) var(--line),0 0 0 10rem transparent,0 0 0 calc(10rem + 1px) var(--line)}.orbit span{color:var(--line);font-size:clamp(7rem,20vw,18rem);font-weight:750;letter-spacing:-.1em}@media(max-width:700px){.orbit{right:-12rem;width:32rem;opacity:.55}}</style>

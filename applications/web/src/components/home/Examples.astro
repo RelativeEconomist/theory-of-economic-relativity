@@ -1,0 +1,190 @@
+---
+import SectionIntro from "../ui/SectionIntro.astro";
+---
+<section class="section examples">
+  <div class="shell">
+    <SectionIntro
+      eyebrow="Learn by exploring"
+      title="Learn TER through economic scenarios"
+      description="TER includes an executable suite of economic scenarios designed to test whether established mechanisms can be represented consistently within the framework. Each scenario can be inspected, changed, and rerun as part of TER's open research process."
+    />
+
+    <div class="examples-grid hairline-grid">
+      <a href="/learn/supply-and-demand/" class="example-card" data-reveal>
+        <span>01</span>
+        <h3>Supply & demand</h3>
+      </a>
+
+      <a href="/learn/asymmetric-information/" class="example-card" data-reveal>
+        <span>02</span>
+        <h3>Asymmetric information</h3>
+      </a>
+
+      <a href="/learn/externalities/" class="example-card" data-reveal>
+        <span>03</span>
+        <h3>Externalities</h3>
+      </a>
+
+      <a href="/learn/actual-vs-perceived-feasibility/" class="example-card" data-reveal>
+        <span>04</span>
+        <h3>Actual vs. perceived feasibility</h3>
+      </a>
+    </div>
+
+    <div class="learning-levels" data-reveal>
+      <div class="learning-levels__head">
+        <span class="learning-levels__title">Interactive learning + simulator</span>
+        <span class="soon-badge">Coming soon</span>
+      </div>
+
+      <div class="learning-levels__items">
+        <span>Middle School</span>
+        <span>High School</span>
+        <span>University</span>
+        <span>Research</span>
+      </div>
+    </div>
+
+    <p class="learning-note" data-reveal>
+      These same scenarios will become interactive learning environments with increasing
+      levels of explanation and configuration, from intuitive walkthroughs to formal models,
+      editable assumptions, and research-level controls.
+    </p>
+  </div>
+</section>
+
+<style>
+
+.examples-grid {
+  grid-template-columns: repeat(4, 1fr);
+  margin-top: clamp(2.5rem, 5vw, 4rem);
+  border-block: 1px solid var(--line);
+}
+
+.example-card {
+  min-height: 12rem;
+  padding: 1.5rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.example-card span {
+  color: var(--muted);
+  font-size: .72rem;
+  font-weight: 700;
+}
+
+.example-card h3 {
+  margin-top: 3rem;
+  font-size: 1.4rem;
+}
+
+@media (max-width: 900px) {
+  .examples-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .examples-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .example-card {
+    min-height: auto;
+  }
+
+  .example-card h3 {
+    margin-top: 2rem;
+  }
+}
+
+.learning-levels {
+  margin-top: clamp(2.5rem, 5vw, 4rem);
+  padding-top: 1.5rem;
+}
+
+.learning-levels__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.learning-levels__title {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.soon-badge {
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.65rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.learning-levels__items {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 1.5rem;
+  row-gap: 0.5rem;
+}
+
+.learning-levels__items span {
+  position: relative;
+  padding-left: 1.5rem;
+  color: var(--ink);
+  font-size: 0.95rem;
+}
+
+.learning-levels__items span:first-child {
+  padding-left: 0;
+}
+
+.learning-levels__items span::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 0.3rem;
+  height: 0.3rem;
+  border-radius: 50%;
+  background: var(--line);
+  transform: translateY(-50%);
+}
+
+.learning-levels__items span:first-child::before {
+  content: none;
+}
+
+.learning-note {
+  margin-top: 1.25rem;
+  max-width: 42rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 600px) {
+  .learning-levels__items {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .learning-levels__items span {
+    padding-left: 0;
+  }
+
+  .learning-levels__items span::before {
+    content: none;
+  }
+}
+</style>

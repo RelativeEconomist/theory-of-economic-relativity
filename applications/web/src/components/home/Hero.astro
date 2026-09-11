@@ -1,0 +1,277 @@
+---
+import Button from "../ui/Button.astro";
+---
+<section class="hero">
+  <div class="hero-glow" aria-hidden="true"></div>
+  <div class="shell hero-grid">
+    <div class="hero-copy">
+      <h1 data-hero-title>Theory of Economic Relativity</h1>
+      <p class="lede" data-hero-copy>
+        An open economic theory and framework for studying how agent decisions interact with reality to produce outcomes, feedback, and economic change.
+      </p>
+      <div class="button-row" data-hero-actions>
+        <Button href="/theory/" label="Explore the theory" />
+        <Button href="/learn/" variant="ghost" label="Try the tests" />
+      </div>
+    </div>
+    <div class="hero-visual" data-hero-visual>
+      <canvas data-orbit-canvas aria-hidden="true"></canvas>
+      <div class="orbit-label label-one">
+        <svg class="orbit-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="3.2" /><path d="M5.5 20c0-4 3-6.5 6.5-6.5s6.5 2.5 6.5 6.5" /></svg>
+        Individual
+      </div>
+      <div class="orbit-label label-two">
+        <svg class="orbit-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="7" r="2.6" /><circle cx="16" cy="8.5" r="2.2" /><path d="M3.5 19.5c0-3.4 2.5-5.8 5.5-5.8s5.5 2.4 5.5 5.8" /><path d="M14.8 14.2c2.3.3 3.9 2.2 3.9 4.8" /></svg>
+        Group
+      </div>
+      <div class="orbit-label label-three">
+        <svg class="orbit-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4.5" width="14" height="15" rx="1" /><path d="M9 8.5h1.2M13.8 8.5H15M9 12h1.2M13.8 12H15M9 15.5h1.2M13.8 15.5H15" /></svg>
+        Institution
+      </div>
+      <div class="orbit-label label-four">
+        <svg class="orbit-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5 12 4l8 5.5" /><path d="M4.5 9.5h15" /><path d="M6.5 9.5V18M10 9.5V18M14 9.5V18M17.5 9.5V18" /><path d="M4 19.5h16" /></svg>
+        Government
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+import { Euler, IcosahedronGeometry, Vector3 } from "three";
+
+  const initHero = async () => {
+    const canvas = document.querySelector<HTMLCanvasElement>("[data-orbit-canvas]");
+    const visual = document.querySelector<HTMLElement>("[data-hero-visual]");
+    if (!canvas || !visual || canvas.dataset.ready) return;
+    canvas.dataset.ready = "true";
+
+    const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    try {
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("Canvas is not supported");
+
+      const geometry = new IcosahedronGeometry(1.55, 2);
+      const position = geometry.getAttribute("position");
+      const vertices: Vector3[] = [];
+      const transformed: Vector3[] = [];
+      for (let index = 0; index < position.count; index += 1) {
+        vertices.push(new Vector3(position.getX(index), position.getY(index), position.getZ(index)));
+        transformed.push(new Vector3());
+      }
+
+            const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+      const violet = getComputedStyle(document.documentElement).getPropertyValue("--violet").trim();
+      const orange = getComputedStyle(document.documentElement).getPropertyValue("--orange").trim();
+
+      const nodeRadius = 1.68;
+
+      const nodes = [
+        { color: accent, point: new Vector3(2.0, .65, .15).setLength(nodeRadius) },
+        { color: violet, point: new Vector3(-1.8, -1.25, .6).setLength(nodeRadius) },
+        { color: orange, point: new Vector3(.1, 2.15, -.2).setLength(nodeRadius) },
+        { color: `color-mix(in srgb, ${violet} 55%, ${orange} 45%)`, point: new Vector3(1.6, -1.7, .3).setLength(nodeRadius) },
+      ];
+
+      const nodeVectors = nodes.map(() => new Vector3());
+      const rotation = new Euler(0, 0, 0, "XYZ");
+      let pointerX = 0;
+      let pointerY = 0;
+      let cssWidth = 1;
+      let cssHeight = 1;
+
+      const resize = () => {
+        const rect = visual.getBoundingClientRect();
+        const ratio = Math.min(devicePixelRatio, window.innerWidth < 720 ? 1.25 : 1.75);
+        cssWidth = rect.width;
+        cssHeight = rect.height;
+        canvas.width = Math.max(1, Math.round(cssWidth * ratio));
+        canvas.height = Math.max(1, Math.round(cssHeight * ratio));
+        context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      };
+      resize();
+      new ResizeObserver(resize).observe(visual);
+      visual.addEventListener("pointermove", (event) => {
+        const rect = visual.getBoundingClientRect();
+        pointerX = (event.clientX - rect.left) / rect.width - .5;
+        pointerY = (event.clientY - rect.top) / rect.height - .5;
+      }, { passive: true });
+
+      const project = (point: Vector3) => {
+        const perspective = 4.8 / (5.8 + point.z);
+        const scale = Math.min(cssWidth, cssHeight) * .34;
+        return { x: cssWidth / 2 + point.x * scale * perspective, y: cssHeight / 2 - point.y * scale * perspective };
+      };
+
+      let frame = 0;
+      const render = () => {
+        context.clearRect(0, 0, cssWidth, cssHeight);
+        rotation.y += reduceMotion ? 0 : .0022;
+        rotation.x += (pointerY * .24 - rotation.x) * .025;
+        rotation.z += (-pointerX * .18 - rotation.z) * .025;
+
+        context.save();
+        context.translate(cssWidth / 2, cssHeight / 2);
+        context.strokeStyle = "#737c6f";
+        context.globalAlpha = .42;
+        context.lineWidth = 1;
+        [0, 1, 2].forEach((index) => {
+          context.save();
+          context.rotate(-.18 + index * .24);
+          context.beginPath();
+          context.ellipse(0, 0, Math.min(cssWidth, cssHeight) * (.39 + index * .055), Math.min(cssWidth, cssHeight) * (.13 + index * .025), 0, 0, Math.PI * 2);
+          context.stroke();
+          context.restore();
+        });
+        context.restore();
+
+        for (let index = 0; index < vertices.length; index += 1) transformed[index].copy(vertices[index]).applyEuler(rotation);
+        context.strokeStyle = "#737c6f";
+        context.globalAlpha = .48;
+        context.lineWidth = 1;
+        for (let index = 0; index < transformed.length; index += 3) {
+          const a = project(transformed[index]);
+          const b = project(transformed[index + 1]);
+          const c = project(transformed[index + 2]);
+          context.beginPath();
+          context.moveTo(a.x, a.y);
+          context.lineTo(b.x, b.y);
+          context.lineTo(c.x, c.y);
+          context.closePath();
+          context.stroke();
+        }
+
+        context.globalAlpha = 1;
+        nodes.forEach((node, index) => {
+          nodeVectors[index].copy(node.point).applyEuler(rotation);
+          const point = project(nodeVectors[index]);
+          context.beginPath();
+          context.fillStyle = node.color;
+          context.arc(point.x, point.y, 9, 0, Math.PI * 2);
+          context.fill();
+        });
+        if (!reduceMotion) frame = requestAnimationFrame(render);
+      };
+      render();
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+          cancelAnimationFrame(frame);
+          frame = 0;
+        } else if (!frame && !reduceMotion) {
+          render();
+        }
+      });
+
+      new IntersectionObserver(([entry]) => {
+        if (!entry) return;
+        if (entry.isIntersecting) {
+          if (!frame) {
+            resize();
+            render();
+          }
+        } else {
+          cancelAnimationFrame(frame);
+          frame = 0;
+        }
+      }).observe(visual);
+    } catch {
+      visual.classList.add("webgl-fallback");
+    }
+  };
+  initHero();
+</script>
+
+<style>
+  .hero {
+  position: relative;
+  min-height: 92svh;
+  overflow: hidden;
+  padding-top: clamp(8.5rem, 14vw, 11rem);
+}
+
+.hero-grid {
+  min-height: calc(92svh - 13rem);
+  display: grid;
+  grid-template-columns: 1.16fr .84fr;
+  align-items: center;
+  gap: 3rem;
+}
+  .hero-glow { position: absolute; top: -30%; right: -20%; width: 60vw; height: 60vw; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb,var(--accent) 15%,transparent), transparent 68%); pointer-events: none; }
+  
+  .hero-copy {
+  position: relative;
+  z-index: 2;
+  top: -3rem;
+  padding-bottom: 3rem;
+}
+  .hero h1 {
+  max-width: 800px;
+  font-size: clamp(3.2rem, 6.3vw, 6rem);
+}
+  .hero .lede { max-width: 37rem; }
+  .hero-chip { width: fit-content; display: flex; align-items: center; gap: .65rem; margin-bottom: 1.5rem; padding: .45rem .8rem .45rem .5rem; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--muted); font-size: .72rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+  .chip-orbit { position: relative; width: 1.55rem; height: 1.55rem; border: 1px solid var(--ink); border-radius: 50%; }
+  .chip-orbit::before { position: absolute; inset: 6px -4px; border: 1px solid var(--ink); border-radius: 50%; content: ""; }
+  .chip-orbit i { position: absolute; top: 2px; left: 5px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+  .availability { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: 1.4rem; color: var(--muted); font-size: .76rem; }
+  .availability strong { color: var(--ink); font-weight: 650; }
+  .pulse { width: .5rem; height: .5rem; border-radius: 50%; background: #46c86c; box-shadow: 0 0 0 5px color-mix(in srgb,#46c86c 18%,transparent); }
+  .hero-visual {
+  position: relative;
+  top: -5rem;
+  min-height: clamp(31rem, 55vw, 44rem);
+}
+
+  .label-one { top: 19%; left: 5%; }
+  .label-two { top: 21%; right: 4%; }
+  .label-three { right: 4%; bottom: 19%; }
+  .label-four { left: 3%; bottom: 19%; }
+
+  .hero-visual canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .orbit-label { 
+    position: absolute;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    min-width: 8.5rem;
+    padding: .48rem .7rem;
+    border: 1px solid var(--line); border-radius: 999px; background: color-mix(in srgb,var(--surface) 88%,transparent); box-shadow: var(--shadow); backdrop-filter: blur(12px); font-size: .72rem; font-weight: 720; }
+  .orbit-label span { color: var(--muted); font-size: .6rem; }
+  .orbit-icon { width: .85rem; height: .85rem; flex: 0 0 auto; fill: none; stroke: var(--muted); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .signal-card { position: absolute; bottom: 8%; left: 0; z-index: 2; width: min(13rem,45%); padding: 1rem; border: 1px solid var(--line); border-radius: 1rem; background: var(--surface); box-shadow: var(--shadow); }
+  .signal-card span { color: var(--muted); font-size: .65rem; text-transform: uppercase; letter-spacing: .08em; }
+  .signal-card strong { display: block; margin: .25rem 0 1rem; font-size: .9rem; }
+  .signal-card svg { color: var(--violet); }
+  .webgl-fallback::before { position: absolute; inset: 16%; border: 1px solid var(--line); border-radius: 50%; box-shadow: 0 0 0 40px transparent, 0 0 0 41px var(--line), 0 0 0 80px transparent, 0 0 0 81px var(--line); content: ""; }
+  .hero-foot { display: flex; justify-content: space-between; padding-block: 1.2rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .68rem; font-weight: 680; letter-spacing: .08em; text-transform: uppercase; }
+    @media (max-width: 900px) {
+    .hero { min-height: auto; }
+    .hero-grid { display: block; min-height: auto; }
+
+    .hero-copy {
+      top: 0;
+      padding-bottom: 0;
+    }
+
+    .hero-visual {
+      top: 0;
+      min-height: 30rem;
+      margin-top: 1rem;
+    }
+  }
+  @media (max-width: 600px) {
+    .hero { padding-top: 7.2rem; }
+    .hero h1 {
+  font-size: clamp(2.8rem, 13vw, 4.2rem);
+  line-height: 1.07;
+}
+    .hero-visual { min-height: 25rem; margin-inline: -.5rem; }
+        .label-one { top: 12%; left: 2%; }
+    .label-two { top: 12%; right: 2%; }
+    .label-three { right: 2%; bottom: 14%; }
+    .label-four { left: 2%; bottom: 14%; }
+    .signal-card { bottom: 5%; left: 2%; }
+    .hero-foot span:last-child { display: none; }
+  }
+</style>

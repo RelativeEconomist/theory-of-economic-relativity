@@ -1,0 +1,22 @@
+---
+import { getCollection, render } from "astro:content";
+import DocPage from "../components/DocPage.astro";
+
+const [entry] = await getCollection("faq");
+if (!entry) {
+  throw new Error(
+    'Content collection "faq" has no entries. Expected it to load research/faq.md ' +
+      "(see the loader pattern/base for \"faq\" in src/content.config.ts). If you're running " +
+      "astro dev, this usually means the content store is stale -- restart the dev server."
+  );
+}
+const { Content } = await render(entry);
+---
+<DocPage
+  title="FAQ"
+  eyebrow="Questions and challenges"
+  description="Recurring conceptual and methodological questions about TER, rendered directly from research/faq.md."
+  sourceUrl="https://github.com/RelativeEconomist/theory-of-economic-relativity/blob/main/research/faq.md"
+>
+  <Content />
+</DocPage>

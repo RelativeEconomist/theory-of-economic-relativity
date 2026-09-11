@@ -1,0 +1,22 @@
+---
+import { getCollection, render } from "astro:content";
+import DocPage from "../components/DocPage.astro";
+
+const [entry] = await getCollection("contribute");
+if (!entry) {
+  throw new Error(
+    'Content collection "contribute" has no entries. Expected it to load CONTRIBUTING.md ' +
+      "(see the loader pattern/base for \"contribute\" in src/content.config.ts). If you're running " +
+      "astro dev, this usually means the content store is stale -- restart the dev server."
+  );
+}
+const { Content } = await render(entry);
+---
+<DocPage
+  title="Contribute"
+  eyebrow="Contributing to TER"
+  description="How to test and extend the Theory of Economic Relativity, rendered directly from CONTRIBUTING.md."
+  sourceUrl="https://github.com/RelativeEconomist/theory-of-economic-relativity/blob/main/CONTRIBUTING.md"
+>
+  <Content />
+</DocPage>

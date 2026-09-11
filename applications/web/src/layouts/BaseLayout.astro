@@ -1,0 +1,115 @@
+---
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import "../styles/global.css";
+import { siteConfig } from "../config/site";
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  noindex?: boolean;
+  /** Show the lime accent backdrop behind the footer's rounded top corners.
+   *  Only appropriate when the page's last section above the footer is
+   *  itself the lime accent color (currently just the homepage). */
+  footerAccent?: boolean;
+}
+
+const {
+  title = siteConfig.title,
+  description = siteConfig.description,
+  image = "/images/og-cover.png",
+  noindex = false,
+  footerAccent = false,
+} = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site ?? siteConfig.url);
+const absoluteImage = new URL(image, Astro.site ?? siteConfig.url);
+---
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#F5F5F5" />
+    <meta name="description" content={description} />
+    <meta name="author" content={siteConfig.author} />
+    {noindex && <meta name="robots" content="noindex,nofollow" />}
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={siteConfig.name} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={absoluteImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={absoluteImage} />
+    <title>{title}</title>
+    <script is:inline>
+      (() => {
+        const saved = localStorage.getItem("ter-theme");
+        const preferred = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        document.documentElement.dataset.theme = saved || preferred;
+      })();
+    </script>
+    <script is:inline type="application/ld+json" set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": `${siteConfig.url}/#organization`,
+          name: siteConfig.company,
+          url: siteConfig.url,
+          description: siteConfig.description,
+        },
+        {
+          "@type": "WebSite",
+          "@id": `${siteConfig.url}/#website`,
+          name: siteConfig.name,
+          url: siteConfig.url,
+          description: siteConfig.description,
+          publisher: { "@id": `${siteConfig.url}/#organization` },
+        },
+      ],
+    })} />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <Header />
+    <main id="main"><slot /></main>
+    <Footer accent={footerAccent} />
+    <script>
+      import Lenis from "lenis";
+      import gsap from "gsap";
+      import ScrollTrigger from "gsap/ScrollTrigger";
+
+      const initMotion = () => {
+        if (document.documentElement.dataset.motionReady) return;
+        document.documentElement.dataset.motionReady = "true";
+        if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        gsap.registerPlugin(ScrollTrigger);
+        // const lenis = new Lenis({ duration: 1.05, smoothWheel: true, wheelMultiplier: .86 });
+        // lenis.on("scroll", ScrollTrigger.update);
+        // gsap.ticker.add((time) => lenis.raf(time * 1000));
+        // gsap.ticker.lagSmoothing(0);
+
+        gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((element) => {
+          gsap.fromTo(element, { y: 32, opacity: 0 }, {
+            y: 0, opacity: 1, duration: .72, ease: "power3.out",
+            scrollTrigger: { trigger: element, start: "top 88%", once: true },
+          });
+        });
+      };
+      initMotion();
+      document.addEventListener("astro:page-load", initMotion);
+    </script>
+  </body>
+</html>

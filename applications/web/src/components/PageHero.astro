@@ -1,0 +1,20 @@
+---
+interface Props { eyebrow: string; title: string; description: string; note?: string; }
+const { eyebrow, title, description, note } = Astro.props;
+---
+<section class="page-hero">
+  <div class="shell">
+    <p class="eyebrow">{eyebrow}</p>
+    <h1 set:html={title} />
+    <div class="hero-bottom">
+      <p class="lede">{description}</p>
+      {note && <p class="fine-print">{note}</p>}
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero-bottom { display: flex; justify-content: space-between; gap: 2rem; align-items: end; margin-top: 1rem; }
+  .hero-bottom .fine-print { max-width: 18rem; text-align: right; }
+  @media (max-width: 700px) { .hero-bottom { display: block; } .hero-bottom .fine-print { margin-top: 1.5rem; text-align: left; } }
+</style>

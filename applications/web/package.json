@@ -1,0 +1,44 @@
+{
+  "name": "theory-of-economic-relativity-web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Website for the Theory of Economic Relativity project.",
+  "author": "Relative Economist",
+  "homepage": "https://www.theoryofeconomicrelativity.com/",
+  "license": "SEE LICENSE IN LICENSE",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "@astrojs/markdown-remark": "latest",
+    "@astrojs/mdx": "latest",
+    "@astrojs/rss": "latest",
+    "@astrojs/sitemap": "latest",
+    "@tailwindcss/vite": "latest",
+    "animejs": "latest",
+    "astro": "7.1.4",
+    "gsap": "latest",
+    "katex": "latest",
+    "lenis": "latest",
+    "motion": "latest",
+    "rehype-katex": "latest",
+    "remark-math": "latest",
+    "tailwindcss": "latest",
+    "three": "latest"
+  },
+  "devDependencies": {
+    "@astrojs/check": "latest",
+    "@types/node": "latest",
+    "@types/three": "latest",
+    "typescript": "latest",
+    "vite": "8.1.5"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

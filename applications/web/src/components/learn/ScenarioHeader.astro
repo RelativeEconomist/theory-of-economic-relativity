@@ -1,0 +1,62 @@
+---
+import type { Scenario } from "../../data/learn/scenarios";
+
+interface Props {
+  scenario: Scenario;
+}
+
+const { scenario } = Astro.props;
+---
+<header class="scenario-header">
+  <div class="scenario-header-top">
+    <p class="eyebrow">
+      {scenario.sourceLabel && <span>{scenario.sourceLabel}</span>}
+      <span>{scenario.category}</span>
+    </p>
+    <slot name="selector" />
+  </div>
+  <h1>{scenario.title}</h1>
+  {scenario.economicQuestion && (
+    <p class="question">{scenario.economicQuestion}</p>
+  )}
+</header>
+
+<style>
+  .scenario-header {
+    padding-top: clamp(7.5rem, 14vw, 10rem);
+  }
+
+  .scenario-header-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem 2rem;
+  }
+
+  .scenario-header-top .eyebrow {
+    margin: 0;
+  }
+
+  h1 {
+    max-width: 1100px;
+    margin-top: 1.5rem;
+    font-size: clamp(2.6rem, 5.6vw, 4.6rem);
+  }
+
+  .question {
+    max-width: 960px;
+    margin: 1.5rem 0 0;
+    color: var(--muted);
+    font-size: clamp(1.05rem, 1.7vw, 1.25rem);
+    line-height: 1.55;
+    text-wrap: pretty;
+  }
+
+  @media (max-width: 720px) {
+    .scenario-header-top {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+</style>

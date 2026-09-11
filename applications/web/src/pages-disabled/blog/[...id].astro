@@ -1,0 +1,28 @@
+---
+// Intentionally outside src/pages/ so this route is not built, served, or
+// included in the sitemap. Kept as demo-content source for possible reuse.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { blogPosts } from "../../data/blog";
+
+export async function getStaticPaths() {
+  return blogPosts.map(post=>({params:{id:post.id},props:{post}}));
+}
+
+const { post }=Astro.props;
+const Content=post.Content;
+const published=post.publishedAt.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"});
+---
+<BaseLayout title={`${post.title} — Theory of Economic Relativity`} description={post.description}>
+  <article class="article">
+    <header class="article-head shell"><a href="/blog/" class="back">← All insights</a><div class="meta"><span>{post.category}</span><time datetime={post.publishedAt.toISOString()}>{published}</time><span>{post.readingTime}</span></div><h1>{post.title}</h1><p class="lede">{post.description}</p><div class="author"><span>AM</span><div><strong>{post.author}</strong><small>Fictional demo author</small></div></div></header>
+    <div class="cover" aria-hidden="true"><div class="cover-orbit"><i></i></div><span>TER / FIELD NOTE</span></div>
+    <div class="article-body shell"><aside><span>Share</span><a href={`https://www.linkedin.com/sharing/share-offsite/?url=${Astro.url}`} rel="noreferrer">LinkedIn</a><a href={`https://x.com/intent/post?url=${Astro.url}`} rel="noreferrer">X / Twitter</a></aside><div class="prose"><Content /></div></div>
+  </article>
+</BaseLayout>
+
+<style>
+  .article-head{padding-top:10rem;padding-bottom:4rem}.back{display:inline-block;margin-bottom:4rem;color:var(--muted);font-size:.78rem;font-weight:700}.meta{display:flex;flex-wrap:wrap;gap:1rem;color:var(--muted);font-size:.68rem;text-transform:uppercase;letter-spacing:.07em}.article h1{max-width:1100px;margin-top:2rem;font-size:clamp(3.2rem,8vw,7.5rem)}.article-head .lede{max-width:48rem}.author{display:flex;align-items:center;gap:.8rem;margin-top:2rem}.author>span{width:2.7rem;height:2.7rem;display:grid;place-items:center;border-radius:50%;background:var(--violet);color:#171326;font-size:.65rem;font-weight:750}.author strong,.author small{display:block}.author small{color:var(--muted);font-size:.72rem}
+  .cover{position:relative;width:min(calc(100% - 2rem),1400px);min-height:clamp(22rem,55vw,44rem);overflow:hidden;display:grid;place-items:center;margin:auto;border-radius:1.5rem;background:var(--accent);color:var(--accent-ink)}.cover>span{position:absolute;right:1rem;bottom:1rem;font-size:.6rem;font-weight:700;letter-spacing:.12em}.cover-orbit{width:clamp(12rem,30vw,26rem);aspect-ratio:1;border:1px solid currentColor;border-radius:50%;box-shadow:0 0 0 clamp(3rem,7vw,6rem) transparent,0 0 0 calc(clamp(3rem,7vw,6rem) + 1px) currentColor}.cover-orbit i{display:block;width:1rem;height:1rem;margin:12%;border-radius:50%;background:currentColor}
+  .article-body{display:grid;grid-template-columns:10rem 1fr;gap:4rem;padding-block:clamp(4rem,8vw,8rem)}aside{position:sticky;top:8rem;height:fit-content;display:flex;flex-direction:column;gap:.65rem;color:var(--muted);font-size:.72rem}aside span{margin-bottom:.5rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em}aside a:hover{color:var(--ink)}
+  @media(max-width:700px){.article-body{grid-template-columns:1fr}.article-body aside{position:static;flex-direction:row}.cover{width:calc(100% - 1.25rem)}}
+</style>

@@ -1,0 +1,227 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ScenarioSelector from "../../components/learn/ScenarioSelector.astro";
+import ScenarioHeader from "../../components/learn/ScenarioHeader.astro";
+import TerArchitecture from "../../components/learn/TerArchitecture.astro";
+import ScenarioAssumptions from "../../components/learn/ScenarioAssumptions.astro";
+import ScenarioHypotheses from "../../components/learn/ScenarioHypotheses.astro";
+import ScenarioResults from "../../components/learn/ScenarioResults.astro";
+import ScenarioSource from "../../components/learn/ScenarioSource.astro";
+import { getActiveScenarios } from "../../data/learn/scenarios";
+import type { Scenario } from "../../data/learn/scenarios";
+
+export async function getStaticPaths() {
+  return getActiveScenarios().map((scenario) => ({
+    params: { slug: scenario.slug },
+    props: { scenario },
+  }));
+}
+
+interface Props {
+  scenario: Scenario;
+}
+
+const { scenario } = Astro.props;
+const activeScenarios = getActiveScenarios();
+const scenarioIndex = activeScenarios.findIndex((item) => item.slug === scenario.slug);
+const previousScenario = scenarioIndex > 0 ? activeScenarios[scenarioIndex - 1] : undefined;
+const nextScenario =
+  scenarioIndex >= 0 && scenarioIndex < activeScenarios.length - 1
+    ? activeScenarios[scenarioIndex + 1]
+    : undefined;
+---
+<BaseLayout
+  title={`${scenario.title} — Learn TER`}
+  description={scenario.summary}
+>
+  <div class="shell">
+    <ScenarioHeader scenario={scenario}>
+      <ScenarioSelector slot="selector" currentSlug={scenario.slug} />
+    </ScenarioHeader>
+
+    {scenario.economicSetup && (
+      <section class="economic-setup doc-section">
+        <p class="eyebrow">Economic setup</p>
+        <h2 class="doc-heading">How the scenario works.</h2>
+        <p class="lede">{scenario.economicSetup}</p>
+      </section>
+    )}
+
+    {scenario.whatChanges && (
+      <section class="what-changes doc-section">
+        <p class="eyebrow">What this test changes</p>
+        <h2 class="doc-heading">What stays fixed, what varies.</h2>
+        <p class="lede">{scenario.whatChanges}</p>
+      </section>
+    )}
+
+    {scenario.terComponents && <TerArchitecture components={scenario.terComponents} />}
+
+    {/* Reserved position for a future simulator block, between the TER
+        architecture section and the hypotheses below. Intentionally empty
+        for now — no simulator controls yet. */}
+
+    {scenario.assumptions && <ScenarioAssumptions assumptions={scenario.assumptions} />}
+    {scenario.hypotheses && <ScenarioHypotheses hypotheses={scenario.hypotheses} />}
+
+    {scenario.configuration && (
+      <section class="scenario-configuration doc-section">
+        <p class="eyebrow">Test configuration</p>
+        <h2 class="doc-heading">How the test is set up.</h2>
+        <dl class="configuration-grid hairline-grid hairline-grid-cols-2">
+          {scenario.configuration.map((field) => (
+            <div>
+              <dt>{field.label}</dt>
+              <dd>{field.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+    )}
+
+    {(scenario.results || scenario.resultsTable) && (
+      <ScenarioResults results={scenario.results} table={scenario.resultsTable} />
+    )}
+
+    {scenario.sourcePath && (
+      <section class="scenario-source-section doc-section">
+        <p class="eyebrow">Executable test</p>
+        <ScenarioSource sourcePath={scenario.sourcePath} />
+      </section>
+    )}
+
+    <section class="section-sm scenario-nav doc-section">
+      <div class="scenario-nav-links hairline-grid">
+        {previousScenario ? (
+          <a href={`/learn/${previousScenario.slug}/`} class="scenario-nav-link">
+            <span class="scenario-nav-label">← Previous scenario</span>
+            <span class="scenario-nav-title">{previousScenario.title}</span>
+          </a>
+        ) : (
+          <span class="scenario-nav-link is-disabled" aria-disabled="true">
+            <span class="scenario-nav-label">← Previous scenario</span>
+            <span class="scenario-nav-title">None</span>
+          </span>
+        )}
+
+        <a href="/learn/" class="scenario-nav-link scenario-nav-all">
+          <span class="scenario-nav-label">View all scenarios</span>
+        </a>
+
+        {nextScenario ? (
+          <a href={`/learn/${nextScenario.slug}/`} class="scenario-nav-link scenario-nav-next">
+            <span class="scenario-nav-label">Next scenario →</span>
+            <span class="scenario-nav-title">{nextScenario.title}</span>
+          </a>
+        ) : (
+          <span class="scenario-nav-link scenario-nav-next is-disabled" aria-disabled="true">
+            <span class="scenario-nav-label">Next scenario →</span>
+            <span class="scenario-nav-title">None</span>
+          </span>
+        )}
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .economic-setup .lede,
+  .what-changes .lede {
+    max-width: 960px;
+    margin-top: 1rem;
+  }
+
+  .configuration-grid {
+    grid-template-columns: repeat(2, 1fr);
+    margin: 2.5rem 0 0;
+    border: 1px solid var(--line);
+  }
+
+  .configuration-grid > div {
+    padding: 1.1rem 1.5rem;
+  }
+
+  .configuration-grid dt {
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 650;
+    letter-spacing: 0.04em;
+  }
+
+  .configuration-grid dd {
+    margin: 0.4rem 0 0;
+    color: var(--ink);
+    font-size: 0.95rem;
+  }
+
+  .scenario-source-section .eyebrow {
+    margin-bottom: 1rem;
+  }
+
+  .scenario-nav {
+    padding-bottom: clamp(4rem, 8vw, 7rem);
+    border-top: 1px solid var(--line);
+  }
+
+  .scenario-nav-links {
+    grid-template-columns: repeat(3, 1fr);
+    margin-top: 1.5rem;
+    border: 1px solid var(--line);
+  }
+
+  .scenario-nav-link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 1.25rem 1.5rem;
+    color: var(--ink);
+  }
+
+  a.scenario-nav-link:hover {
+    background: var(--surface);
+  }
+
+  .scenario-nav-link.is-disabled {
+    color: var(--muted);
+  }
+
+  .scenario-nav-label {
+    color: var(--muted);
+    font-size: 0.68rem;
+    font-weight: 650;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .scenario-nav-title {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .scenario-nav-all {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .scenario-nav-next {
+    align-items: flex-end;
+    text-align: right;
+  }
+
+  @media (max-width: 640px) {
+    .configuration-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .scenario-nav-links {
+      grid-template-columns: 1fr;
+    }
+
+    .scenario-nav-all,
+    .scenario-nav-next {
+      align-items: flex-start;
+      text-align: left;
+    }
+  }
+</style>

@@ -1,0 +1,25 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PageHero from "../components/PageHero.astro";
+
+// TODO: replace with the real UseBasin form endpoint (https://usebasin.com/f/<form-id>).
+const USEBASIN_ENDPOINT = "https://usebasin.com/f/bfbb642007f9";
+---
+<BaseLayout title="Contact — Theory of Economic Relativity" description="Get in touch about the Theory of Economic Relativity.">
+  <PageHero eyebrow="Get in touch" title={'Get in <span class="serif">touch.</span>'} description="Questions about the theory, the tests, or the site are welcome." />
+  <section class="section-sm divider"><div class="shell contact-grid">
+    <div class="contact-aside" data-reveal><p class="eyebrow">Before you write</p><p class="lede">Replies aren't guaranteed on a fixed timeline, but every message is read.</p></div>
+    <form action={USEBASIN_ENDPOINT} method="POST" data-reveal>
+      <div class="field"><label for="name">Your name</label><input id="name" name="name" type="text" autocomplete="name" placeholder="Example: Jordan Lee" /></div>
+      <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" required placeholder="jordan@example.com" /></div>
+      <div class="field full"><label for="message">Message</label><textarea id="message" name="message" required rows="5" placeholder="Tell us what you're working on, testing, or interested in."></textarea></div>
+      <div class="form-bottom full"><p>Sent securely via UseBasin.</p><button class="button button-primary" type="submit"><span>Send message</span><span aria-hidden="true">↗</span></button></div>
+    </form>
+  </div></section>
+</BaseLayout>
+
+<style>
+  .contact-grid{display:grid;grid-template-columns:.65fr 1.35fr;gap:clamp(3rem,8vw,8rem)}
+  form{display:grid;grid-template-columns:1fr 1fr;gap:1rem;padding:clamp(1.3rem,4vw,3rem);border:1px solid var(--line);border-radius:1.5rem;background:var(--surface)}.field{display:grid;gap:.55rem}.field.full,.form-bottom.full{grid-column:1/-1}label{font-size:.72rem;font-weight:720}input,textarea{width:100%;min-height:3.5rem;padding:.85rem 1rem;border:1px solid var(--line);border-radius:.75rem;background:var(--bg);color:var(--ink);font-size:1rem}textarea{min-height:9rem;resize:vertical}input::placeholder,textarea::placeholder{color:color-mix(in srgb,var(--muted) 75%,transparent)}.form-bottom{display:flex;justify-content:space-between;align-items:center;gap:2rem;padding-top:1rem}.form-bottom p{max-width:20rem;margin:0;color:var(--muted);font-size:.7rem}
+  @media(max-width:800px){.contact-grid,form{grid-template-columns:1fr}.field.full,.form-bottom.full{grid-column:auto}.form-bottom{align-items:stretch;flex-direction:column}.form-bottom .button{width:100%}}
+</style>

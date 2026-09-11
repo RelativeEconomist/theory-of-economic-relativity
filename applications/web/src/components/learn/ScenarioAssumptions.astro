@@ -1,0 +1,45 @@
+---
+interface Props {
+  assumptions: string[];
+}
+
+const { assumptions } = Astro.props;
+---
+<section class="scenario-assumptions doc-section">
+  <p class="eyebrow">Assumptions</p>
+  <h2 class="doc-heading">What this test assumes.</h2>
+
+  <ul class="assumptions-list hairline-grid">
+    {assumptions.map((assumption) => <li>{assumption}</li>)}
+  </ul>
+</section>
+
+<style>
+  .assumptions-list {
+    margin: 2.5rem 0 0;
+    padding: 0;
+    list-style: none;
+    border: 1px solid var(--line);
+  }
+
+  .assumptions-list li {
+    position: relative;
+    min-width: 0;
+    padding: 1.25rem 1.5rem 1.25rem 2.75rem;
+    overflow-wrap: anywhere;
+    color: var(--muted);
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .assumptions-list li::before {
+    content: "";
+    position: absolute;
+    top: 1.55rem;
+    left: 1.5rem;
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+</style>

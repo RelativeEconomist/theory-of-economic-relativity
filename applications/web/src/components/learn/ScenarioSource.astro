@@ -1,0 +1,37 @@
+---
+interface Props {
+  sourcePath: string;
+}
+
+const { sourcePath } = Astro.props;
+const sourceUrl = `https://github.com/RelativeEconomist/theory-of-economic-relativity/blob/main/${sourcePath}`;
+---
+<p class="scenario-source">
+  <a href={sourceUrl} target="_blank" rel="noreferrer">View executable test on GitHub ↗</a>
+  <code>{sourcePath}</code>
+</p>
+
+<style>
+  .scenario-source {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.4rem 1rem;
+    margin: 1.5rem 0 0;
+  }
+
+  .scenario-source a {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 3px;
+    text-underline-offset: 3px;
+  }
+
+  .scenario-source code {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", "Menlo", monospace;
+    font-size: 0.85rem;
+  }
+</style>

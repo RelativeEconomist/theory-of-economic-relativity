@@ -1,0 +1,135 @@
+---
+import type { TerComponentMapping } from "../../data/learn/scenarios";
+
+interface Props {
+  components: TerComponentMapping[];
+}
+
+const { components } = Astro.props;
+---
+<section class="ter-architecture doc-section">
+  <p class="eyebrow">TER architecture</p>
+  <h2 class="doc-heading">How this test uses the TER framework.</h2>
+  <p class="lede">
+    Every TER agent selects an action through the same nine-component
+    architecture. The table below shows what each component means, how it
+    is instantiated in this test, and whether this test fixes it, varies
+    it, selects it, or produces it as a result.
+  </p>
+
+  <div class="equation card" role="img" aria-label="C sub i,t equals D sub i,t of F-hat sub i,t, G sub i,t, M sub i,t, V sub i,t, H sub i,t">
+    <code>C<sub>i,t</sub> = D<sub>i,t</sub>(F̂<sub>i,t</sub>, G<sub>i,t</sub>, M<sub>i,t</sub>, V<sub>i,t</sub>, H<sub>i,t</sub>)</code>
+  </div>
+
+  <div class="architecture-table" role="table">
+    <div class="architecture-row architecture-head" role="row">
+      <span role="columnheader">Component</span>
+      <span role="columnheader">Meaning</span>
+      <span role="columnheader">In this test</span>
+      <span role="columnheader">Test treatment</span>
+    </div>
+    {components.map((component) => (
+      <div class="architecture-row" role="row">
+        <span class="component-name" role="cell">
+          <b>{component.symbol}</b> {component.name}
+        </span>
+        <span class="component-meaning" role="cell">{component.definition}</span>
+        <span class="component-mapping" role="cell">{component.mapping}</span>
+        <span class="component-treatment" role="cell">{component.testTreatment}</span>
+      </div>
+    ))}
+  </div>
+</section>
+
+<style>
+  .equation {
+    display: flex;
+    overflow-x: auto;
+    align-items: center;
+    margin-top: 2.5rem;
+    padding: 1.75rem 2rem;
+  }
+
+  .equation code {
+    font-family: ui-monospace, "SF Mono", "Menlo", monospace;
+    font-size: clamp(1rem, 2.4vw, 1.35rem);
+    white-space: nowrap;
+  }
+
+  .architecture-table {
+    margin-top: 2.5rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+
+  .architecture-row {
+    display: grid;
+    grid-template-columns: 11rem 1fr 1.2fr 12rem;
+    gap: 1.5rem;
+    padding: 1.25rem 1.5rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .architecture-row:first-child {
+    border-top: none;
+  }
+
+  .architecture-head {
+    color: var(--muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    background: var(--surface-2);
+  }
+
+  .component-name {
+    font-weight: 650;
+  }
+
+  .component-name b {
+    display: inline-block;
+    min-width: 1.6rem;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", "Menlo", monospace;
+  }
+
+  .component-meaning,
+  .component-mapping {
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
+
+  .component-treatment {
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
+  @media (max-width: 900px) {
+    .architecture-row {
+      grid-template-columns: 1fr;
+      gap: 0.4rem;
+    }
+
+    .architecture-head {
+      display: none;
+    }
+
+    .component-meaning::before {
+      content: "Meaning: ";
+      color: var(--ink);
+    }
+
+    .component-mapping::before {
+      content: "In this test: ";
+      color: var(--ink);
+    }
+
+    .component-treatment::before {
+      content: "Test treatment: ";
+      color: var(--ink);
+    }
+  }
+</style>

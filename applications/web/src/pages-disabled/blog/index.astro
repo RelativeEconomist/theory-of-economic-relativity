@@ -1,0 +1,23 @@
+---
+// Intentionally outside src/pages/ so this route is not built, served, or
+// included in the sitemap. Kept as demo-content source for possible reuse.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PageHero from "../../components/PageHero.astro";
+import { blogPosts as posts } from "../../data/blog";
+const featured=posts.find(p=>p.featured)??posts[0];
+const rest=posts.filter(p=>p.id!==featured.id);
+const date=(d:Date)=>d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+---
+<BaseLayout title="Insights — Theory of Economic Relativity" description="Practical notes on positioning, founder authority, and focused go-to-market strategy.">
+  <PageHero eyebrow="Insights" title={'Useful thinking for <span class="serif">the work ahead.</span>'} description="Practical field notes on positioning, founder authority, and building a clearer path from expertise to demand." note="Demo editorial content — replace before publishing." />
+  <section class="section-sm"><div class="shell">
+    <a class="featured" href={`/blog/${featured.id}/`} data-reveal><div class="featured-art"><span>FEATURED NOTE</span><div class="orb"><i></i></div><b>TER</b></div><div class="featured-copy"><div class="meta"><span>{featured.category}</span><time datetime={featured.publishedAt.toISOString()}>{date(featured.publishedAt)}</time></div><h2>{featured.title}</h2><p class="lede">{featured.description}</p><strong>Read the article · {featured.readingTime}</strong></div></a>
+    <div class="post-list">{rest.map((post,index)=><a href={`/blog/${post.id}/`} data-reveal><span class="num">0{index+2}</span><div><div class="meta"><span>{post.category}</span><time datetime={post.publishedAt.toISOString()}>{date(post.publishedAt)}</time></div><h3>{post.title}</h3><p>{post.description}</p></div><span class="arrow">↗</span></a>)}</div>
+  </div></section>
+</BaseLayout>
+
+<style>
+  .featured{display:grid;grid-template-columns:1fr 1fr;gap:clamp(2rem,6vw,6rem);align-items:center;padding-bottom:5rem;border-bottom:1px solid var(--line)}.featured-art{position:relative;min-height:32rem;overflow:hidden;display:grid;place-items:center;border-radius:1.5rem;background:var(--accent);color:var(--accent-ink)}.featured-art>span,.featured-art>b{position:absolute;top:1rem;left:1rem;font-size:.6rem;letter-spacing:.1em}.featured-art>b{top:auto;right:1rem;bottom:1rem;left:auto}.orb{width:15rem;height:15rem;border:1px solid currentColor;border-radius:50%;box-shadow:0 0 0 3rem transparent,0 0 0 3.05rem currentColor}.orb i{display:block;width:1rem;height:1rem;margin:2rem;border-radius:50%;background:currentColor}.meta{display:flex;justify-content:space-between;gap:1rem;color:var(--muted);font-size:.67rem;text-transform:uppercase;letter-spacing:.06em}.featured-copy h2{margin-top:2rem;font-size:clamp(2.6rem,5vw,5rem)}.featured-copy>strong{display:block;margin-top:2rem;font-size:.76rem}
+  .post-list>a{display:grid;grid-template-columns:3rem 1fr 3rem;gap:2rem;align-items:center;padding:2rem .5rem;border-bottom:1px solid var(--line)}.num{color:var(--muted);font-size:.7rem}.post-list h3{margin:.8rem 0;font-size:clamp(1.6rem,3vw,2.5rem)}.post-list p{max-width:42rem;margin:0;color:var(--muted)}.arrow{font-size:1.5rem}
+  @media(max-width:800px){.featured{grid-template-columns:1fr}.featured-art{min-height:23rem}.post-list>a{grid-template-columns:2rem 1fr;gap:1rem}.post-list .arrow{display:none}}
+</style>

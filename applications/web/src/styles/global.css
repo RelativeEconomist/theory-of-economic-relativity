@@ -1,0 +1,318 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter Variable", "Avenir Next", "Segoe UI", sans-serif;
+  --font-display: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+}
+
+:root {
+  color-scheme: light;
+  --bg: #f5f5f5;
+  --surface: #ffffff;
+  --surface-2: #ecece8;
+  --ink: #121410;
+  --muted: #4a4f47;
+  --line: #d8dad3;
+  --accent: #d9ff43;
+  --accent-ink: #161d00;
+  --violet: #8b78ff;
+  --orange: #ff6b35;
+  --max: 1240px;
+  --radius-sm: 0.75rem;
+  --radius-md: 1.25rem;
+  --radius-lg: 2rem;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --shadow: 0 24px 80px rgba(18, 20, 16, 0.09);
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #11130f;
+  --surface: #191c17;
+  --surface-2: #242820;
+  --ink: #f2f3ee;
+  --muted: #afb5a8;
+  --line: #343a30;
+  --accent: #d9ff43;
+  --accent-ink: #171d03;
+  --violet: #a897ff;
+  --orange: #ff8054;
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bg);
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  overflow-x: clip;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.6;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.35s var(--ease), color 0.35s var(--ease);
+}
+
+body.menu-open {
+  overflow: hidden;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img, svg, canvas {
+  display: block;
+  max-width: 100%;
+}
+
+button, input, textarea, select {
+  font: inherit;
+}
+
+button, a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 3px solid var(--violet);
+  outline-offset: 4px;
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 200;
+  top: 1rem;
+  left: 1rem;
+  transform: translateY(-200%);
+  padding: 0.75rem 1rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--bg);
+  transition: transform 0.2s var(--ease);
+}
+
+.skip-link:focus { transform: translateY(0); }
+
+.shell {
+  width: min(calc(100% - 2rem), var(--max));
+  margin-inline: auto;
+}
+
+.section {
+  position: relative;
+  padding-block: clamp(5rem, 10vw, 9rem);
+}
+
+.section-sm {
+  padding-block: clamp(3.5rem, 7vw, 6rem);
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0 0 1.35rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 760;
+  letter-spacing: 0.12em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.eyebrow::before {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 25%, transparent);
+  content: "";
+}
+
+.display, h1, h2, h3 {
+  margin: 0;
+  font-weight: 580;
+  letter-spacing: -0.045em;
+  line-height: 0.98;
+  text-wrap: balance;
+}
+
+h1 { font-size: clamp(3rem, 6vw, 6rem); }
+h2 { font-size: clamp(2.4rem, 5.2vw, 5rem); }
+h3 { font-size: clamp(1.45rem, 2.4vw, 2rem); line-height: 1.08; }
+
+.serif {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.055em;
+}
+
+.lede {
+  max-width: 55rem;
+  margin: 1.5rem 0 0;
+  color: var(--muted);
+  font-size: clamp(1.06rem, 1.7vw, 1.3rem);
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.muted { color: var(--muted); }
+.fine-print { color: var(--muted); font-size: 0.78rem; line-height: 1.45; }
+
+.button {
+  position: relative;
+  display: inline-flex;
+  min-height: 3.25rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  overflow: hidden;
+  padding: 0.8rem 1.2rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.91rem;
+  font-weight: 720;
+  line-height: 1;
+  transition: transform 0.18s var(--ease), background-color 0.25s var(--ease), border-color 0.25s var(--ease);
+}
+
+.button:hover { transform: translateY(-2px); }
+.button:active { transform: translateY(0) scale(0.98); }
+.button-primary { background: var(--accent); color: var(--accent-ink); }
+.button-dark { background: var(--ink); color: var(--bg); }
+.button-ghost { border-color: var(--line); background: transparent; color: var(--ink); }
+.button-light { background: #f5f5f5; color: #14180a; }
+.button svg { width: 1rem; transition: transform 0.25s var(--ease); }
+.button:hover svg { transform: translateX(3px); }
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.divider { border-top: 1px solid var(--line); }
+
+[data-reveal] {
+  will-change: transform, opacity;
+}
+
+.page-hero {
+  padding-top: clamp(9rem, 17vw, 13rem);
+  padding-bottom: clamp(3.5rem, 7vw, 6rem);
+}
+
+.page-hero h1 { max-width: 1100px; }
+
+/* Learn scenario template: shared section rhythm, used across the
+   scenario page components instead of the larger default section
+   spacing used elsewhere on the site. */
+.doc-section { padding-top: clamp(2.5rem, 4.5vw, 4rem); }
+
+/* Smaller section-heading treatment: the scenario template's h2 size,
+   reused for homepage section intros (SectionIntro, OpenScience) so
+   section titles don't inherit the larger default h1/h2 scale. */
+.doc-heading { max-width: 900px; margin-top: 0.75rem; font-size: clamp(2rem, 3.5vw, 3.5rem); }
+
+/* Hairline grid: bordered list/card grids with 1px dividers between cells.
+   Used for the scenario panel lists and the home examples grid. */
+.hairline-grid { display: grid; gap: 1px; background: var(--line); }
+.hairline-grid > * { background: var(--bg); }
+
+/* Modifier for a 2-column hairline grid whose cells can be temporarily
+   invisible (mid scroll-reveal) or genuinely absent (a trailing cell left
+   over by an odd item count). Rather than relying on a solid container
+   fill punched through by opaque children -- which shows as a solid block
+   wherever a cell has nothing currently painting over it -- each cell
+   draws its own divider via box-shadow, so the parent contributes no fill
+   of its own and unrevealed/empty areas always show the page background. */
+.hairline-grid-cols-2 {
+  background: transparent;
+}
+
+.hairline-grid-cols-2 > * {
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+.prose {
+  max-width: 46rem;
+  color: var(--ink);
+  font-size: 1.07rem;
+  line-height: 1.78;
+}
+
+.prose > * + * { margin-top: 1.4rem; }
+/* Markdown h1/h2 share the .doc-heading section-heading scale (see above)
+   rather than inventing their own clamp: this keeps a rendered Markdown h1
+   (e.g. CONTRIBUTING.md's leading "# Contributing to TER") from competing
+   with PageHero's dominant h1 above it, and matches h2 to the same
+   established treatment used elsewhere on the site. */
+.prose h1, .prose h2 { margin-top: 3.5rem; font-size: clamp(2rem, 3.5vw, 3.5rem); }
+.prose h3 { margin-top: 2.5rem; }
+.prose p, .prose li { color: var(--muted); }
+.prose strong { color: var(--ink); }
+.prose a { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 3px; text-underline-offset: 3px; }
+.prose blockquote { margin-inline: 0; padding: 1.5rem 0 1.5rem 1.5rem; border-left: 4px solid var(--accent); font-size: 1.3rem; }
+.prose code { padding: 0.15rem 0.35rem; border-radius: 0.35rem; background: var(--surface-2); font-size: 0.9em; }
+.prose table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; font-size: 0.95rem; }
+.prose th, .prose td { padding: 0.65rem 0.9rem; border: 1px solid var(--line); text-align: left; }
+.prose th { background: var(--surface-2); color: var(--ink); font-weight: 650; }
+.prose pre { padding: 1.25rem 1.5rem; border-radius: var(--radius-md); background: var(--surface-2); overflow-x: auto; }
+.prose pre code { padding: 0; border-radius: 0; background: none; }
+.prose .katex-display { margin: 0; padding: 0.5rem 0; overflow-x: auto; overflow-y: hidden; }
+.prose .katex-mathml { user-select: none; }
+
+/* Wider variant for long-form reference documents (Theory, Contribute):
+   widens the column so tables, equations, code blocks, and ordinary
+   paragraph/list/blockquote text all share the same 56rem measure.
+   `.prose.doc-prose` (not bare `.doc-prose`) is required so this beats
+   the base `.prose { max-width: 46rem }` rule on specificity rather than
+   relying on source order. */
+.prose.doc-prose { max-width: 56rem; }
+.doc-prose p, .doc-prose li, .doc-prose blockquote { max-width: 56rem; }
+
+@media (max-width: 720px) {
+  .shell { width: min(calc(100% - 1.25rem), var(--max)); }
+  .section { padding-block: 4.75rem; }
+  .button-row { align-items: stretch; flex-direction: column; }
+  .button-row .button { width: 100%; }
+  h1 { font-size: clamp(3.1rem, 16vw, 5.1rem); }
+  h2 { font-size: clamp(2.5rem, 12.5vw, 4rem); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  [data-reveal] { opacity: 1 !important; transform: none !important; }
+}

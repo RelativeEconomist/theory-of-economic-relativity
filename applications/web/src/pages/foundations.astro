@@ -1,0 +1,23 @@
+---
+import { getCollection, render } from "astro:content";
+import DocPage from "../components/DocPage.astro";
+
+const [entry] = await getCollection("foundations");
+if (!entry) {
+  throw new Error(
+    'Content collection "foundations" has no entries. Expected it to load ' +
+      'research/foundations-and-references.md (see the loader pattern/base for "foundations" in ' +
+      "src/content.config.ts). If you're running astro dev, this usually means the content store " +
+      "is stale -- restart the dev server."
+  );
+}
+const { Content } = await render(entry);
+---
+<DocPage
+  title="Foundations and References"
+  eyebrow="Established economics"
+  description="The established economic research TER builds on and how it maps into TER's architecture, rendered directly from research/foundations-and-references.md."
+  sourceUrl="https://github.com/RelativeEconomist/theory-of-economic-relativity/blob/main/research/foundations-and-references.md"
+>
+  <Content />
+</DocPage>

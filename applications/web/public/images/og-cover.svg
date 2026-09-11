@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#11130f"/>
+  <circle cx="940" cy="315" r="220" fill="none" stroke="#3a3f34" stroke-width="2"/>
+  <ellipse cx="940" cy="315" rx="290" ry="105" fill="none" stroke="#d9ff43" stroke-width="2"/>
+  <circle cx="940" cy="315" r="52" fill="#d9ff43"/>
+  <circle cx="1172" cy="245" r="13" fill="#9a88ff"/>
+  <text x="76" y="100" fill="#d9ff43" font-family="Arial,sans-serif" font-size="22" font-weight="700" letter-spacing="3">TER</text>
+  <text x="76" y="278" fill="#f5f5f5" font-family="Arial,sans-serif" font-size="76" font-weight="600" letter-spacing="-4">An open economic</text>
+  <text x="76" y="364" fill="#f5f5f5" font-family="Georgia,serif" font-size="84" font-style="italic">theory and framework.</text>
+  <text x="76" y="514" fill="#a7ada0" font-family="Arial,sans-serif" font-size="22">An open, testable economic decision-making framework.</text>
+</svg>

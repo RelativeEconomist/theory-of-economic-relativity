@@ -1,0 +1,18 @@
+TER Licensing
+
+This repository uses separate licenses for research content and executable software.
+
+CC BY 4.0
+The Theory of Economic Relativity theory, research prose, documentation,
+diagrams, website content, and other non-software materials are licensed under
+Creative Commons Attribution 4.0 International.
+
+See LICENSE and the official legal code referenced there.
+
+MIT
+Executable software, including TER Core, supporting software, test code, and
+other source code under research/ is licensed under the MIT License.
+
+See LICENSE-SOFTWARE.
+
+Where a file contains an explicit license notice, that notice controls for that file.

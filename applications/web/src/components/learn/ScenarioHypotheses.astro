@@ -1,0 +1,46 @@
+---
+interface Props {
+  hypotheses: string[];
+}
+
+const { hypotheses } = Astro.props;
+---
+<section class="scenario-hypotheses doc-section">
+  <p class="eyebrow">Hypotheses</p>
+  <h2 class="doc-heading">Expected behavior.</h2>
+  <p class="lede">What the test checks for, stated before the results below.</p>
+
+  <ol class="hypotheses-list">
+    {hypotheses.map((hypothesis) => <li>{hypothesis}</li>)}
+  </ol>
+</section>
+
+<style>
+  .hypotheses-list {
+    display: grid;
+    gap: 0.9rem;
+    margin: 2.5rem 0 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: hypothesis;
+  }
+
+  .hypotheses-list li {
+    display: grid;
+    grid-template-columns: 2.5rem 1fr;
+    gap: 1rem;
+    padding: 1.1rem 0;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 0.95rem;
+    line-height: 1.55;
+    counter-increment: hypothesis;
+  }
+
+  .hypotheses-list li::before {
+    content: counter(hypothesis, decimal-leading-zero);
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+</style>

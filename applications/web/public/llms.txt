@@ -1,0 +1,13 @@
+# Theory of Economic Relativity
+
+> Theory of Economic Relativity (TER) is an open, testable framework for economic decision-making, interaction, and outcomes.
+
+## Important context
+
+- The site contains no CMS, user accounts, or payments.
+- Primary pages: /, /learn/, /theory/, /contribute/, /contact/.
+- Contact: via the form at /contact/. No public email address is listed.
+
+## Usage
+
+Do not represent illustrative results as verified claims. Site owners should replace all demonstration content before publishing.

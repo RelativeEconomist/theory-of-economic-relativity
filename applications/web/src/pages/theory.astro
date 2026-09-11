@@ -1,0 +1,34 @@
+---
+import { getCollection, render } from "astro:content";
+import DocPage from "../components/DocPage.astro";
+import { siteConfig } from "../config/site";
+
+const [entry] = await getCollection("theory");
+if (!entry) {
+  throw new Error(
+    'Content collection "theory" has no entries. Expected it to load theory/academic.md ' +
+      "(see the loader pattern/base for \"theory\" in src/content.config.ts). If you're running " +
+      "astro dev, this usually means the content store is stale -- restart the dev server."
+  );
+}
+const { Content } = await render(entry);
+---
+<DocPage
+  title="Theory"
+  eyebrow="Canonical theory"
+  description="The full academic definition of the Theory of Economic Relativity, rendered directly from theory/academic.md."
+  sourceUrl="https://github.com/RelativeEconomist/theory-of-economic-relativity/blob/main/theory/academic.md"
+>
+  <Content />
+</DocPage>
+<script is:inline type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  headline: "Theory of Economic Relativity",
+  description: "The full academic definition of the Theory of Economic Relativity, rendered directly from theory/academic.md.",
+  url: `${siteConfig.url}/theory/`,
+  author: { "@type": "Person", name: siteConfig.author },
+  publisher: { "@id": `${siteConfig.url}/#organization` },
+  isPartOf: { "@id": `${siteConfig.url}/#website` },
+  inLanguage: "en",
+})} />

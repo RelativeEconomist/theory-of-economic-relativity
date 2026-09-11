@@ -1,0 +1,118 @@
+---
+import type { ScenarioField } from "../../data/learn/scenarios";
+
+interface Props {
+  results?: ScenarioField[];
+  /** Comparison table across multiple cases, shown instead of the label/value list. */
+  table?: { columns: string[]; rows: string[][] };
+}
+
+const { results, table } = Astro.props;
+---
+<section class="scenario-results doc-section">
+  <p class="eyebrow">Test result</p>
+  <h2 class="doc-heading">Observed behavior.</h2>
+  <p class="lede">
+    Results from the executable test, with explanation of the economic
+    mechanism where useful.
+  </p>
+
+  {results && (
+    <dl class="results-grid">
+      {results.map((result) => (
+        <div>
+          <dt>{result.label}</dt>
+          <dd>{result.value}</dd>
+        </div>
+      ))}
+    </dl>
+  )}
+
+  {table && (
+    <div class="results-table-wrap">
+      <table class="results-table">
+        <thead>
+          <tr>{table.columns.map((column) => <th>{column}</th>)}</tr>
+        </thead>
+        <tbody>
+          {table.rows.map((row) => (
+            <tr>{row.map((cell) => <td>{cell}</td>)}</tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+</section>
+
+<style>
+  /* Reuses the same table treatment as .prose table in global.css, so a
+     comparison table here matches the Theory doc's Markdown tables. */
+  .results-table-wrap {
+    margin: 2.5rem 0 0;
+    overflow-x: auto;
+  }
+
+  .results-table {
+    width: 100%;
+    min-width: 32rem;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+  }
+
+  .results-table th,
+  .results-table td {
+    padding: 0.65rem 0.9rem;
+    border: 1px solid var(--line);
+    text-align: left;
+  }
+
+  .results-table th {
+    background: var(--surface-2);
+    color: var(--ink);
+    font-weight: 650;
+  }
+
+  .results-table td {
+    color: var(--ink);
+  }
+
+  .results-grid {
+    display: grid;
+    gap: 0;
+    margin: 2.5rem 0 0;
+  }
+
+  .results-grid > div {
+    display: grid;
+    grid-template-columns: 16rem 1fr;
+    gap: 1.5rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .results-grid > div:last-child {
+    border-bottom: 1px solid var(--line);
+  }
+
+  dt {
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 650;
+    letter-spacing: 0.02em;
+  }
+
+  dd {
+    margin: 0;
+    color: var(--ink);
+    font-size: 0.98rem;
+    line-height: 1.55;
+    white-space: pre-line;
+  }
+
+  @media (max-width: 640px) {
+    .results-grid > div {
+      grid-template-columns: 1fr;
+      gap: 0.35rem;
+    }
+  }
+</style>

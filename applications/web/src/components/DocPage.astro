@@ -1,0 +1,25 @@
+---
+import "katex/dist/katex.min.css";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PageHero from "./PageHero.astro";
+
+interface Props {
+  title: string;
+  eyebrow: string;
+  description: string;
+  sourceUrl?: string;
+}
+
+const { title, eyebrow, description, sourceUrl } = Astro.props;
+---
+<BaseLayout title={`${title} — Theory of Economic Relativity`} description={description}>
+  <PageHero eyebrow={eyebrow} title={title} description={description} />
+  <section class="section-sm divider">
+    <div class="shell">
+      <div class="prose doc-prose">
+        {sourceUrl && <p><a href={sourceUrl} target="_blank" rel="noreferrer">View source on GitHub ↗</a></p>}
+        <slot />
+      </div>
+    </div>
+  </section>
+</BaseLayout>

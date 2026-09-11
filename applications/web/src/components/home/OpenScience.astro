@@ -1,0 +1,56 @@
+---
+import Button from "../ui/Button.astro";
+---
+<section class="section open-science">
+  <div class="shell open-science-inner">
+    <p class="label" data-reveal>Open science</p>
+    <h2 class="doc-heading" data-reveal>Read it. Test it. Challenge it. Improve it.</h2>
+    <p class="lede" data-reveal>
+  TER presents a coherent, testable architecture for economic decision making,
+  interaction, outcomes, and change. We think it's broad enough to be worth
+  testing across a wide range of economic problems—but important questions,
+  edge cases, and implementation challenges remain.
+</p>
+    <p class="lede" data-reveal>
+        The theory, models,
+  and research tools are open so others can test them, challenge them, improve them,
+  and help build TER into a more reliable and scalable economic framework.
+    </p>
+    <div class="button-row" data-reveal>
+      <Button href="/theory/" label="Read the theory" variant="dark" />
+      <Button href="/learn/" label="Try the tests" variant="ghost" />
+    </div>
+  </div>
+</section>
+
+<style>
+  .open-science { background: var(--accent); color: var(--accent-ink); }
+
+  .label {
+    margin: 0 0 1.25rem;
+    font-size: .76rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    opacity: .7;
+  }
+
+  .lede {
+    color: var(--accent-ink);
+    opacity: .85;
+  }
+
+  .lede-secondary {
+    max-width: 50rem;
+    margin: 2rem 0 0;
+    color: var(--muted);
+    font-size: 1.1rem;
+    line-height: 1.6;
+    opacity: .85;
+  }
+
+  .open-science :global(.button-ghost) {
+    border-color: color-mix(in srgb, var(--accent-ink) 30%, transparent);
+    color: var(--accent-ink);
+  }
+</style>
