@@ -22,6 +22,8 @@ TER is open for researchers, economists, programmers, and students to **use, cha
 
 > **Canonical theory:** [`theory/academic.md`](theory/academic.md) is the source of truth for TER's definitions, axioms, models, claims, and limitations.
 
+**Website:** https://www.theoryofeconomicrelativity.com
+
 ## Where to Go
 
 | I want to... | Go here |
