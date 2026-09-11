@@ -24,6 +24,8 @@ TER is open for researchers, economists, programmers, and students to **use, cha
 
 **Website:** https://www.theoryofeconomicrelativity.com
 
+**DOI:** https://doi.org/10.5281/zenodo.22711351
+
 ## Where to Go
 
 | I want to... | Go here |
