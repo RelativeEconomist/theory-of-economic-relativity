@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Any, Callable
 
 from research.ter.agent import AgentState
+from research.ter.outcome import RealityView
 
 
 RULES: dict[str, Callable[..., Any]] = {}
@@ -58,9 +59,9 @@ def get_rule(name: str) -> Callable[..., Any]:
 
 
 def build_agent_results(
-    agents: list[AgentState],
+    agents: list[RealityView],
     actions: list[Any],
-    compute: Callable[[AgentState, Any], dict[str, Any]],
+    compute: Callable[[RealityView, Any], dict[str, Any]],
 ) -> dict[str, Any]:
     """
     Build the standard named per-agent outcome shape for a reality
@@ -75,9 +76,13 @@ def build_agent_results(
 
     compute(agent, action) -> dict is called once per agent for its
     actually selected action, and once per action in that agent's
-    perceived_feasible_set, so ScenarioResult.agent(name).outcome_for(...)
+    actual_feasible_set, so ScenarioResult.agent(name).outcome_for(...)
     can look up an unselected action's outcome later without any rule
-    being re-executed.
+    being re-executed. Alternatives range over F, not F_hat: R (this
+    helper included) only ever receives a RealityView, which carries F
+    and never the agent's perceived_feasible_set -- reality's own "what
+    else could have happened" is a question about what was actually
+    possible, not about what the agent believed was possible.
 
     Returns:
 
@@ -88,7 +93,7 @@ def build_agent_results(
             "alternative_outcomes": {
                 agent.name: {
                     action: compute(agent, action)
-                    for action in agent.perceived_feasible_set
+                    for action in agent.actual_feasible_set
                 },
             },
         }
@@ -101,7 +106,7 @@ def build_agent_results(
 
         alternative_outcomes[agent.name] = {
             candidate: compute(agent, candidate)
-            for candidate in agent.perceived_feasible_set
+            for candidate in agent.actual_feasible_set
         }
 
     return {
@@ -635,28 +640,34 @@ def internalized_value(action: Any, agent: AgentState) -> float:
 @register_rule("social_value_outcome")
 def social_value_outcome(
     state: dict[str, Any],
-    agents: list[AgentState],
+    agents: list[RealityView],
     actions: list[Any],
     parameters: dict[str, Any],
 ):
     """
     Calculate social value under this scenario's stated welfare measure
-    as the agent's private value plus the *actual* external effect.
+    as the actual private value plus the actual external effect.
 
-    Reads the agent's own private_values (V) and the scenario's actual
-    external_effects (a fact about reality, not any agent's belief) --
-    never the agent's own decision valuation (agent.value) or perceived
-    external effect. This keeps the external-effect term tied to what 
-    actually happens, while social value remains a scenario-specific 
-    welfare measure rather than a universal TER outcome equation.
+    Reads the scenario's actual private_values and actual external_effects
+    -- both facts about reality, not any agent's belief or valuation --
+    never the agent's own decision valuation (agent.value or
+    agent.valuation) or perceived external effect. This keeps social
+    value tied entirely to what actually happens, while remaining a
+    scenario-specific welfare measure rather than a universal TER outcome
+    equation.
 
-    Required agent valuation field:
+    private_values is deliberately a scenario parameter here, not the
+    agent's own valuation["private_values"] (V): the two are declared
+    equal in every current scenario that uses this rule (see
+    test_08_externalities.py), the same way that scenario's
+    perceived_external_effects (M) and external_effects (P) are declared
+    equal -- TER does not require either equality, and R must not read M
+    or V to find out.
 
-        private_values     action -> private value
+    Required scenario parameters:
 
-    Required scenario parameter:
-
-        external_effects   action -> actual external effect
+        private_values      action -> actual private value
+        external_effects    action -> actual external effect
 
     Reports two things, both keyed by agent name rather than position, and
     neither carrying a "selected_action" marker: which action was actually
@@ -666,15 +677,15 @@ def social_value_outcome(
         agent_results         the generic outcome for the action actually
                                selected.
         alternative_outcomes  the generic outcome for every action in that
-                               agent's perceived_feasible_set (including
-                               the selected one). Lets a result look up an
-                               unselected action's outcome (see
-                               AgentResult.outcome_for) without any rule
-                               being re-executed later.
+                               agent's actual_feasible_set (including the
+                               selected one). Lets a result look up an
+                               unselected-but-actually-feasible action's
+                               outcome (see AgentResult.outcome_for)
+                               without any rule being re-executed later.
     """
 
     def compute_outcome(agent, action):
-        private_value = agent.valuation["private_values"][action]
+        private_value = parameters["private_values"][action]
         external_effect = parameters["external_effects"][action]
 
         return {
@@ -692,7 +703,7 @@ def social_value_outcome(
 
         alternative_outcomes[agent.name] = {
             candidate: compute_outcome(agent, candidate)
-            for candidate in agent.perceived_feasible_set
+            for candidate in agent.actual_feasible_set
         }
 
     return {

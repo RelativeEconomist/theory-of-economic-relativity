@@ -96,6 +96,7 @@ class TestPublicSurface(unittest.TestCase):
             "RealityFunction",
             "FeedbackRule",
             "run_scenario",
+            "__version__",
         }
 
         self.assertEqual(
