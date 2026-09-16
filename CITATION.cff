@@ -5,6 +5,7 @@ message: >-
 title: Theory of Economic Relativity
 type: software
 version: 0.30.0
+doi: 10.5281/zenodo.22711351
 url: https://www.theoryofeconomicrelativity.com
 repository-code: https://github.com/RelativeEconomist/theory-of-economic-relativity
 license: MIT

@@ -38,9 +38,9 @@ Core architecture:
     H   current production decision
     D   DecisionProcess.MAXIMIZE
     C   the firm's selected production action
-    R   RealityFunction.SOCIAL_VALUE -- realizes O from private_values
-        and the scenario's own actual external_effects, never from any
-        firm's belief or valuation
+    R   RealityFunction.SOCIAL_VALUE -- realizes O from the scenario's
+        own actual private_values and external_effects parameters,
+        never from any firm's belief or declared valuation
     O   realized private value, actual external effect, and this
         scenario's specified social-value measure
 
@@ -95,23 +95,32 @@ that is a scenario-specific choice of V.
 
 Assumptions
 -----------
-- private_values is the firm's own valuation of each action (V).
+- BASE_FIRM's valuation["private_values"] is the firm's own valuation of
+  each action (V), read by the private_value/internalized_value
+  valuation rules to select C. The scenario's parameters["private_values"]
+  is the actual private value each action really yields once selected (a
+  fact used only to compute the realized social value, never by any
+  valuation rule) -- declared equal to the firm's own V here, but reality
+  (R) never reads V to find that out, only its own copy in parameters.
   perceived_external_effects is the firm's belief about each action's
   consequence on others (M). external_effects (a scenario parameter) is
   the actual consequence, used only to compute the realized social
   value -- it is not visible to any valuation rule.
-- This test assumes the firm knows its own external effect exactly:
-  perceived_external_effects is declared equal to external_effects (see
-  BASE_FIRM). TER does not require this; it is a simplifying assumption
-  of this test, not a framework constraint.
+- This test assumes the firm knows its own private value and external
+  effect exactly: parameters["private_values"] matches
+  valuation["private_values"], and perceived_external_effects is
+  declared equal to external_effects (see BASE_FIRM and
+  PRIVATE_INCENTIVE_SCENARIO). TER does not require either equality;
+  these are simplifying assumptions of this test, not framework
+  constraints.
 - valuation_rule determines what the firm's own decision process sees:
   private_value ignores perceived_external_effects; internalized_value
   adds it in, V depending on M without the two becoming the same thing.
-- social_value_outcome always reads private_values and the scenario's
-  actual external_effects directly, never the firm's own decision
-  valuation (agent.value) or belief, so social value is not double
-  counted when internalized_value has already folded a perceived effect
-  into the firm's own valuation.
+- social_value_outcome always reads parameters["private_values"] and
+  parameters["external_effects"] directly, never the firm's own decision
+  valuation (agent.value), declared valuation (agent.valuation), or
+  belief, so social value is not double counted when internalized_value
+  has already folded a perceived effect into the firm's own valuation.
 - Social value is a scenario-specific welfare measure defined by this
   test (private value + external effect), not a universal TER outcome
   equation.
@@ -215,10 +224,19 @@ PRIVATE_INCENTIVE_SCENARIO = Scenario(
     agents=[
         BASE_FIRM,
     ],
-    # The actual external effect: what really happens to others,
-    # regardless of what the firm believes. Read by social_value_outcome
-    # to compute the realized social value, not by any valuation rule.
+    # The actual private value and external effect: what actually
+    # results from producing, regardless of the firm's own valuation or
+    # belief. Read by social_value_outcome to compute the realized
+    # social value, not by any valuation rule. Declared equal to
+    # BASE_FIRM's valuation["private_values"] here -- this test assumes
+    # the firm's own valuation matches reality exactly, the same
+    # simplifying assumption already made for perceived_external_effects
+    # vs external_effects; TER does not require either equality.
     parameters={
+        "private_values": {
+            PRODUCE: PRODUCE_PRIVATE_VALUE,
+            DO_NOT_PRODUCE: DO_NOT_PRODUCE_PRIVATE_VALUE,
+        },
         "external_effects": {
             PRODUCE: PRODUCE_EXTERNAL_EFFECT,
             DO_NOT_PRODUCE: DO_NOT_PRODUCE_EXTERNAL_EFFECT,

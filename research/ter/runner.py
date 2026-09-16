@@ -3,6 +3,7 @@ from copy import deepcopy
 from typing import Any
 
 from research.ter.agent import AgentState
+from research.ter.outcome import reality_view
 from research.ter.rules import get_rule
 from research.ter.scenario import AgentSpec, Scenario, ScenarioResult
 from research.ter.simulation import simulate
@@ -116,12 +117,27 @@ def run_scenario(scenario: Scenario) -> ScenarioResult:
         # feedback has happened yet, so one agent's later outcome can
         # never leak backward into another agent's decision here.
         if reality_function:
-            outcome_function = lambda agents, actions: reality_function(
-                state=state,
-                agents=agents,
-                actions=actions,
-                parameters=scenario.parameters,
-            )
+            def outcome_function(agents, actions):
+                # R may read C (actions), F (each agent's
+                # actual_feasible_set), and P/S (state, parameters) --
+                # never M or F_hat. reality_state carries the same
+                # restriction under state["agents"], so a reality
+                # function cannot recover the full AgentState by reading
+                # around its own `agents` argument.
+                reality_agents = [
+                    reality_view(agent)
+                    for agent in agents
+                ]
+
+                reality_state = dict(state)
+                reality_state["agents"] = reality_agents
+
+                return reality_function(
+                    state=reality_state,
+                    agents=reality_agents,
+                    actions=actions,
+                    parameters=scenario.parameters,
+                )
         else:
             outcome_function = lambda agents, actions: {}
 
