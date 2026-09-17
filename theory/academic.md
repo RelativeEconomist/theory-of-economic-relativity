@@ -4,7 +4,7 @@
 
 ## Abstract
 
-The Theory of Economic Relativity is a unifying framework built on established economic principles. It organizes concepts such as scarcity, opportunity cost, marginal analysis, incentives, prices, supply and demand, externalities, institutions, and equilibrium within a common agent centered architecture.
+The Theory of Economic Relativity is a proposed unifying framework built on established economic principles. It organizes concepts such as scarcity, opportunity cost, marginal analysis, incentives, prices, supply and demand, externalities, institutions, and equilibrium within a common agent centered architecture.
 
 The theory begins with a simple observation:
 
@@ -1090,7 +1090,7 @@ This architecture connects objectives, perceived reality, feasible actions, deci
 
 If this claim is correct, TER provides a shared framework for connecting economic decision making, information, constraints, interaction, outcomes, and dynamic change without requiring specialized economic theories to be discarded.
 
-The validity, scope, and usefulness of this claim remain open to theoretical and empirical testing.
+The validity, scope, usefulness, and distinctiveness of this claim remain open to theoretical, empirical, and comparative testing.
 
 
 ## 8. Scope and Limits

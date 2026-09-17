@@ -2,67 +2,52 @@
 
 > **Economic outcomes emerge from agent decisions interacting with reality.**
 
-The **Theory of Economic Relativity (TER)** is an open economic theory and analytical framework for explaining how agent decisions, interactions, constraints, and realized outcomes combine to produce economic behavior and change over time.
+The **Theory of Economic Relativity (TER)** is an open, testable economic theory and analytical framework for studying how agent decisions, interactions, constraints, and realized outcomes combine to produce economic behavior and change over time.
 
-TER proposes that many economic phenomena traditionally studied through separate models and theories can be understood as different configurations and dynamics of a **common agent centered architecture**.
+At its core, TER asks a simple question: **can many economic phenomena be understood as different configurations of a common agent centered architecture?** Agents act in relation to objectives, make decisions using the information and possibilities they perceive, encounter reality and other agents, and experience outcomes that may change future decisions.
 
-At its core, TER models agents acting in relation to objectives through decision processes shaped by their information, beliefs, perceived feasible actions, valuations, and time horizons. Selected actions then encounter reality, interact with other agents, and produce realized outcomes that may reshape future decision environments.
-
-This creates a common structure for studying mechanisms such as constrained choice, asymmetric information, bounded rationality, strategic interaction, institutions, externalities, markets, equilibrium, and dynamic feedback while keeping their specific assumptions and mechanisms explicit.
-
-TER is built on established economics, but its central claim is stronger than simple compatibility:
+TER builds on established economics rather than claiming its underlying mechanisms are new. Its contribution is to organize those mechanisms within a shared, open, versioned framework for specification, testing, and reproduction.
 
 > **Many economic phenomena traditionally described through separate models and theories can be understood as different configurations and dynamics of a common agent centered economic architecture.**
 
-That claim is intended to be tested.
+That central claim, along with TER's scope and usefulness, remains open to testing.
 
-This repository contains the canonical theory, an executable TER research framework, and a growing suite of replication and adversarial tests designed to reproduce established economic results, expose weaknesses, identify counterexamples, and test the limits of the framework.
+**Website:** https://www.theoryofeconomicrelativity.com  
+**DOI:** https://doi.org/10.5281/zenodo.22711351  
+**Canonical theory:** [`theory/academic.md`](theory/academic.md)
 
-TER is open for researchers, economists, programmers, and students to **use, challenge, reproduce, falsify, and improve**.
+## Start Here
 
-> **Canonical theory:** [`theory/academic.md`](theory/academic.md) is the source of truth for TER's definitions, axioms, models, claims, and limitations.
+You do not need to begin with the formal theory.
 
-**Website:** https://www.theoryofeconomicrelativity.com
-
-**DOI:** https://doi.org/10.5281/zenodo.22711351
-
-## Where to Go
-
-| I want to... | Go here |
+| If you are... | Start here |
 | --- | --- |
-| Understand TER | This README |
-| Read the canonical theory | [`theory/academic.md`](theory/academic.md) |
-| Build or reason about a TER model | [`research/README.md`](research/README.md) |
-| Review variable boundaries and modeling discipline | [`research/ter-methodology-notes.md`](research/ter-methodology-notes.md) |
-| See executable examples | [`research/tests/`](research/tests/) |
-| Run the research code | [Getting Started](#getting-started) below |
-| Contribute | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
+| **New to TER** | Explore the [TER website](https://www.theoryofeconomicrelativity.com) and [Learn](https://www.theoryofeconomicrelativity.com/learn/) |
+| **A student or teacher** | Start with the first Learn scenarios below, then return here for the architecture |
+| **A researcher or economist** | Read [`theory/academic.md`](theory/academic.md) and [`research/ter-methodology-notes.md`](research/ter-methodology-notes.md) |
+| **A developer** | Start with [`research/README.md`](research/README.md), the framework under [`research/ter/`](research/ter/), and the tests under [`research/tests/`](research/tests/) |
+| **A contributor or critic** | See [`CONTRIBUTING.md`](CONTRIBUTING.md) |
 
-## Table of Contents
+## Try TER First
 
-- [Where to Go](#where-to-go)
-- [The Core Idea](#the-core-idea)
-- [The TER Architecture](#the-ter-architecture)
-- [From Decisions to Economic Systems](#from-decisions-to-economic-systems)
-- [What TER Is Testing](#what-ter-is-testing)
-- [Research and Replication Tests](#research-and-replication-tests)
-- [Repository Structure](#repository-structure)
-- [Getting Started](#getting-started)
-- [Contributing and Criticism](#contributing-and-criticism)
-- [Project Status](#project-status)
-- [License](#license)
+The Learn section introduces TER through progressively richer economic scenarios. A simple place to start is with the first four:
+
+1. **Basic Agent Choice**
+2. **Optimization vs. Satisficing**
+3. **Bounded Rationality Search**
+4. **Asymmetric Information**
+
+Explore them from the [Learn page](https://www.theoryofeconomicrelativity.com/learn/). More advanced scenarios cover markets, externalities, strategic interaction, feedback, intertemporal choice, learning, comparative advantage, and other established economic mechanisms.
 
 ## The Core Idea
 
-TER asks whether many economic phenomena traditionally described through separate models and theories can be understood as different configurations and dynamics of a common agent centered architecture.
-
-A key distinction within that architecture is:
+A key distinction within TER is:
 
 > **Agents make decisions according to their perceived reality, while reality constrains the consequences of those decisions.**
 
 An agent may be an individual, household, business, nonprofit, government, institution, or coordinated group.
 
-Agents may differ in objectives, information, beliefs, constraints, valuations, time horizons, and decision processes. TER does **not** assume that every agent optimizes or follows the same decision process algorithm.
+Agents may differ in objectives, information, beliefs, constraints, valuations, time horizons, and decision processes. TER does **not** assume that every agent optimizes or follows the same decision process.
 
 At a high level:
 
@@ -90,7 +75,9 @@ This architecture can be applied from a single decision to interacting agents an
 
 TER represents the selected action of agent $i$ at time $t$ as:
 
-$$ C_{i,t} = D_{i,t}(\hat{F}_{i,t}, G_{i,t}, M_{i,t}, V_{i,t}, H_{i,t}) $$
+$$
+C_{i,t} = D_{i,t}(\hat{F}_{i,t}, G_{i,t}, M_{i,t}, V_{i,t}, H_{i,t})
+$$
 
 In plain language, an agent selects an action through a decision process shaped by:
 
@@ -106,15 +93,17 @@ In plain language, an agent selects an action through a decision process shaped 
 | $C$ | Selected action |
 | $O$ | Realized outcome |
 
-> **Quick reference** — the canonical definitions, with full notation and time indices, are in [`theory/academic.md`](theory/academic.md#3-core-definitions).
+> **Quick reference:** the canonical definitions, with full notation and time indices, are in [`theory/academic.md`](theory/academic.md#3-core-definitions). Detailed variable placement and modeling boundaries are in [`research/ter-methodology-notes.md`](research/ter-methodology-notes.md).
 
-The selected action is simply the action that wins the agent's decision process. That process may involve optimization, satisficing, heuristics, habits, intuition, strategic reasoning, or another mechanism.
+The selected action is the action produced by the agent's decision process. That process may involve optimization, satisficing, heuristics, habits, intuition, strategic reasoning, or another mechanism.
 
 The distinction between $F$ and $\hat{F}$ is especially important. An agent may believe an action is possible when reality does not permit it, or fail to recognize an opportunity that actually exists.
 
 The selected action then encounters reality:
 
-$$ C_{i,t} \rightarrow O_{i,t} $$
+$$
+C_{i,t} \rightarrow O_{i,t}
+$$
 
 Outcomes may depend on actual constraints, other agents, prevailing conditions, external effects, and external shocks. Those outcomes can then change future information, beliefs, feasible actions, valuations, time horizons, decision processes, and subsequent actions.
 
@@ -131,7 +120,7 @@ TER develops this architecture through three core models, a state persistence co
 5. **Dynamic Feedback** — how outcomes alter future decision environments.
 6. **Feedback Analysis and Stability** — how feedback may amplify, damp, propagate, persist, oscillate, or change across regimes.
 
-These models are not six separate theories. They describe different layers of the same framework.
+These are not six separate theories. They describe different layers of the same framework.
 
 The complete formal treatment is in [`theory/academic.md`](theory/academic.md#5-formal-architecture).
 
@@ -248,17 +237,15 @@ Criticism is valuable when it makes the framework more precise, more falsifiable
 
 ## Project Status
 
-TER is under active development and public testing.
-
-The current research baseline includes **24 numbered economic replication tests** plus framework contract tests. The project is continuing to expand replication coverage, simulation capability, documentation, and public research tooling.
+TER is under active development and public testing. The theory, methodology, software, and tests are developed openly and versioned together so the framework can be reviewed, reproduced, challenged, and improved over time.
 
 The theory itself remains governed by [`theory/academic.md`](theory/academic.md). Implementation convenience should not silently change the theory.
 
-## Author’s Note
+## Author's Note
 
 Humanity expands its feasible set by pursuing difficult goals through fair competition, institutions, cooperation, knowledge sharing, and scientific exploration.
 
-That perspective is personal and separate from TER’s formal theory.
+That perspective is personal and separate from TER's formal theory.
 
 TER is open so others can use it, challenge it, reproduce it, and improve it through open science and engineering.
 

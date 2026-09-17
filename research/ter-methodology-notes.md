@@ -32,6 +32,84 @@ The most common way to misuse TER is placing a fact in the wrong component. This
 | `R` vs `O` | `R` is the mechanism — a one-time modeling choice; `O` is its output for one agent and period. Don't describe `R` as just a restatement of one `O`. | "Withdrawals capped at liquidity" is `R`; "60 units realized" is one `O`. |
 | `P` (residual use) | `P` must be defined explicitly, not used to catch unexplained outcome variation. | "Market conditions" as a vague catch-all is not a valid `P`. |
 
+## TER Variable Placement and Boundaries
+
+| Variable | Definition | Put it here when… | Do not put it here when… |
+|---|---|---|---|
+| **`G`** Objective | The objective relevant to the agent's decision | It defines what the agent is acting in relation to, such as profit, survival, wellbeing, stability, growth, or security | It is merely a belief, valuation, action, or decision rule |
+| **`M`** Model of reality | The agent's information, beliefs, assumptions, expectations, and interpretations about reality | It describes what the agent believes to be true, including beliefs about other agents or about its own future state, valuations, or decision tendencies | It is an actual constraint, actual condition, valuation itself, or the decision algorithm |
+| **`F`** Actual feasible set | The actions reality actually permits for the agent at that time | The action is genuinely possible under current resources, institutions, technology, physical conditions, and other relevant constraints | The agent merely believes the action is possible |
+| **`F̂`** Perceived feasible set | The actions the agent perceives as feasible and available to its decision process | The agent believes the action is available for consideration, whether or not reality actually permits it | The action is merely known about but excluded by search, filtering, attention, or selection inside `D` |
+| **`V`** Valuation | The value assigned to actions relative to `G` | It determines how desirable or costly an action is relative to the agent's objective | It is the objective itself, a belief about reality, or the process used to select |
+| **`H`** Time horizon | The future interval or consequences considered relevant to the decision | It determines which future consequences enter the decision problem | It merely determines how strongly an already-considered consequence is valued |
+| **`D`** Decision process | The process through which the agent considers, compares, filters, and selects among actions in `F̂` | It represents optimization, satisficing, heuristics, habits, limited search, stochastic choice, or other selection procedures | It contains actual feasibility, realized consequences, or hidden preferences that properly belong in `V` |
+| **`C`** Selected action | The action produced by the decision process | It is the action the agent actually selects | It is the realized result, or an action rewritten after failure or partial execution |
+| **`R`** Reality function | The mechanism determining realized consequences from selected actions and actual conditions | It maps `C`, actual feasibility, prevailing conditions, shocks, and interacting actions into realized outcomes | It treats `M`, `F̂`, or `V` as objective reality, or acts as an unconstrained residual explanation |
+| **`P`** Prevailing conditions | Actual conditions affecting realized consequences | It represents relevant environmental, institutional, technological, market, or system conditions at the time of realization | It is merely believed by the agent or used to absorb unexplained outcome variation |
+| **`S`** External shocks | Changes external to the modeled system boundary that affect realization | The disturbance originates outside the system being modeled | It is generated endogenously by agents or mechanisms already inside the modeled system |
+| **`O`** Realized outcome | The result produced when selected actions encounter reality and interact with other agents and conditions | It records what actually happens, including success, failure, partial execution, external effects, and system outcomes | It is merely intended, expected, believed, or selected |
+
+### Hard boundary rules
+
+**`G` vs `V`**
+
+`G` is what the agent acts in relation to. `V` is how actions are valued relative to that objective.
+
+**`M` vs `V`**
+
+`M` is what the agent believes. `V` is how the agent values actions given its objective and relevant beliefs.
+
+**`M` vs `F̂`**
+
+`M` contains beliefs and understanding. `F̂` contains the actions perceived as actually available to the decision process.
+
+**`F̂` vs `D`**
+
+`F̂` defines what enters the decision environment. `D` determines what is examined, filtered, compared, and selected.
+
+**`H` vs `V`**
+
+`H` determines which future consequences are relevant. `V` determines how relevant consequences are valued. When they are observationally equivalent, use independent evidence or experimental design rather than infer both from the same observed choice.
+
+**`D` vs `R`**
+
+`D` selects. `R` realizes.
+
+$$
+(G,M,\hat{F},V,H,D) \rightarrow C
+$$
+
+then
+
+$$
+(C,F,P,S) \rightarrow O
+$$
+
+For multiple agents:
+
+$$
+O_t = R(C_{1,t},\ldots,C_{n,t},P_t,S_t)
+$$
+
+**`C` vs `O`**
+
+Never rewrite `C` because execution fails. Failure, partial execution, or changed consequences belong in `O`.
+
+**`F` is objective, not necessarily exogenous.**
+
+`F` for agent `i` at time `t` is what is actually feasible. It may change endogenously because of institutions, resources, technology, or other agents' actions.
+
+> When external search, attention, or information acquisition is itself an economically chosen activity, represent that activity as an action in `F̂`, place its costs and consequences in `R`/`O`, and reflect acquired information in subsequent `M`. Internal consideration or search within a decision procedure remains part of `D`.
+
+### Common specification objects that are not TER primitives
+
+| Object | How to use it |
+|---|---|
+| **Model state / stocks** | Wealth, inventory, capital, location, technology, balance sheets, physical stocks, and similar objects may be declared as model-specific state. They may constrain `F`, affect `P`, be represented imperfectly in `M`, and evolve through model-specific laws of motion. |
+| **Feedback / update rules** | Dynamic specifications should declare the mechanisms by which `O_t` changes `G, M, F, F̂, V, H, D` at `t+1`. These are specification-specific update mechanisms, not a universal `U` primitive and not part of within-period `D`. |
+
+> **Every economically relevant fact should have one primary TER location. If the same fact appears in multiple components, the specification must explain why that duplication is necessary rather than silently double counting it.**
+
 ## Specification Rules
 
 Practices that keep a TER specification testable instead of merely descriptive.
@@ -46,6 +124,7 @@ Practices that keep a TER specification testable instead of merely descriptive.
 - **Specify `R` substantively, and never use `R` or `P` as a residual.** Both must be defined enough to generate testable implications, not absorb whatever's left unexplained.
 - **Define the agent/system boundary explicitly.** A coordinated group may be one agent or many depending on the question — but don't double-count a collective action as also an independent constituent action, and don't assume an institution's objective is automatically each member's `G`.
 - **Use independent evidence.** Constrain `G`, `M`, `F`, `F̂`, `V`, `H`, `D` from observed constraints, elicited beliefs, experiments, or structural estimation — not by reverse-engineering them from the result you want.
+- **Compare against alternatives.** A specification's implications should be checked against competing specifications, established non-TER models, and null explanations — not judged solely by whether it can be made to fit one observation.
 - **Distinguish framework failure from specification failure.** Most failed predictions challenge one specification, not TER itself — a framework-level challenge means a determinant can't be represented without distorting TER's definitions, two components collapse into one, or an axiom contradicts itself.
 - **Replication tests must preserve variable meaning.** Don't redefine what a variable means just to reproduce a target result.
 - **Distinguish decision error from execution error.** If `D` selects the wrong action, that's a decision-formation problem; if the selected action differs from what was actually executed, that's realization — keep the two apart.

@@ -2,6 +2,16 @@
 
 This document addresses recurring conceptual and methodological questions about TER — the kind that come up repeatedly when researchers first specify or challenge a model. It is explanatory only. Where anything here ever conflicts with the canonical specification, [`theory/academic.md`](../theory/academic.md) wins.
 
+## Is TER a theory or a framework?
+
+Both.
+
+The theory is the set of definitions, axioms, and models that describe how agents, decisions, reality, outcomes, and feedback relate.
+
+The framework is how those ideas are applied in practice through TER’s methodology, software, and test suite.
+
+TER is still open to testing, criticism, and revision. Calling it a theory does not mean it is settled, and calling it a framework does not reduce it to software or documentation.
+
 ## Can TER explain anything after the fact?
 
 No — representational breadth is not the same as explanatory success. TER's ability to represent an observed outcome does not, by itself, validate a particular explanation of that outcome.
@@ -25,6 +35,12 @@ At the level of an individual specification: yes. A specification should generat
 At the framework level, TER explicitly invites challenges, including: an internal contradiction within the framework; an economically meaningful phenomenon that cannot be represented without violating TER's definitions; a foundational claim that conflicts with empirical evidence; a TER variable or mechanism that is unnecessary or incorrectly specified; or a failure to reproduce an established economic mechanism without changing that mechanism.
 
 This does not mean every possible specification someone writes is automatically falsifiable — a poorly built specification can still be unfalsifiable in practice, which is exactly what the guidance above is meant to prevent. See [§7.10](../theory/academic.md#710-ter-is-an-open-and-testable-framework).
+
+## Is TER predictive?
+
+Only conditionally, and only at the level of a particular specification. A specification that fixes `G`, `M`, `F̂`, `V`, `H`, and `D` from independent evidence can generate a conditional prediction — given this decision environment, this action or outcome should follow — that can then be checked against evidence.
+
+TER itself is not an omniscient prediction system: it does not assume an observer can know every agent's objectives, beliefs, constraints, interactions, or the shocks that will occur. The presence of imbalance, feedback, or amplification does not by itself predict when or how a system state will change. See [§7.9](../theory/academic.md#79-ter-is-a-framework-for-analysis-not-an-omniscient-prediction-system).
 
 ## Does TER make irrational behavior secretly rational?
 
@@ -53,6 +69,16 @@ The canonical theory explicitly states that TER does not require deterministic c
 No. TER explicitly builds on established economics and does not claim concepts such as bounded rationality, asymmetric information, strategic interaction, institutions, externalities, equilibrium, or behavioral economics as novel.
 
 Its contribution is the common architecture used to organize and connect them: many of these established mechanisms may be represented as configurations or processes within a common agent-centered architecture, without changing what they mean. See [§7.7](../theory/academic.md#77-established-economic-theories-may-be-represented-within-a-common-framework) and [`foundations-and-references.md`](foundations-and-references.md).
+
+## What is actually novel?
+
+TER does not claim to have invented the established economic mechanisms it uses, such as scarcity, bounded rationality, asymmetric information, strategic interaction, institutions, or externalities.
+
+Its contribution is the way those mechanisms are organized and separated within a common agent centered architecture. That includes distinctions TER treats as structurally important, such as actual versus perceived feasibility, decision versus realization, and the separation of objectives, beliefs, valuation, time horizon, decision process, and realized outcomes.
+
+Some of these components have clear prior literature. What remains to be established is whether TER’s particular configuration of them, together with its open, versioned methodology, executable framework, and replication tests, is itself distinctive and useful.
+
+That is the claim TER puts forward for testing. See the [Central Research Claim](../theory/academic.md#central-research-claim) and [§7.10](../theory/academic.md#710-ter-is-an-open-and-testable-framework).
 
 ## Was AI used to develop TER?
 
