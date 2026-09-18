@@ -4,10 +4,10 @@ import Button from "../ui/Button.astro";
 import FHat from "../ui/FHat.astro";
 ---
 
-<section class="section architecture">
+<section class="section-sm architecture">
   <div class="shell">
     <SectionIntro
-      eyebrow="The common architecture"
+      eyebrow=""
       title="A common architecture for economic behavior."
       description="TER proposes that economically relevant agent decisions can be represented through a common agent centered architecture without requiring agents to use the same decision process."
     />
@@ -131,22 +131,6 @@ import FHat from "../ui/FHat.astro";
           <p>a — Potential action</p>
         </div>
       </section>
-    </div>
-
-    <div class="closing" data-reveal>
-      <span class="closing-marker" aria-hidden="true"></span>
-
-      <div>
-        <p class="closing-lead">
-          The common structure does not imply common behavior.
-        </p>
-
-        <p class="closing-note">
-          A common architecture makes heterogeneous economic behavior comparable without forcing agents into one model of rationality.
-
-Agents may pursue different objectives, hold different beliefs, face different constraints, and use different decision processes while still being represented within the same TER framework.
-        </p>
-      </div>
     </div>
 
     <div class="theory-cta-row">
@@ -392,43 +376,6 @@ Agents may pursue different objectives, hold different beliefs, face different c
 
   .notation p + p {
     margin-top: 0.4rem;
-  }
-
-  /* Closing */
-
-  .closing {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 1.25rem;
-    margin-top: clamp(4rem, 8vw, 7rem);
-  }
-
-  .closing-marker {
-    width: 0.65rem;
-    height: 0.65rem;
-    margin-top: 0.55rem;
-    border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 0 5px
-      color-mix(in srgb, var(--accent) 15%, transparent);
-  }
-
-  .closing-lead {
-    max-width: 60rem;
-    margin: 0;
-    color: #f5f5f5;
-    font-size: clamp(1.6rem, 3vw, 2.4rem);
-    font-weight: 560;
-    line-height: 1.2;
-    letter-spacing: -0.035em;
-  }
-
-  .closing-note {
-    max-width: 55rem;
-    margin: 1rem 0 0;
-    color: #a7ada0;
-    font-size: 1rem;
-    line-height: 1.6;
   }
 
   /* Theory CTA */

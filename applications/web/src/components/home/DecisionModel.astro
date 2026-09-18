@@ -3,12 +3,12 @@ import SectionIntro from "../ui/SectionIntro.astro";
 import FHat from "../ui/FHat.astro";
 ---
 
-<section class="section process">
+<section class="section-sm process">
   <div class="shell">
     <SectionIntro
       eyebrow="How TER represents a decision"
       title="Agents decide from the world they perceive."
-      description="TER distinguishes an agent’s model of reality and perceived feasible actions from the constraints reality actually imposes. Agents do not need to optimize or behave perfectly rationally. That distinction helps explain why agents can make decisions that make sense from their perspective and still produce unexpected, constrained, or failed outcomes."
+      description="TER distinguishes what an agent knows and believes from reality itself, and the actions it perceives as feasible from those actually available. A decision can make sense from the agent's perspective and still produce an unexpected or failed outcome."
     />
     <div class="process-layout">
       <div class="ter-band row-1" data-reveal aria-hidden="true" style="--row-accent: var(--accent)">
@@ -66,9 +66,7 @@ import FHat from "../ui/FHat.astro";
           <div>
             <h3>Agents interpret reality</h3>
             <p>
-              Information, beliefs, assumptions, expectations, and perceived
-              possibilities shape how an agent understands the decision it
-              faces.
+              Information and beliefs shape how an agent understands its options.
             </p>
           </div>
         </li>
@@ -78,9 +76,7 @@ import FHat from "../ui/FHat.astro";
           <div>
             <h3>Agents select an action</h3>
             <p>
-              The selected action results from the agent’s decision process
-              using its objective, model of reality, perceived feasible actions,
-              valuations, and time horizon.
+              The decision process selects from the actions the agent perceives as available.
             </p>
           </div>
         </li>
@@ -90,7 +86,7 @@ import FHat from "../ui/FHat.astro";
           <div>
             <h3>Actions encounter reality</h3>
             <p>
-            Reality determines whether the selected action is actually feasible and what realized outcome follows under prevailing conditions. That outcome can then alter the conditions shaping future decisions.
+            Reality determines what is actually feasible and what outcome follows.
             </p>
           </div>
         </li>
@@ -109,7 +105,7 @@ import FHat from "../ui/FHat.astro";
     align-items: stretch;
     column-gap: clamp(3rem, 8vw, 8rem);
     row-gap: 0;
-    margin-top: clamp(4rem, 8vw, 7rem);
+    margin-top: clamp(2.25rem, 4.5vw, 3.5rem);
   }
 
   .row-1 { grid-row: 1; }
@@ -127,7 +123,7 @@ import FHat from "../ui/FHat.astro";
     display: grid;
     grid-template-columns: 3rem 1fr;
     gap: 1.5rem;
-    padding: 1.8rem 0;
+    padding: 1.15rem 0;
     border-top: 1px solid var(--line);
   }
   li:last-child {
@@ -140,7 +136,7 @@ import FHat from "../ui/FHat.astro";
   }
   li p {
     max-width: 36rem;
-    margin: 0.8rem 0 1rem;
+    margin: 0.5rem 0 0;
     color: var(--muted);
   }
 
@@ -149,9 +145,9 @@ import FHat from "../ui/FHat.astro";
     grid-column: 1;
     flex-direction: column;
     justify-content: center;
-    gap: 1.35rem;
+    gap: 1rem;
     height: 100%;
-    padding: 1.75rem 0 1.75rem 1.25rem;
+    padding: 1.1rem 0 1.1rem 1.25rem;
     border-left: 1px solid var(--line);
   }
 
@@ -195,8 +191,8 @@ import FHat from "../ui/FHat.astro";
     display: flex;
     flex-direction: column;
     justify-content: center;
-    min-height: 5.75rem;
-    padding: 1.1rem 1rem;
+    min-height: 4.5rem;
+    padding: 0.75rem 1rem;
     border: 1px solid var(--line);
     border-top: 2px solid var(--row-accent, var(--line));
     border-radius: var(--radius-sm);
@@ -210,7 +206,7 @@ import FHat from "../ui/FHat.astro";
 
   .ter-node.wide {
     flex: 1 1 auto;
-    min-height: 6.25rem;
+    min-height: 5rem;
   }
 
   .ter-node strong {
@@ -250,7 +246,7 @@ import FHat from "../ui/FHat.astro";
       grid-column: 1;
     }
     .ter-band {
-      padding: 1.25rem 0 1.25rem 1.25rem;
+      padding: 0.9rem 0 0.9rem 1.25rem;
     }
   }
 </style>

@@ -1,9 +1,9 @@
 ---
-interface Props { eyebrow: string; title: string; description?: string; }
+interface Props { eyebrow?: string; title: string; description?: string; }
 const { eyebrow, title, description } = Astro.props;
 ---
 <div class="section-intro" data-reveal>
-  <p class="eyebrow">{eyebrow}</p>
+  {eyebrow && <p class="eyebrow">{eyebrow}</p>}
   <h2 class="doc-heading" set:html={title} />
   {description && <p class="lede">{description}</p>}
 </div>

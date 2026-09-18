@@ -64,13 +64,13 @@ const year = new Date().getFullYear();
 <style>
   .footer-backdrop { background: var(--bg); }
   .footer-backdrop-accent { background: var(--accent); }
-  .footer { overflow: hidden; padding: clamp(5rem,10vw,9rem) 0 1.5rem; border-radius: 2.5rem 2.5rem 0 0; background: #0e100c; color: #f5f5f5; }
-  .footer-cta { position: relative; padding-bottom: clamp(5rem,10vw,9rem); }
+  .footer { overflow: hidden; padding: clamp(4rem,8vw,7rem) 0 1.5rem; border-radius: 2.5rem 2.5rem 0 0; background: #0e100c; color: #f5f5f5; }
+  .footer-cta { position: relative; padding-bottom: clamp(4rem,8vw,7rem); }
   .footer .eyebrow { color: #a7ada0; }
-  .footer h2 { max-width: 1000px; }
-  .circle-link { position: absolute; right: 0; bottom: clamp(4rem,8vw,7rem); width: clamp(3.25rem, 6.5vw, 5.5rem); aspect-ratio: 1; display: grid; place-items: center; border-radius: 50%; background: var(--accent); color: var(--accent-ink); transition: transform .4s var(--ease); }
+  .footer h2 { max-width: 1000px; font-size: clamp(2rem, 4vw, 3.75rem); }
+  .circle-link { position: absolute; right: 0; bottom: clamp(3.25rem,6.5vw,5.5rem); width: clamp(2.75rem, 5.5vw, 4.5rem); aspect-ratio: 1; display: grid; place-items: center; border-radius: 50%; background: var(--accent); color: var(--accent-ink); transition: transform .4s var(--ease); }
   .circle-link:hover { transform: rotate(-8deg) scale(1.05); }
-  .circle-link svg { width: 2rem; }
+  .circle-link svg { width: 1.6rem; }
   .footer-grid { display: grid; grid-template-columns: 2fr repeat(4,1fr); gap: 3rem; padding: 3rem 0; border-top: 1px solid #30342c; }
   .brand-col p { max-width: 22rem; margin: 1.4rem 0 1rem; color: #a7ada0; }
   .footer-grid h3 { margin: 0 0 1.1rem; color: #777d71; font-size: .7rem; font-family: inherit; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
@@ -80,8 +80,8 @@ const year = new Date().getFullYear();
   .footer-bottom { display: flex; justify-content: space-between; gap: 1rem; padding-top: 1.5rem; border-top: 1px solid #30342c; color: #777d71; font-size: .75rem; }
   @media (max-width: 780px) {
     .footer { border-radius: 1.5rem 1.5rem 0 0; }
-    .footer-cta { padding-bottom: 8rem; }
-    .circle-link { right: auto; bottom: 2.5rem; left: 0; width: 5.5rem; }
+    .footer-cta { padding-bottom: 6.5rem; }
+    .circle-link { right: auto; bottom: 2.25rem; left: 0; width: 4.5rem; }
     .footer-grid { grid-template-columns: 1fr 1fr; }
     .brand-col { grid-column: 1 / -1; }
     .footer-bottom { flex-direction: column; }

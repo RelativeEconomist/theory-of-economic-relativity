@@ -1,0 +1,57 @@
+---
+import SectionIntro from "../ui/SectionIntro.astro";
+---
+<section class="intro-why section-sm">
+  <div class="shell">
+    <SectionIntro
+      eyebrow="Why TER?"
+      title="One framework for studying many economic behaviors."
+      description="People, businesses, and organizations make decisions based on what they know, believe, value, and think is possible. Resources and reality constrain what is actually possible."
+    />
+
+    <p class="lede" data-reveal>
+      TER provides a common way to study how agent decisions are made, how they interact with other agents and reality, and what outcomes follow.
+    </p>
+
+    <div class="emphasis" data-reveal>
+      <span class="emphasis-marker" aria-hidden="true"></span>
+      <p class="emphasis-line">What seems possible to an agent and what is actually possible can be different.</p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .intro-why {
+    background: var(--surface);
+  }
+
+  .intro-why :global(.section-intro) {
+    max-width: 56rem;
+  }
+
+  .emphasis {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: start;
+    gap: 1rem;
+    max-width: 55rem;
+    margin-top: clamp(1.75rem, 3.5vw, 2.5rem);
+  }
+
+  .emphasis-marker {
+    width: 0.6rem;
+    height: 0.6rem;
+    margin-top: 0.5rem;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 20%, transparent);
+  }
+
+  .emphasis-line {
+    margin: 0;
+    font-size: clamp(1.1rem, 1.8vw, 1.35rem);
+    font-weight: 620;
+    line-height: 1.35;
+    letter-spacing: -0.02em;
+  }
+</style>
