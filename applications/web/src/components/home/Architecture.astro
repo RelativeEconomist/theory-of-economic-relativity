@@ -13,36 +13,48 @@ import FHat from "../ui/FHat.astro";
     />
 
     <div class="equation-panel" data-reveal>
-      <span class="equation-label">Agent decision model</span>
+      <div class="model-row">
+        <span class="equation-label">Agent decision model</span>
 
-      <div class="equation" aria-label="TER agent decision model">
-        <span>C<sub>i,t</sub></span>
-        <span class="operator">=</span>
-        <span>
-          D<sub>i,t</sub> (
-          <FHat /><sub>i,t</sub><span class="eq-comma">, </span>
-          G<sub>i,t</sub><span class="eq-comma">, </span>
-          M<sub>i,t</sub><span class="eq-comma">, </span>
-          V<sub>i,t</sub><span class="eq-comma">, </span>
-          H<sub>i,t</sub>
-          )
-        </span>
+        <div class="equation" aria-label="TER agent decision model">
+          <span>C<sub>i,t</sub></span>
+          <span class="operator">=</span>
+          <span>
+            D<sub>i,t</sub> (
+            <FHat /><sub>i,t</sub><span class="eq-comma">, </span>
+            G<sub>i,t</sub><span class="eq-comma">, </span>
+            M<sub>i,t</sub><span class="eq-comma">, </span>
+            V<sub>i,t</sub><span class="eq-comma">, </span>
+            H<sub>i,t</sub>
+            )
+          </span>
+        </div>
+
+        <p class="equation-note">
+          An agent selects an action from what it perceives as feasible using its
+          objective, model of reality, valuations, time horizon, and decision process.
+        </p>
       </div>
 
-      <p class="equation-note">
-        An agent selects an action from what it perceives as feasible using its
-        objective, model of reality, valuations, time horizon, and decision process.
-      </p>
+      <div class="model-row">
+        <span class="equation-label">Outcome model</span>
 
-      <p class="architecture-line">
-        (G, M, <FHat />, V, H, D)<sub>i,t</sub>
-        <span class="arrow">&rarr;</span>
-        C<sub>i,t</sub>
-        <span class="arrow">&rarr;</span>
-        (C, F, P, S)<sub>i,t</sub>
-        <span class="arrow">&rarr;</span>
-        O<sub>i,t</sub>
-      </p>
+        <div class="equation" aria-label="TER outcome model">
+          <span>O<sub>i,t</sub></span>
+          <span class="operator">=</span>
+          <span>
+            R (
+            C<sub>i,t</sub><span class="eq-comma">, </span>
+            F<sub>t</sub>
+            )
+          </span>
+        </div>
+
+        <p class="equation-note">
+          The agent selects an action, which then encounters the objective feasible
+          state of reality at time t and produces the realized outcome.
+        </p>
+      </div>
     </div>
 
     <div class="architecture-grid">
@@ -55,7 +67,7 @@ import FHat from "../ui/FHat.astro";
         <dl>
           <div class="variable-row">
             <dt>G</dt>
-            <dd>Objective pursued by the agent</dd>
+            <dd>Objective relevant to the agent's decision</dd>
           </div>
 
           <div class="variable-row">
@@ -65,12 +77,12 @@ import FHat from "../ui/FHat.astro";
 
           <div class="variable-row">
             <dt>F</dt>
-            <dd>Actual feasible set available to the agent</dd>
+            <dd>Objective feasible state of reality, including all conditions and constraints that determine what can occur</dd>
           </div>
 
           <div class="variable-row">
             <dt><FHat /></dt>
-            <dd>Feasible set the agent perceives as available</dd>
+            <dd>Possibilities the agent perceives as available</dd>
           </div>
 
           <div class="variable-row">
@@ -128,7 +140,6 @@ import FHat from "../ui/FHat.astro";
           <span class="notation-label">Notation</span>
           <p>i — Agent</p>
           <p>t — Time period</p>
-          <p>a — Potential action</p>
         </div>
       </section>
     </div>
@@ -153,7 +164,7 @@ import FHat from "../ui/FHat.astro";
   /* Equation */
 
   .equation-panel {
-    margin-top: clamp(3.5rem, 7vw, 6rem);
+    margin-top: clamp(3rem, 6vw, 5rem);
     padding: clamp(1rem, 2vw, 1.5rem);
     border: 1px solid #30342c;
     border-radius: var(--radius-lg);
@@ -162,12 +173,18 @@ import FHat from "../ui/FHat.astro";
 
   .equation-label {
     display: block;
-    margin-bottom: clamp(2rem, 4vw, 3rem);
+    margin-bottom: 0.6rem;
     color: #8d9387;
     font-size: 0.72rem;
     font-weight: 750;
     letter-spacing: 0.1em;
     text-transform: uppercase;
+  }
+
+  .model-row + .model-row {
+    margin-top: clamp(1rem, 2vw, 1.25rem);
+    padding-top: clamp(1rem, 2vw, 1.25rem);
+    border-top: 1px solid #252920;
   }
 
   .equation {
@@ -177,7 +194,7 @@ import FHat from "../ui/FHat.astro";
     justify-content: center;
     gap: 0.15em 0.35em;
     color: #f5f5f5;
-    font-size: clamp(1.75rem, 3.6vw, 3.4rem);
+    font-size: clamp(1.6rem, 3.3vw, 3.1rem);
     font-weight: 620;
     line-height: 1.10;
     letter-spacing: -0.045em;
@@ -202,34 +219,11 @@ import FHat from "../ui/FHat.astro";
 
   .equation-note {
     max-width: 52rem;
-    margin: clamp(1.5rem, 3vw, 2.5rem) auto 0;
-    padding-top: clamp(1.5rem, 3vw, 2rem);
-    border-top: 1px solid #30342c;
+    margin: 0.75rem auto 0;
     color: #a7ada0;
     font-size: 1.05rem;
     line-height: 1.6;
     text-align: center;
-  }
-
-  .architecture-line {
-    max-width: 52rem;
-    margin: 0.9rem auto 0;
-    color: #777d71;
-    font-size: 0.92rem;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-    text-align: center;
-  }
-
-  .architecture-line sub {
-    position: relative;
-    bottom: -0.05em;
-    font-size: 0.65em;
-  }
-
-  .architecture-line .arrow {
-    margin: 0 0.35em;
-    color: #596052;
   }
 
   /* Lower architecture explanation */
@@ -238,7 +232,7 @@ import FHat from "../ui/FHat.astro";
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: clamp(3rem, 7vw, 7rem);
-    margin-top: clamp(4rem, 8vw, 7rem);
+    margin-top: clamp(3.5rem, 7vw, 6rem);
   }
 
   .block-head {
@@ -401,11 +395,6 @@ import FHat from "../ui/FHat.astro";
       text-align: left;
     }
 
-    .architecture-line {
-      margin-inline: 0;
-      text-align: left;
-    }
-
     .theory-cta-row {
       text-align: left;
     }
@@ -417,7 +406,7 @@ import FHat from "../ui/FHat.astro";
     }
 
     .equation {
-      font-size: clamp(1.5rem, 7.5vw, 2.25rem);
+      font-size: clamp(1.4rem, 7vw, 2.1rem);
     }
 
     .mechanisms {

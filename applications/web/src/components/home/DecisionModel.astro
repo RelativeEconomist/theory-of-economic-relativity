@@ -1,97 +1,46 @@
 ---
 import SectionIntro from "../ui/SectionIntro.astro";
-import FHat from "../ui/FHat.astro";
 ---
 
 <section class="section-sm process">
   <div class="shell">
     <SectionIntro
-      eyebrow="How TER represents a decision"
-      title="Agents decide from the world they perceive."
-      description="TER distinguishes what an agent knows and believes from reality itself, and the actions it perceives as feasible from those actually available. A decision can make sense from the agent's perspective and still produce an unexpected or failed outcome."
+      eyebrow=""
+      title="Agents choose from perceived possibilities"
+      description="Agents do not act from reality directly. They act through their goals, model of reality, perceived possibilities, valuations, time horizon, and decision process. The selected action then encounters reality, where actual possibilities determine the realized outcome."
     />
-    <div class="process-layout">
-      <div class="ter-band row-1" data-reveal aria-hidden="true" style="--row-accent: var(--accent)">
-        <div class="ter-band-head">
-          <span class="ter-index">01</span>
-          <span class="ter-band-label">Agent perception</span>
-        </div>
-        <div class="ter-nodes">
-          <div class="ter-node">
-            <strong>M</strong>
-            <span>Model of reality</span>
-          </div>
-          <span class="ter-join" aria-hidden="true">+</span>
-          <div class="ter-node">
-            <strong><FHat /></strong>
-            <span>Perceived feasible actions</span>
-          </div>
-        </div>
+
+    <div class="progression" role="list" aria-label="Decision environment, action selected, reality, outcome">
+      <div class="step" role="listitem" data-reveal style="--row-accent: var(--accent)">
+        <h3>Decision environment</h3>
+        <p>Goal · Model of reality · Perceived possibilities · Valuation · Time horizon · Decision process</p>
       </div>
 
-      <div class="ter-band row-2" data-reveal aria-hidden="true" style="--row-accent: var(--violet)">
-        <div class="ter-band-head">
-          <span class="ter-index">02</span>
-          <span class="ter-band-label">Selected action</span>
-        </div>
-        <div class="ter-nodes single">
-          <div class="ter-node wide">
-            <strong>C</strong>
-            <span>Selected action</span>
-          </div>
-        </div>
+      <div class="connector" aria-hidden="true"></div>
+
+      <div class="step" role="listitem" data-reveal style="--row-accent: var(--violet)">
+        <h3>Action selected</h3>
+        <p>From that environment, the agent selects an action from what it perceives as possible.</p>
       </div>
 
-      <div class="ter-band row-3" data-reveal aria-hidden="true" style="--row-accent: var(--orange)">
-        <div class="ter-band-head">
-          <span class="ter-index">03</span>
-          <span class="ter-band-label">Reality and outcome</span>
-        </div>
-        <div class="ter-nodes">
-          <div class="ter-node">
-            <strong>F</strong>
-            <span>Actual feasible actions</span>
-          </div>
-          <span class="ter-join arrow" aria-hidden="true">&rarr;</span>
-          <div class="ter-node">
-            <strong>O</strong>
-            <span>Realized outcome</span>
-          </div>
-        </div>
+      <div class="connector" aria-hidden="true"></div>
+
+      <div class="step" role="listitem" data-reveal style="--row-accent: var(--orange)">
+        <h3>Reality</h3>
+        <p>That selected action then encounters the actual possibilities permitted by reality.</p>
       </div>
 
-      <ol>
-        <li class="row-1" data-reveal>
-          <span>01</span>
-          <div>
-            <h3>Agents interpret reality</h3>
-            <p>
-              Information and beliefs shape how an agent understands its options.
-            </p>
-          </div>
-        </li>
+      <div class="connector" aria-hidden="true"></div>
 
-        <li class="row-2" data-reveal>
-          <span>02</span>
-          <div>
-            <h3>Agents select an action</h3>
-            <p>
-              The decision process selects from the actions the agent perceives as available.
-            </p>
-          </div>
-        </li>
-
-        <li class="row-3" data-reveal>
-          <span>03</span>
-          <div>
-            <h3>Actions encounter reality</h3>
-            <p>
-            Reality determines what is actually feasible and what outcome follows.
-            </p>
-          </div>
-        </li>
-      </ol>
+      <div class="step" role="listitem" data-reveal style="--row-accent: var(--orange)">
+        <h3>Outcome</h3>
+        <p>From that interaction, a realized outcome follows.</p>
+      </div>
     </div>
+
+    <p class="bridge" data-reveal>
+      The next section shows this same structure in TER notation.
+    </p>
   </div>
 </section>
 
@@ -99,154 +48,99 @@ import FHat from "../ui/FHat.astro";
   .process {
     overflow: hidden;
   }
-  .process-layout {
-    display: grid;
-    grid-template-columns: 0.8fr 1.2fr;
+
+  .progression {
+    display: flex;
     align-items: stretch;
-    column-gap: clamp(3rem, 8vw, 8rem);
-    row-gap: 0;
     margin-top: clamp(2.25rem, 4.5vw, 3.5rem);
   }
 
-  .row-1 { grid-row: 1; }
-  .row-2 { grid-row: 2; }
-  .row-3 { grid-row: 3; }
-
-  ol {
-    display: contents;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-  li {
-    grid-column: 2;
-    display: grid;
-    grid-template-columns: 3rem 1fr;
-    gap: 1.5rem;
-    padding: 1.15rem 0;
-    border-top: 1px solid var(--line);
-  }
-  li:last-child {
-    border-bottom: 1px solid var(--line);
-  }
-  li > span {
-    color: var(--muted);
-    font-size: 0.68rem;
-    font-weight: 700;
-  }
-  li p {
-    max-width: 36rem;
-    margin: 0.5rem 0 0;
-    color: var(--muted);
-  }
-
-  .ter-band {
+  .step {
     display: flex;
-    grid-column: 1;
+    flex: 1 1 0;
     flex-direction: column;
-    justify-content: center;
-    gap: 1rem;
-    height: 100%;
-    padding: 1.1rem 0 1.1rem 1.25rem;
-    border-left: 1px solid var(--line);
+    justify-content: flex-start;
+    gap: 0.9rem;
+    min-height: 8.5rem;
+    padding: 1.25rem 1.5rem;
+    border: 1px solid var(--line);
+    border-top: 2px solid var(--row-accent, var(--line));
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    text-align: left;
   }
 
-  .ter-band-head {
-    display: flex;
-    align-items: center;
-    gap: 0.55rem;
-  }
-
-  .ter-index {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
+  .step h3 {
+    margin: 0;
     color: var(--muted);
-    font-size: 0.68rem;
+    font-size: 1.05rem;
     font-weight: 700;
-  }
-
-  .ter-index::before {
-    width: 0.4rem;
-    height: 0.4rem;
-    border-radius: 50%;
-    background: var(--row-accent, var(--accent));
-    content: "";
-  }
-
-  .ter-band-label {
-    color: var(--ink);
-    font-size: 0.85rem;
-    font-weight: 700;
+    line-height: 1.3;
     letter-spacing: -0.005em;
   }
 
-  .ter-nodes {
-    display: flex;
-    align-items: stretch;
-    gap: 0.75rem;
-  }
-
-  .ter-node {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-height: 4.5rem;
-    padding: 0.75rem 1rem;
-    border: 1px solid var(--line);
-    border-top: 2px solid var(--row-accent, var(--line));
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-    text-align: center;
-  }
-
-  .ter-node:not(.wide) {
-    flex: 1 1 0;
-  }
-
-  .ter-node.wide {
-    flex: 1 1 auto;
-    min-height: 5rem;
-  }
-
-  .ter-node strong {
-    display: block;
-    margin-bottom: 0.35rem;
-    font-size: 2rem;
-    line-height: 1;
-    letter-spacing: -0.03em;
-  }
-
-  .ter-node.wide strong {
-    font-size: 2.3rem;
-  }
-
-  .ter-node > span {
-  display: block;
-  color: var(--muted);
-  font-size: 0.66rem;
-  line-height: 1.35;
-}
-
-  .ter-join {
-    flex: 0 0 auto;
-    color: var(--muted);
-    font-size: 0.95rem;
+  .detail {
+    margin: 0;
+    color: var(--ink);
+    font-size: 1rem;
     font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: -0.015em;
   }
 
-  @media (max-width: 800px) {
-    .process-layout {
-      grid-template-columns: 1fr;
+  .connector {
+    position: relative;
+    flex: 0 0 2rem;
+    align-self: center;
+    height: 1px;
+    background: var(--line);
+  }
+
+  .connector::after {
+    position: absolute;
+    top: 50%;
+    right: -1px;
+    width: 0;
+    height: 0;
+    border-top: 0.3rem solid transparent;
+    border-bottom: 0.3rem solid transparent;
+    border-left: 0.4rem solid var(--line);
+    content: "";
+    transform: translateY(-50%);
+  }
+
+  .bridge {
+    max-width: 44rem;
+    margin: clamp(1.5rem, 3vw, 2rem) 0 0;
+    color: var(--muted);
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 900px) {
+    .progression {
+      flex-direction: column;
     }
-    .row-1, .row-2, .row-3 {
-      grid-row: auto;
+
+    .step {
+      min-height: auto;
     }
-    .ter-band, li {
-      grid-column: 1;
+
+    .connector {
+      width: 1px;
+      height: 1.75rem;
+      flex-basis: 1.75rem;
     }
-    .ter-band {
-      padding: 0.9rem 0 0.9rem 1.25rem;
+
+    .connector::after {
+      top: auto;
+      right: 50%;
+      bottom: -1px;
+      border-top: 0.4rem solid var(--line);
+      border-right: 0.3rem solid transparent;
+      border-bottom: 0;
+      border-left: 0.3rem solid transparent;
+      transform: translateX(50%);
     }
   }
 </style>
