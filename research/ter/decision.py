@@ -19,11 +19,14 @@ class DecisionView:
     AgentState's docstring); they accompany this view for the same
     reason.
 
-    actual_feasible_set (F) is deliberately absent. Actual feasibility is
-    a Model 5.2 concern, checked only after C is selected, on the
-    reality/outcome side (research.ter.outcome.is_actually_feasible).
-    Leaving F out of this view is what makes that boundary mechanical
-    rather than a matter of decision-rule discipline.
+    F_t (the objective feasible state of reality) is deliberately
+    absent: it is part of the objective environment the agent's action
+    encounters, but it is not a direct input to D. Whether F_t permits
+    C, and what outcome follows, are Model 5.2 concerns, handled only
+    after C is selected, on the reality/outcome side
+    (research.ter.outcome.is_actually_feasible, then the reality
+    function). Leaving F_t out of this view is what makes that boundary
+    mechanical rather than a matter of decision-rule discipline.
     """
 
     objective: Any
@@ -58,9 +61,9 @@ def select_action(agent: AgentState):
     The specific behavior of D is supplied by the model or test. TER does
     not require optimization.
 
-    D is called with a DecisionView, not the full AgentState: it has no
-    access to F (actual_feasible_set). Actual feasibility is checked
-    later, on the reality/outcome side, without rewriting C.
+    D is called with a DecisionView, not the full AgentState: F_t is not
+    a direct input to D. Whether F_t permits C is checked later, on the
+    reality/outcome side, without rewriting C.
     """
     if not agent.perceived_feasible_set:
         raise ValueError("Perceived feasible set cannot be empty.")

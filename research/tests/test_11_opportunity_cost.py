@@ -1,10 +1,13 @@
 """
 TER Replication Test 11: Opportunity Cost and Tradeoffs
+Canonical TER: theory/academic.md, Model 5.1
 
 Economic question
-------------------
-Can TER represent opportunity cost when an agent chooses among
-competing feasible alternatives with different values?
+-----------------
+In this configured scenario, when an agent chooses among competing
+actions it perceives as feasible, can the opportunity cost of the
+selected action be read as the value of the best unchosen action in its
+Perceived Feasible Set?
 
 Scenario
 --------
@@ -14,64 +17,48 @@ A student has one free evening and three ways to spend it:
     WORK_SHIFT: V = 7
     RELAX:      V = 4
 
-All three actions are both actually and perceived feasible.
+All three actions are in the student's Perceived Feasible Set.
 
-TER mapping
------------
-Core architecture:
-
-    (G, M, F̂, V, H, D) ──→ C
-
-    G   choose how to spend the evening
-    M   specified but empty
-    F̂   STUDY, WORK_SHIFT, RELAX -- F equals F̂
-    V   ValuationRule.MAPPED -- each action's value read from a
-        declared map
-    H   this evening
-    D   DecisionProcess.MAXIMIZE
-    C   STUDY
-
-Tested TER mechanics
---------------------
-G     Objective              constant: choose how to spend the evening
-M     Model of reality       specified but empty
-F, F̂  Feasible sets          STUDY, WORK_SHIFT, RELAX; F̂ equals F
-V     Valuation               ValuationRule.MAPPED, a static declared map
-H     Time horizon           constant: this evening
-D     Decision process       constant: DecisionProcess.MAXIMIZE
-C     Selected action        STUDY, observed result
+TER instantiation
+-----------------
+Component                     Instantiation in this test                     Status
+G   Objective                 choose how to spend one free evening           fixed
+M   Model of Reality          specified but empty                            fixed
+F̂   Perceived Feasible Set    STUDY, WORK_SHIFT, RELAX                       fixed
+V   Valuation                 ValuationRule.MAPPED, a static declared map    fixed
+H   Time Horizon              this evening                                   fixed
+D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+C   Selected Action           STUDY                                          observed
+F_t, R, outcomes              F_t and outcome realization are outside this test's scope.
 
 Economic mechanism
 ------------------
     STUDY       V=10  -> selected
-    WORK_SHIFT  V=7   -> best unchosen alternative
+    WORK_SHIFT  V=7   -> best unchosen action in F̂
     RELAX       V=4
 
-Opportunity cost in this test = 7, the value of the best unchosen
-alternative (WORK_SHIFT). Opportunity cost has no dedicated rule or 
-helper here, and is read directly off ordinary TER outputs -- the 
-best unchosen action among perceived_feasible_set, and its 
-value from agent.value_of().
+Opportunity cost in this test = 7, the value of the best unchosen action
+in the Perceived Feasible Set (WORK_SHIFT). It is read directly off
+ordinary outputs -- the unchosen actions in perceived_feasible_set and
+their values from agent.value_of() -- with no dedicated rule or helper.
 
 Assumptions
 -----------
 - Values are a static, hand-assigned map (valuation["values"]), not
   derived from any utility function.
-- Opportunity cost is not a TER primitive and has no dedicated rule or
-  helper here. It is read directly off ordinary TER outputs: the best
-  unchosen action among perceived_feasible_set, and its value from
-  agent.value_of().
-- For this test, opportunity cost is measured as the value of the
-  highest-valued unchosen perceived-feasible alternative. Because F
-  equals F̂ here, that is also the highest-valued unchosen actually
-  feasible alternative.
+- Opportunity cost is not a TER primitive. Here it is measured as the
+  value of the highest-valued unchosen action in F̂, that is, over the
+  alternatives the agent perceives as feasible. The test makes no claim
+  about which alternatives are objectively feasible.
 
 Hypothesis
 ----------
-1. The agent selects the highest-valued feasible action (STUDY).
-2. The best unchosen alternative is WORK_SHIFT, not RELAX.
-3. The opportunity cost of studying is WORK_SHIFT_VALUE, the value of
-   the highest-valued feasible alternative not selected.
+In this configuration:
+1. The decision process (MAXIMIZE) selects the highest-valued action in F̂
+   (STUDY).
+2. The best unchosen action in F̂ is WORK_SHIFT, not RELAX.
+3. The opportunity cost of studying, measured as the value of the
+   highest-valued unchosen action in F̂, is WORK_SHIFT_VALUE.
 """
 
 import unittest
@@ -112,11 +99,6 @@ BASE_STUDENT = AgentSpec(
             RELAX: RELAX_VALUE,
         },
     },
-    actual_feasible_set=[
-        WORK_SHIFT,
-        STUDY,
-        RELAX,
-    ],
     perceived_feasible_set=[
         WORK_SHIFT,
         STUDY,

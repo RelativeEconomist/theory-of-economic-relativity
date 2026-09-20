@@ -25,7 +25,6 @@ def make_agent(model_of_reality):
     return AgentState(
         objective="test objective",
         model_of_reality=model_of_reality,
-        actual_feasible_set=["a"],
         perceived_feasible_set=["a"],
         value=lambda action, agent: 0.0,
         horizon="test horizon",

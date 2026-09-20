@@ -36,7 +36,6 @@ BASE_AGENT = AgentSpec(
             "a": 1,
         },
     },
-    actual_feasible_set=["a"],
     perceived_feasible_set=["a"],
     valuation_rule=ValuationRule.MAPPED,
     decision_process=DecisionProcess.MAXIMIZE,

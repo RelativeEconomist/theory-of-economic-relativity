@@ -1,11 +1,12 @@
 """
 TER Replication Test 13: Public Goods and Free Riding
+Canonical TER: theory/academic.md, Models 5.1 and 5.3
 
 Economic question
-------------------
-Can TER represent a public-goods setting where individual incentives
-lead agents to free ride even though mutual contribution would produce
-a better collective outcome?
+-----------------
+In a public-goods payoff structure where mutual contribution would produce
+a higher combined payoff than mutual free riding, does each business's own
+valuation lead it to free ride?
 
 Scenario
 --------
@@ -18,47 +19,45 @@ whatever the other contributes:
     both free ride                -> 1 each
 
 Each business values its own action against its belief about what the
-other will do. This test abstracts the public good's actual provision
-into this payoff structure alone; it does not separately model how the
-improvement gets built or what it costs to provide.
+other will do. This test abstracts the public good's provision into this
+payoff structure alone; it does not separately model how the improvement
+gets built or what it costs to provide.
 
-TER mapping
------------
-Core architecture:
+Single-business scenarios vary the business's belief about the
+counterpart (Model 5.1 only). One two-business scenario adds R, which
+realizes payoffs from both businesses' selected actions (Model 5.3).
 
-    (G, M, F̂, V, H, D) ──→ C ──→ R ──→ O
-
-    G   maximize own payoff from the contribution decision
-    M   expected_other_action -- each business's belief about which
-        action the counterpart will choose
-    F̂   CONTRIBUTE, FREE_RIDE -- F equals F̂
-    V   payoff_matrix -- each business's own perceived payoff
-        structure, used only to value actions
-        (ValuationRule.PAYOFF_MATRIX)
-    H   single contribution decision
-    D   DecisionProcess.MAXIMIZE
-    C   "contribute" or "free_ride", one per business
-    R   RealityFunction.PAYOFF_MATRIX_OUTCOME -- realizes payoffs from
-        both businesses' actual selected actions and the scenario's
-        own actual_payoff_matrix, never from any business's V
-    O   each business's realized payoff
-
-F equals F̂ throughout: both actions are always actually feasible.
-
-Tested TER mechanics
---------------------
-G     Objective              constant: maximize own payoff from the
-                              contribution decision
-M     Model of reality       expected_other_action -- CHANGED across
-                              single-business scenarios
-F, F̂  Feasible sets          CONTRIBUTE, FREE_RIDE; F̂ equals F
-V     Valuation               payoff_matrix (perceived), looked up
+TER instantiation
+-----------------
+Component                     Instantiation in this test                     Status
+G   Objective                 maximize own payoff from the contribution      fixed
+                              decision
+M   Model of Reality          expected_other_action: the business's belief   varied (across the
+                              about which action the counterpart will        single-business
+                              choose                                         scenarios)
+F̂   Perceived Feasible Set    CONTRIBUTE, FREE_RIDE                          fixed
+V   Valuation                 ValuationRule.PAYOFF_MATRIX: the business's    fixed
+                              own perceived payoff_matrix, looked up
                               against M
-H     Time horizon           constant: single contribution decision
-D     Decision process       constant: DecisionProcess.MAXIMIZE
-C     Selected action        observed result
-R     Reality function       RealityFunction.PAYOFF_MATRIX_OUTCOME
-O     Realized outcome       each business's realized payoff, from R
+H   Time Horizon              single contribution decision                   fixed
+D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+C   Selected Action           "contribute" or "free_ride", one per business  observed
+F_t aspects used by R         actual_payoff_matrix: the scenario's own       fixed
+                              payoff structure, a scenario-specified
+                              condition R reads (not a complete
+                              representation of F_t); two-business
+                              scenario only
+R   Reality Function          RealityFunction.PAYOFF_MATRIX_OUTCOME:         fixed
+                              realizes payoffs from both businesses'
+                              selected actions and actual_payoff_matrix,
+                              never from any business's V
+O_t System Outcome            the realized payoffs of both businesses,       observed
+                              from R
+Feedback (Model 5.5)          none                                           --
+
+In the two-business scenario R takes both businesses' selected actions
+together, so Model 5.3 applies. This test defines no individual outcomes
+O_{i,t} and no relationship between them and O_t.
 
 Economic mechanism
 ------------------
@@ -68,13 +67,13 @@ either belief about the counterpart (5 > 3 if the other contributes;
 against either counterpart action for each business under this payoff
 structure. When both businesses face that same structure, mutual free
 riding is the resulting one-shot Nash equilibrium -- neither business
-can do better by unilaterally switching, given the other's action. TER
-is not running a general equilibrium solver here; the two independent
-businesses simply each apply the same dominant strategy, and the
-pairing of their choices is read off afterward. Mutual contribution
-would produce a higher combined payoff (3 + 3 = 6) than mutual free
-riding (1 + 1 = 2), but is never the equilibrium outcome under this
-payoff structure.
+can do better by unilaterally switching, given the other's action. The
+two businesses decide independently, each applying the same valuation
+and decision process; the pairing of their choices is read off
+afterward, and no equilibrium is computed. Mutual contribution would
+produce a higher combined payoff (3 + 3 = 6) than mutual free riding
+(1 + 1 = 2), but is not selected under this payoff structure. The
+combined payoff is a sum computed by this test, not an output of R.
 
 Assumptions
 -----------
@@ -88,20 +87,21 @@ Assumptions
   test does not separately model production or provision of the public good.
 - Each business correctly understands the payoff structure: the payoff
   matrix in V (PAYOFF_MATRIX, used for valuation) matches the actual
-  payoff structure used by R (ACTUAL_PAYOFF_MATRIX, used to realize O)
+  payoff structure used by R (ACTUAL_PAYOFF_MATRIX, used to realize O_t)
   exactly. This is a simplifying assumption of this test, not a TER
   requirement -- declared independently, not aliased.
 - Because FREE_RIDE strictly dominates CONTRIBUTE for each business
   under this payoff structure, no scenario driven by
-  DecisionProcess.MAXIMIZE ever actually selects mutual contribution.
-  The mutual-contribution comparison therefore reads the payoff
-  directly off the actual payoff structure (ACTUAL_PAYOFF_MATRIX) as an
-  explicitly labeled counterfactual -- what O would have been had both
-  businesses contributed -- not a realized outcome from an executed
-  scenario, and not a lookup into the perceived/valuation PAYOFF_MATRIX.
+  DecisionProcess.MAXIMIZE selects mutual contribution. The
+  mutual-contribution comparison therefore reads the payoff directly off
+  the actual payoff structure (ACTUAL_PAYOFF_MATRIX) as an explicitly
+  labeled counterfactual -- the payoff both businesses would receive had
+  both contributed -- not a realized outcome from an executed scenario,
+  and not a lookup into the perceived/valuation PAYOFF_MATRIX.
 
 Hypothesis
 ----------
+In this configured scenario:
 1. Expecting contribution leads the agent to prefer FREE_RIDE.
 2. Expecting free riding also leads the agent to prefer FREE_RIDE.
 3. Expected_other_action changes the valuation of free riding itself, even
@@ -155,7 +155,7 @@ PAYOFF_MATRIX = {
     },
 }
 
-# R: the actual payoff structure used to realize O
+# R: the actual payoff structure used to realize O_t
 # (RealityFunction.PAYOFF_MATRIX_OUTCOME). This test assumes each
 # business understands the game correctly, so this matches
 # PAYOFF_MATRIX exactly -- but it is declared independently and read
@@ -186,10 +186,6 @@ BASE_AGENT = AgentSpec(
     valuation={
         "payoff_matrix": PAYOFF_MATRIX,
     },
-    actual_feasible_set=[
-        CONTRIBUTE,
-        FREE_RIDE,
-    ],
     perceived_feasible_set=[
         CONTRIBUTE,
         FREE_RIDE,

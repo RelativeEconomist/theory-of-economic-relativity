@@ -10,11 +10,16 @@ class AgentState:
     TER mapping:
     G     -> objective
     M     -> model_of_reality
-    F     -> actual_feasible_set
     F_hat -> perceived_feasible_set
     V     -> valuation + value function
     H     -> horizon
     D     -> decision_process
+
+    F_t (the objective feasible state of reality) is not an AgentState
+    field and is not a direct input to D. It is not agent specific: it is
+    part of the objective environment every agent's action encounters,
+    carried reality-side in the scenario `state` and `parameters`, where
+    only the reality function reads it (see research.ter.outcome).
 
     name is not a TER primitive. It is carried over from AgentSpec so
     agents remain identifiable through execution (e.g. ScenarioResult.agent).
@@ -31,7 +36,6 @@ class AgentState:
 
     objective: Any
     model_of_reality: Any
-    actual_feasible_set: list[Any]
     perceived_feasible_set: list[Any]
     value: Callable[[Any, "AgentState"], float]
     horizon: Any

@@ -1,11 +1,12 @@
 """
 TER Replication Test 18: Consumer Surplus
+Canonical TER: theory/academic.md, Model 5.1
 
 Economic question
-------------------
-Can TER represent consumer surplus as the difference between a buyer's
-reservation value and the market price for buyers who choose to
-purchase?
+-----------------
+In this configured market, is the value a buyer's valuation assigns to BUY
+equal to reservation value minus the market price, so that consumer
+surplus can be read from it for buyers who purchase?
 
 Scenario
 --------
@@ -18,32 +19,26 @@ Four buyers face the same fixed quoted market price, 10:
 
     total consumer surplus = 5 + 2 = 7
 
-TER mapping
------------
-Core architecture:
-
-    (G, M, F̂, V, H, D) ──→ C
-
-    G   maximize transaction value
-    M   the quoted market price, assumed correctly observed
-    F̂   BUY, DO_NOT_BUY -- F equals F̂
-    V   ValuationRule.PRICE_TAKING -- reservation value relative to
-        price
-    H   current purchase decision
-    D   DecisionProcess.MAXIMIZE
-    C   BUY or DO_NOT_BUY
-
-Tested TER mechanics
---------------------
-G     Objective              constant: maximize transaction value
-M     Model of reality       the quoted market price, assumed correctly
+TER instantiation
+-----------------
+Component                     Instantiation in this test                     Status
+G   Objective                 maximize transaction value                     fixed
+M   Model of Reality          the quoted market price, assumed correctly     fixed
                               observed
-F, F̂  Feasible sets          BUY, DO_NOT_BUY; F̂ equals F
-V     Valuation               reservation value relative to price --
-                              CHANGED between buyers
-H     Time horizon           constant: current purchase decision
-D     Decision process       constant: DecisionProcess.MAXIMIZE
-C     Selected action        BUY or DO_NOT_BUY, observed result
+F̂   Perceived Feasible Set    BUY, DO_NOT_BUY                                fixed
+V   Valuation                 ValuationRule.PRICE_TAKING: reservation value  varied (by buyer)
+                              relative to price
+H   Time Horizon              current purchase decision                      fixed
+D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+C   Selected Action           BUY or DO_NOT_BUY, one per buyer               observed
+F_t, R, outcomes              F_t and outcome realization are outside this test's scope.
+
+The four buyers are independent agents in one single-period scenario with
+no reality function. Consumer surplus and its total are computed by the
+test from each buyer's own value_of(BUY); that arithmetic is test-specific
+analysis, not a TER primitive, not R, and not a TER system outcome. The
+test introduces no relationship between agent-level and system-level
+outcomes.
 
 Economic mechanism
 ------------------
@@ -62,10 +57,10 @@ Assumptions
   assumptions, not TER primitives.
 - No buyer's reservation value equals MARKET_PRICE, so tie-breaking
   behavior never determines the result.
-- Consumer surplus is not a TER primitive or realized O in this test.
-  Under this specific valuation setup, agent.value_of(BUY) equals
-  reservation value minus price, so for buyers who actually select BUY
-  it can be read directly as consumer surplus.
+- Consumer surplus is not a TER primitive, and no realized outcome or
+  reality function is modeled. Under this specific valuation setup,
+  agent.value_of(BUY) equals reservation value minus price, so for buyers
+  who actually select BUY it can be read directly as consumer surplus.
 - Total consumer surplus is the sum of that derived surplus only across
   buyers who actually purchase.
 - This test computes consumer surplus for one fixed price and one
@@ -74,6 +69,7 @@ Assumptions
 
 Hypothesis
 ----------
+In this configured market:
 1. Buyers with reservation values above the market price choose BUY.
 2. Buyers with reservation values below the market price choose
    DO_NOT_BUY.
@@ -130,10 +126,6 @@ BASE_BUYER = AgentSpec(
         "price_taking_action": BUY,
         "price_role": "cost",
     },
-    actual_feasible_set=[
-        BUY,
-        DO_NOT_BUY,
-    ],
     perceived_feasible_set=[
         BUY,
         DO_NOT_BUY,

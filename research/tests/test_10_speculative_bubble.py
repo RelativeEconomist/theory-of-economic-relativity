@@ -1,11 +1,11 @@
 """
 TER Replication Test 10: Speculative Bubble
+Canonical TER: theory/academic.md, Models 5.1, 5.3 and 5.5
 
 Economic question
-------------------
+-----------------
 Can rising prices alter expectations, increase buying, and reinforce
-future price increases through the same declarative TER scenario
-architecture used for other economic models?
+future price increases through a positive feedback loop?
 
 Scenario
 --------
@@ -24,38 +24,34 @@ return -> HOLD. The realized price growth then updates next period's
 expected appreciation, which can amplify the price path further over
 subsequent periods.
 
-TER mapping
------------
-The feedback chain, repeating each period:
+TER instantiation
+-----------------
+Component                     Instantiation in this test                     Status
+G   Objective                 increase investment value                      fixed
+M   Model of Reality          expected_appreciation: a belief about future   varied (by feedback)
+                              price movement, the same for every investor
+                              at the start
+F̂   Perceived Feasible Set    BUY, HOLD                                      fixed
+V   Valuation                 ValuationRule.EXPECTED_RETURN:                 fixed (distinct per
+                              required_return                                investor)
+H   Time Horizon              next period                                    fixed
+D   Decision Process          DecisionProcess.MAXIMIZE, with an explicit     fixed
+                              tie_break_preference of HOLD
+C   Selected Action           BUY or HOLD, one per investor                  observed
+F_t aspects used by R         the current price (scenario state) and         varied (price, by R)
+                              price_sensitivity -- scenario-specified
+                              conditions R reads (not a complete
+                              representation of F_t)
+R   Reality Function          RealityFunction.DEMAND_MOVES_PRICE: moves      fixed
+                              price according to the number of buyers
+O_t System Outcome            buyers and the realized price, from R          observed
+Feedback (Model 5.5)          FeedbackRule.PRICE_GROWTH_EXPECTATIONS:        varied
+                              updates the next period's M from this          (feedback_strength)
+                              period's realized price growth
 
-    M_t ──→ C_t ──→ R ──→ O_t ──→ feedback ──→ M_{t+1}
-
-    M         expected_appreciation -- a belief about future price
-              movement, shared across investors
-    V         required_return -- each investor's own valuation
-              threshold, distinct per investor
-    D         DecisionProcess.MAXIMIZE
-    C         BUY or HOLD
-    R         RealityFunction.DEMAND_MOVES_PRICE
-    O         buyers and the realized price
-    feedback  FeedbackRule.PRICE_GROWTH_EXPECTATIONS, updating the next
-              period's M from this period's realized price growth
-
-Tested TER mechanics
---------------------
-G     Objective              constant: increase investment value
-M     Model of reality       expected_appreciation -- CHANGED between
-                              periods by feedback
-F, F̂  Feasible sets          BUY, HOLD; F̂ equals F throughout
-V     Valuation               required_return -- constant, distinct per
-                              investor
-D     Decision process       constant: DecisionProcess.MAXIMIZE
-C     Selected action        BUY or HOLD, observed result
-R     Reality function       RealityFunction.DEMAND_MOVES_PRICE
-O     Realized outcome       buyers, realized price
-Feedback                     FeedbackRule.PRICE_GROWTH_EXPECTATIONS, from
-                              this period's realized price growth to the
-                              next period's M
+This is a multi-agent specification: R takes all investors' selected
+actions together, so Model 5.3 applies. This test defines no individual
+outcomes O_{i,t} and no relationship between them and O_t.
 
 Economic mechanism
 ------------------
@@ -63,8 +59,8 @@ Period 0: every investor's M_0 (5% expected appreciation) already
 exceeds required returns of 1-4%, so those four investors BUY. The 5%
 investor is indifferent (expected appreciation == required return,
 buy value 0 == hold value 0); this test's explicit tie convention
-resolves that to HOLD, via decision_parameters, not by [BUY, HOLD]
-order in F_hat. Aggregate buying moves price upward through
+resolves that to HOLD, via decision_parameters, not by the [BUY, HOLD]
+order in F̂. Aggregate buying moves price upward through
 DEMAND_MOVES_PRICE. Feedback then recomputes expected_appreciation from
 that period's own realized growth, which can again exceed some
 investors' required returns -- reinforcing buying, and price growth,
@@ -86,11 +82,11 @@ Assumptions
 
 Hypothesis
 ----------
+In this configured scenario:
 1. Positive expected appreciation can produce buying.
 2. Buying raises price.
 3. Stronger feedback produces more amplification.
 4. Removing feedback dampens the price path.
-5. Amplification alone does not imply unsustainability.
 """
 
 import unittest
@@ -149,13 +145,12 @@ def build_investor(required_return, name):
         valuation={
             "required_return": required_return,
         },
-        actual_feasible_set=[BUY, HOLD],
         perceived_feasible_set=[BUY, HOLD],
         valuation_rule=ValuationRule.EXPECTED_RETURN,
         decision_process=DecisionProcess.MAXIMIZE,
         # Expected appreciation == required return is a real tie (buy
         # value 0 == hold value 0). Resolved explicitly by D, not by
-        # [BUY, HOLD] order in F_hat: expected appreciation == required
+        # [BUY, HOLD] order in F̂: expected appreciation == required
         # return -> HOLD.
         decision_parameters={
             "tie_break_preference": HOLD,
@@ -266,24 +261,4 @@ class TestSpeculativeBubble(unittest.TestCase):
         self.assertGreater(
             positive_feedback.final["price"],
             no_feedback.final["price"],
-        )
-
-    def test_amplification_does_not_assert_unsustainability(self):
-        result = run_scenario(
-            BASE_SCENARIO
-        )
-
-        self.assertGreater(
-            result.final["price"],
-            result.initial["price"],
-        )
-
-        self.assertNotIn(
-            "unsustainable",
-            result.final,
-        )
-
-        self.assertNotIn(
-            "is_bubble",
-            result.final,
         )

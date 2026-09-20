@@ -1,28 +1,30 @@
 """
-Framework test: agent decision contract.
+Framework test: agent decision contract
+
+Canonical TER: theory/academic.md, Model 5.1
 
 Purpose
 -------
-Not an economic replication test. Verifies two structural guarantees of
-TER Model 5.1's decision step (research/ter/decision.py::select_action),
-independent of any specific economic scenario:
+Verifies two structural guarantees of the Model 5.1 decision step
+(research/ter/decision.py::select_action), independent of any economic
+scenario:
 
 1. The selected action C is always a member of the agent's perceived
-   feasible set F_hat.
+   feasible set F̂.
 2. An empty perceived feasible set cannot produce a selected action.
 
-These were previously demonstrated inside an economic replication test
-(coffee choice) even though they are properties of the decision
-mechanism itself, not economic claims. They live here instead so a
-future change to the coffee example can't accidentally weaken framework
-coverage, and so an economic test doesn't need to also prove framework
-internals.
+These are properties of the decision mechanism itself, not economic
+claims, so they live here rather than in an economic replication test.
 
-TestMaximizeTieBreakContract below covers a third, narrower guarantee:
-DecisionProcess.MAXIMIZE's optional tie_break_preference (D
-configuration, not a TER primitive) only ever resolves ties among
-actions already sharing the highest value, never overrides a unique
-higher-valued action, and must itself be a perceived feasible action.
+TestMaximizeTieBreakContract below covers a narrower implementation
+guarantee: DecisionProcess.MAXIMIZE's optional tie_break_preference (a D
+configuration entry, not a TER primitive) only resolves ties among actions
+already sharing the highest value, never overrides a unique higher-valued
+action, and must itself be in the perceived feasible set.
+
+Out of scope
+------------
+F_t and outcome realization.
 """
 
 import unittest
@@ -50,9 +52,6 @@ BASE_AGENT = AgentSpec(
             COFFEE_A: 1,
         },
     },
-    actual_feasible_set=[
-        COFFEE_A,
-    ],
     perceived_feasible_set=[
         COFFEE_A,
     ],
@@ -129,11 +128,6 @@ TIE_BREAK_BASE_AGENT = AgentSpec(
             ACTION_C: 1,
         },
     },
-    actual_feasible_set=[
-        ACTION_A,
-        ACTION_B,
-        ACTION_C,
-    ],
     perceived_feasible_set=[
         ACTION_A,
         ACTION_B,

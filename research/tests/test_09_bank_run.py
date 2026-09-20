@@ -1,9 +1,10 @@
 """
 TER Replication Test 09: Bank Run and Liquidity Feedback
+Canonical TER: theory/academic.md, Models 5.1, 5.3 and 5.5
 
 Economic question
-------------------
-Can individually reasonable withdrawal decisions reduce actual bank
+-----------------
+Can individually reasonable withdrawal decisions reduce a bank's
 liquidity, and can that realized liquidity loss feed back into other
 depositors' beliefs and trigger further withdrawal requests?
 
@@ -16,100 +17,88 @@ failure risk (failure_probability 0.50); 7 depositors start confident
     high-risk depositors (3): perceive 50% failure risk -> request WITHDRAW
     low-risk depositors  (7): perceive  5% failure risk -> choose STAY
 
-The 3 requested withdrawals (300) are realized against actual liquidity,
-leaving 700. Lower realized liquidity then raises every depositor's
-perceived failure risk for the next period -- including the previously
-confident ones. If that pushes a low-risk depositor's belief past its
-own threshold, it now requests WITHDRAW too, even though nothing about
-its personal risk_signal changed.
+The 3 requested withdrawals (300) are realized against the bank's
+liquidity, leaving 700. Lower realized liquidity then raises every
+depositor's perceived failure risk for the next period -- including the
+previously confident ones. If that pushes a low-risk depositor's belief
+past its own threshold, it now requests WITHDRAW too, even though nothing
+about its personal risk_signal changed.
 
-TER mapping
------------
-Core architecture, with feedback carried into the next period:
+TER instantiation
+-----------------
+Component                     Instantiation in this test                     Status
+G   Objective                 preserve deposit value                         fixed
+M   Model of Reality          failure_probability and risk_signal: each      varied (failure_probability,
+                              depositor's belief about the bank, not a       by feedback)
+                              valuation
+F̂   Perceived Feasible Set    STAY, WITHDRAW                                 fixed
+V   Valuation                 ValuationRule.BANK_DEPOSITOR: deposit_value,   fixed
+                              deposit_benefit, withdrawal_cost
+H   Time Horizon              immediate liquidity decision                   fixed
+D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+C   Selected Action           STAY, or WITHDRAW (a withdrawal request)       observed
+F_t aspects used by R         the bank's liquidity (scenario state) and      varied (liquidity, by R)
+                              withdrawal_amount -- scenario-specified
+                              conditions R reads (not a complete
+                              representation of F_t)
+R   Reality Function          RealityFunction.WITHDRAWALS_REDUCE_LIQUIDITY:  fixed
+                              realizes as much of the requested
+                              withdrawals as liquidity allows
+O_t System Outcome            withdrawal requests, realized withdrawals,     observed
+                              and remaining liquidity, from R
+Feedback (Model 5.5)          FeedbackRule.BANK_LIQUIDITY_CONFIDENCE:        fixed
+                              updates the next period's M from this
+                              period's realized liquidity
 
-    (G, M, F̂, V, H, D) ──→ C ──→ R ──→ O
-                                        │
-                            feedback    │
-                     (BANK_LIQUIDITY_CONFIDENCE)
-                                        │
-                                        ▼
-                              next period's M
+This is a multi-agent specification: R takes all depositors' selected
+actions together, so Model 5.3 applies. This test defines no individual
+outcomes O_{i,t} and no relationship between them and O_t.
 
-    M         failure_probability / risk_signal -- each depositor's
-              belief about the bank, not a valuation
-    V         deposit_value, deposit_benefit, withdrawal_cost -- the
-              depositor's own valuation of staying or withdrawing
-    D         DecisionProcess.MAXIMIZE
-    C         STAY, or WITHDRAW (a withdrawal request -- see below)
-    R         RealityFunction.WITHDRAWALS_REDUCE_LIQUIDITY
-    O         withdrawal requests, realized liquidity withdrawal, and
-              remaining liquidity
-    feedback  FeedbackRule.BANK_LIQUIDITY_CONFIDENCE, updating the next
-              period's M from this period's realized liquidity
-
-WITHDRAW means the depositor submits a withdrawal request -- that
-action is feasible, so it belongs in F and F̂ exactly like STAY. What
-happens to the request is entirely R's job: WITHDRAWALS_REDUCE_LIQUIDITY
-realizes only as much as the bank's actual liquidity allows. Requested
-withdrawals can therefore exceed realized withdrawals without C ever
-being rewritten -- the depositor's selected action stays WITHDRAW; only
-how much of it reality honors changes.
-
-Tested TER mechanics
---------------------
-G     Objective              constant: preserve deposit value
-M     Model of reality       failure_probability, risk_signal -- CHANGED
-                              between periods by feedback
-F, F̂  Feasible sets          STAY, WITHDRAW; F̂ equals F throughout
-V     Valuation               deposit_value, deposit_benefit,
-                              withdrawal_cost -- constant
-D     Decision process       constant: DecisionProcess.MAXIMIZE
-C     Selected action        STAY or WITHDRAW (a request, not a
-                              guarantee of realization)
-R     Reality function       RealityFunction.WITHDRAWALS_REDUCE_LIQUIDITY
-O     Realized outcome       requests, realized withdrawals, remaining
-                              liquidity
-Feedback                     FeedbackRule.BANK_LIQUIDITY_CONFIDENCE,
-                              from this period's realized liquidity to
-                              the next period's M
+WITHDRAW means the depositor submits a withdrawal request. What happens
+to the request is R's job: WITHDRAWALS_REDUCE_LIQUIDITY realizes only as
+much as the bank's liquidity allows. Requested withdrawals can therefore
+exceed realized withdrawals; the depositor's selected action stays
+WITHDRAW, and only how much of it is realized differs.
 
 Economic mechanism
 ------------------
 Period 0: high-risk depositors' already-elevated M_0 makes WITHDRAW
 their best response immediately; low-risk depositors' M_0 makes STAY
-theirs. R realizes the 3 requested withdrawals against actual liquidity
-(1000 -> 700). Feedback then raises every depositor's failure_probability
-from that lower liquidity, including low-risk depositors whose own
-risk_signal never changed. If the resulting belief crosses their own
-threshold, period 1 sees additional WITHDRAW requests -- more withdrawal
-pressure than period 0, produced entirely by the realized-liquidity ->
-belief -> decision loop, not by any change in the depositor's valuation
-or personal risk signal.
+theirs. R realizes the 3 requested withdrawals against the bank's
+liquidity (1000 -> 700). Feedback then raises every depositor's
+failure_probability from that lower liquidity, including low-risk
+depositors whose own risk_signal never changed. If the resulting belief
+crosses their own threshold, period 1 sees additional WITHDRAW requests
+-- more withdrawal pressure than period 0, produced entirely by the
+realized-liquidity -> belief -> decision loop, not by any change in the
+depositor's valuation or personal risk signal.
 
 Assumptions
 -----------
 - The bank itself is not an AgentState; liquidity is scenario state, and
-  withdrawal capacity is capped by RealityFunction.WITHDRAWALS_REDUCE_LIQUIDITY,
-  not by any agent's actual_feasible_set.
+  withdrawal capacity is capped by RealityFunction.WITHDRAWALS_REDUCE_LIQUIDITY
+  reading scenario state["liquidity"], not by any per-agent permission.
 - initial_liquidity is a scenario parameter used to normalize perceived
   risk; it is independent of the "liquidity" state value.
 - Every depositor's initial failure_probability (M_0) is set equal to
   its own risk_signal directly, not left for feedback to fill in:
-  feedback only ever updates the environment for a period that follows
-  a realized outcome, and there is no realized outcome before period
-  0's decision. This is exactly what BANK_LIQUIDITY_CONFIDENCE would
-  compute anyway from a starting liquidity_risk of 0, stated up front
-  instead of relying on that coincidence.
+  feedback only ever updates M for a period that follows a realized
+  outcome, and there is no realized outcome before period 0's decision.
+  This is exactly what BANK_LIQUIDITY_CONFIDENCE would compute anyway
+  from a starting liquidity_risk of 0, stated up front instead of
+  relying on that coincidence.
 
 Hypothesis
 ----------
+In this configured scenario:
 1. High-confidence depositors prefer to remain deposited.
 2. High perceived failure risk produces withdrawal.
-3. Initial withdrawals reduce actual bank liquidity.
+3. Initial withdrawals reduce bank liquidity.
 4. Reduced liquidity raises perceived failure risk.
 5. Feedback can produce additional withdrawals.
 6. High liquidity and confidence can remain stable.
-7. Requested withdrawals may exceed what reality permits.
+7. Requested withdrawals may exceed the liquidity available to realize
+   them.
 """
 
 import unittest
@@ -177,10 +166,6 @@ BASE_DEPOSITOR = AgentSpec(
         "deposit_benefit": DEPOSIT_BENEFIT,
         "withdrawal_cost": WITHDRAWAL_COST,
     },
-    actual_feasible_set=[
-        STAY,
-        WITHDRAW,
-    ],
     perceived_feasible_set=[
         STAY,
         WITHDRAW,

@@ -23,7 +23,6 @@ def build_agent(spec: AgentSpec) -> AgentState:
         name=spec.name,
         objective=spec.objective,
         model_of_reality=deepcopy(spec.model_of_reality),
-        actual_feasible_set=list(spec.actual_feasible_set),
         perceived_feasible_set=list(spec.perceived_feasible_set),
         value=valuation_rule,
         horizon=spec.horizon,
@@ -75,12 +74,12 @@ def run_scenario(scenario: Scenario) -> ScenarioResult:
     Shared TER code handles execution. Each period follows the same
     order:
 
-        decision (C_t) -> reality (O_t) -> feedback -> next decision
-        environment
+        decision (C_t) -> reality (realized outcome) -> feedback -> later
+        conditions
 
     Initial beliefs belong in each agent's model_of_reality at
     construction time (M_0), not in a feedback rule -- feedback only
-    ever updates the decision environment from an outcome that has
+    ever updates later conditions from an outcome that has
     already been realized, so it has nothing to act on before period 0.
     """
 
@@ -113,17 +112,18 @@ def run_scenario(scenario: Scenario) -> ScenarioResult:
 
         # Decision (Model 5.1, Model 5.3):
         # every agent selects an action from the same, already-settled
-        # decision environment -- nothing in this period's realization or
+        # conditions -- nothing in this period's realization or
         # feedback has happened yet, so one agent's later outcome can
         # never leak backward into another agent's decision here.
         if reality_function:
             def outcome_function(agents, actions):
-                # R may read C (actions), F (each agent's
-                # actual_feasible_set), and P/S (state, parameters) --
-                # never M or F_hat. reality_state carries the same
-                # restriction under state["agents"], so a reality
-                # function cannot recover the full AgentState by reading
-                # around its own `agents` argument.
+                # R may read C (actions) and the scenario state and
+                # parameters (which encode conditions relevant to F_t,
+                # including any state["permitted_actions"] permission
+                # data) -- never M or F̂. reality_state carries
+                # the same restriction under state["agents"], so a
+                # reality function cannot recover the full AgentState by
+                # reading around its own `agents` argument.
                 reality_agents = [
                     reality_view(agent)
                     for agent in agents
@@ -131,6 +131,14 @@ def run_scenario(scenario: Scenario) -> ScenarioResult:
 
                 reality_state = dict(state)
                 reality_state["agents"] = reality_agents
+
+                # The permitted_actions permission data is handed to R as a
+                # copy, so R mutating it in place can never alter the
+                # history entry it was read from.
+                if "permitted_actions" in reality_state:
+                    reality_state["permitted_actions"] = deepcopy(
+                        reality_state["permitted_actions"]
+                    )
 
                 return reality_function(
                     state=reality_state,
@@ -171,9 +179,18 @@ def run_scenario(scenario: Scenario) -> ScenarioResult:
         for key, value in outcome.items():
             next_state[key] = value
 
+        # next_state is a shallow copy, so permitted_actions would still
+        # be the same nested object earlier history entries hold. Give
+        # this period its own copy before feedback can touch it, so a
+        # later in-place change never rewrites an earlier period.
+        if "permitted_actions" in next_state:
+            next_state["permitted_actions"] = deepcopy(
+                next_state["permitted_actions"]
+            )
+
         # Feedback (Model 5.5):
         # only now, with a real realized outcome in hand, fold it into the
-        # decision environment the next period will decide from. There is
+        # conditions the next period will start from. There is
         # no realized outcome before the first decision, so feedback never
         # runs ahead of it.
         if feedback_rule:

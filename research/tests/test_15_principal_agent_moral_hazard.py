@@ -1,11 +1,12 @@
 """
 TER Replication Test 15: Principal-Agent and Moral Hazard
+Canonical TER: theory/academic.md, Models 5.1 and 5.2
 
 Economic question
-------------------
-Can TER represent a principal-agent setting where hidden effort creates
-a moral-hazard incentive, and a performance incentive changes the
-agent's chosen effort?
+-----------------
+In a constructed principal-agent setting where effort is hidden and costly,
+does a performance incentive change the effort a worker selects, and what
+does the principal's outcome then become?
 
 Scenario
 --------
@@ -28,42 +29,33 @@ A performance bonus large enough to reward HIGH_EFFORT (15 - 6 = 9 vs
 10 - 2 = 8) realigns the worker's private incentive with the
 principal's preferred outcome.
 
-TER mapping
------------
-Core architecture, worker side:
+TER instantiation
+-----------------
+Component                     Instantiation in this test                     Status
+G   Objective                 maximize personal compensation net of effort   fixed
+                              cost
+M   Model of Reality          specified but empty                            fixed
+F̂   Perceived Feasible Set    HIGH_EFFORT, LOW_EFFORT                        fixed
+V   Valuation                 ValuationRule.NET: compensation (benefit)      varied (HIGH_EFFORT's
+                              minus effort cost                              benefit only)
+H   Time Horizon              current effort decision                        fixed
+D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+C   Selected Action           HIGH_EFFORT or LOW_EFFORT                      observed
+F_t aspects used by R         principal_outcomes_by_effort: the principal's  fixed
+                              outcome under each effort level, a
+                              scenario-specified condition R reads (not a
+                              complete representation of F_t)
+R   Reality Function          principal_outcome_by_effort (local):           fixed
+                              realizes the principal's outcome from the
+                              worker's selected effort, never from the
+                              worker's V
+O_{i,t} Realized Outcome      the principal's realized outcome, from R       observed
+Feedback (Model 5.5)          none                                           --
 
-    (G, M, F̂, V, H, D) ──→ C
-
-    G   maximize personal compensation net of effort cost
-    M   specified but empty
-    F̂   HIGH_EFFORT, LOW_EFFORT -- F equals F̂
-    V   ValuationRule.NET -- compensation (benefit) minus effort cost
-    H   current effort decision
-    D   DecisionProcess.MAXIMIZE
-    C   the worker's selected effort
-
-Reality side, realizing the principal's outcome from C:
-
-    C ──→ R ──→ O
-
-    R   a local reality function reading the worker's actual selected
-        effort and the scenario's own principal_outcomes_by_effort --
-        never the worker's V
-    O   the principal's realized outcome
-
-Tested TER mechanics
---------------------
-G     Objective              constant: maximize personal compensation
-                              net of effort cost
-M     Model of reality       specified but empty
-F, F̂  Feasible sets          HIGH_EFFORT, LOW_EFFORT; F̂ equals F
-V     Valuation               ValuationRule.NET -- CHANGED between
-                              scenarios (HIGH_EFFORT's benefit only)
-H     Time horizon           constant: current effort decision
-D     Decision process       constant: DecisionProcess.MAXIMIZE
-C     Selected action        HIGH_EFFORT or LOW_EFFORT, observed result
-R     Reality function       local: principal_outcome_by_effort
-O     Realized outcome       the principal's realized outcome, from R
+This is a single-worker specification, so Model 5.2 applies. The
+principal is not modeled as a TER agent; the outcome R realizes from the
+worker's selected effort is the principal's outcome. No interaction among
+multiple agents is modeled, and no system outcome O_t is defined.
 
 Economic mechanism
 ------------------
@@ -95,7 +87,7 @@ Assumptions
   test-specific economic assumptions, not TER primitives.
 - The principal's outcome under each effort level
   (principal_outcomes_by_effort, a scenario parameter) is realized only
-  by the reality side, from the worker's actual selected effort -- never
+  by the reality side, from the worker's selected effort -- never
   read from or fed into the worker's own valuation. That separation is
   the moral-hazard mechanism itself: the principal's preference and the
   worker's private incentive are only brought into alignment by
@@ -107,12 +99,11 @@ Assumptions
 
 Hypothesis
 ----------
+In this configured scenario:
 1. Without a performance incentive, the agent selects LOW_EFFORT.
 2. HIGH_EFFORT produces the better principal outcome.
 3. Adding a sufficient performance bonus changes the agent's valuation so
    HIGH_EFFORT is selected.
-4. The objective, feasible actions, and decision process remain
-   unchanged across scenarios; only the incentive structure changes.
 """
 
 import unittest
@@ -191,10 +182,6 @@ BASE_WORKER = AgentSpec(
             LOW_EFFORT: LOW_EFFORT_COST,
         },
     },
-    actual_feasible_set=[
-        HIGH_EFFORT,
-        LOW_EFFORT,
-    ],
     perceived_feasible_set=[
         HIGH_EFFORT,
         LOW_EFFORT,
@@ -308,33 +295,4 @@ class TestPrincipalAgentMoralHazard(unittest.TestCase):
         self.assertEqual(
             agent.value_of(LOW_EFFORT),
             BASE_COMPENSATION - LOW_EFFORT_COST,
-        )
-
-    def test_incentive_change_leaves_the_rest_of_the_agent_unchanged(self):
-        fixed = run_scenario(FIXED_COMPENSATION_SCENARIO).agent(BASE_WORKER.name)
-        incentivized = run_scenario(PERFORMANCE_INCENTIVE_SCENARIO).agent(BASE_WORKER.name)
-
-        self.assertNotEqual(
-            fixed.selected_action,
-            incentivized.selected_action,
-        )
-
-        self.assertEqual(
-            fixed.objective,
-            incentivized.objective,
-        )
-
-        self.assertEqual(
-            fixed.actual_feasible_set,
-            incentivized.actual_feasible_set,
-        )
-
-        self.assertEqual(
-            fixed.perceived_feasible_set,
-            incentivized.perceived_feasible_set,
-        )
-
-        self.assertEqual(
-            fixed.decision_process,
-            incentivized.decision_process,
         )

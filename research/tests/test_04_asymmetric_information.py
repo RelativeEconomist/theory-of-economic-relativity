@@ -1,12 +1,13 @@
 """
 TER Replication Test 04: Asymmetric Information and Adverse Selection
+Canonical TER: theory/academic.md, Models 5.1 and 5.3
 
 Economic question
-------------------
-Can TER represent the adverse-selection mechanism in Akerlof's "market for
-lemons," a classic model of markets where sellers know product quality
-better than buyers, causing high-quality sellers to withdraw when individual
-quality is unobservable and goods are priced using pooled expected quality?
+-----------------
+In a constructed used-car market in the style of Akerlof's "market for
+lemons", where sellers know product quality better than buyers, do
+high-quality sellers withdraw when individual quality is unobservable and
+goods are priced using pooled expected quality?
 
 Scenario
 --------
@@ -32,42 +33,31 @@ Consequence under verified quality (each car priced at its true value):
     high-quality car: price 10 -> sell
     low-quality car:  price 4  -> sell
 
-TER mapping
------------
-Core architecture:
+TER instantiation
+-----------------
+Component                     Instantiation in this test                     Status
+G   Objective                 maximize value from the sale decision          fixed
+M   Model of Reality          known_quality: each seller's own belief        fixed (by seller type)
+                              about its own car; not read by R
+F̂   Perceived Feasible Set    sell, hold                                     fixed
+V   Valuation                 ValuationRule.NET: benefit (price offered)     varied (offered price:
+                              minus cost (reservation value)                 pooled vs. verified)
+H   Time Horizon              current sale decision                          fixed
+D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+C   Selected Action           sell or hold, one per seller                   observed
+F_t aspects used by R         actual_quality_by_seller: the actual quality   fixed
+                              of each seller's car, a scenario-specified
+                              condition R reads (not a complete
+                              representation of F_t)
+R   Reality Function          RealityFunction.QUALITY_MARKET: counts sales   fixed
+                              by actual quality from the sellers' selected
+                              actions
+O_t System Outcome            sold_high, sold_low, total_sold, from R        observed
+Feedback (Model 5.5)          none                                           --
 
-    (G, M, F̂, V, H, D) ──→ C ──→ O
-
-known_quality (M) is each seller's own belief about itself. It is never
-read by the reality side. O comes only from the scenario's own
-actual_quality_by_seller:
-
-    G, M, F̂, V, H
-            │
-            ▼
-       D = MAXIMIZE
-            │
-            ▼
-            C ─────────────────────────┐
-                                       ▼
-    actual_quality_by_seller ──→ QUALITY_MARKET ──→ O
-       (scenario side, not M)
-
-Tested TER mechanics
---------------------
-G     Objective              constant: maximize value from the sale
-                              decision
-M     Model of reality       each seller's own known_quality -- a
-                              belief about itself, not read by any
-                              reality function
-F, F̂  Feasible sets          ["sell", "hold"]; F̂ equals F throughout
-V     Valuation               ValuationRule.NET: benefit (price offered)
-                              minus cost (reservation value)
-H     Time horizon           constant
-D     Decision process       constant: DecisionProcess.MAXIMIZE
-C     Selected action        observed result
-O     Realized outcome       RealityFunction.QUALITY_MARKET, from the
-                              scenario's own actual_quality_by_seller
+This is a multi-agent specification: R takes the sellers' selected actions
+together, so Model 5.3 applies. This test defines no individual outcomes
+O_{i,t} and no relationship between them and O_t.
 
 Economic mechanism
 ------------------
@@ -88,24 +78,29 @@ Assumptions
 - This test assumes sellers know their own quality perfectly: each
   seller's known_quality is set to match its actual quality exactly
   (see ACTUAL_QUALITY_BY_SELLER). TER does not require this.
+- Buyers are not modeled as agents; the price each seller is offered
+  enters its V directly.
 - Both prices (pooled and verified) are fixed functions of scenario
   parameters (and, for the verified price, actual seller quality) --
-  never of a realized outcome -- so this is not TER feedback. Each
-  seller's initial price is set directly in its initial valuation (V).
-- F vs F̂ divergence is intentionally out of scope for this test; every
-  seller's F̂ equals its F.
+  never of a realized outcome -- so this is not feedback in the sense
+  of Model 5.5. Each seller's initial price is set directly in its
+  initial valuation (V).
+- Divergence between F̂ and what reality permits is not modeled in this
+  test.
 
 Hypothesis
 ----------
+In this configured scenario:
 1. Under pooled (asymmetric information) pricing, high quality sellers
    withhold from the market.
 2. Under pooled pricing, low quality sellers still sell.
 3. The result is adverse selection: only low quality goods trade.
 4. Under verified (symmetric information) pricing, both quality types trade.
 5. The same sellers, with the same reservation values, decide differently
-   purely because of the information available to the pricing mechanism.
-6. Gains from trade exist for high quality sellers but go unrealized under
-   asymmetric information.
+   when the offered price changes from the pooled price to the verified
+   price.
+6. Gains from trade exist for high quality sellers (buyer value exceeds
+   reservation value) but go unrealized under pooled pricing.
 """
 
 import unittest
@@ -177,10 +172,6 @@ BASE_SELLER = AgentSpec(
             HOLD: 0,
         },
     },
-    actual_feasible_set=[
-        SELL,
-        HOLD,
-    ],
     perceived_feasible_set=[
         SELL,
         HOLD,
@@ -398,6 +389,8 @@ class TestAsymmetricInformation(unittest.TestCase):
         )
 
     def test_gains_from_trade_exist_but_go_unrealized(self):
+        # Scenario-premise check: buyer value exceeds the high-quality
+        # seller's reservation value, so gains from trade exist.
         self.assertGreater(
             VALUE_IF_HIGH,
             HIGH_RESERVATION_VALUE,
@@ -422,6 +415,8 @@ class TestAsymmetricInformation(unittest.TestCase):
             + (1 - BELIEVED_SHARE_HIGH) * VALUE_IF_LOW
         )
 
+        # Scenario-premise check: the pooled price differs from either
+        # quality's own value.
         self.assertNotEqual(expected_price, VALUE_IF_HIGH)
         self.assertNotEqual(expected_price, VALUE_IF_LOW)
 

@@ -1,12 +1,13 @@
 """
 TER Replication Test 07: Supply and Demand
+Canonical TER: theory/academic.md, Model 5.1
 
 Economic question
-------------------
-Can independent buyer and seller decisions, each evaluated at an
-externally supplied candidate price, aggregate into downward-sloping
-demand, upward-sloping supply, and a market-clearing price where
-aggregate demand equals aggregate supply?
+-----------------
+In this configured market, does a test-specific aggregation of
+independently selected buyer and seller actions, evaluated at externally
+supplied candidate prices, produce downward-sloping demand, upward-sloping
+supply, and a price where quantity demanded equals quantity supplied?
 
 Scenario
 --------
@@ -18,35 +19,34 @@ DO_NOT_SELL (against their own cost):
     buyer reservation values: 9, 8, 7, 6, 5
     seller costs:             1, 2, 3, 4, 5
 
-TER mapping
------------
-Core architecture, evaluated once per candidate price:
+TER instantiation
+-----------------
+Component                     Instantiation in this test                     Status
+G   Objective                 maximize transaction value                     fixed
+M   Model of Reality          the quoted price, set by the market helper     varied (across the
+                              at each candidate price                        price grid)
+F̂   Perceived Feasible Set    BUY, DO_NOT_BUY (buyers); SELL, DO_NOT_SELL    fixed
+                              (sellers)
+V   Valuation                 ValuationRule.PRICE_TAKING: reservation value  fixed
+                              minus price (buyer), price minus cost (seller)
+H   Time Horizon              current transaction                            fixed
+D   Decision Process          DecisionProcess.MAXIMIZE with an explicit      fixed
+                              tie_break_preference (BUY for buyers, SELL
+                              for sellers)
+C   Selected Action           BUY / DO_NOT_BUY or SELL / DO_NOT_SELL, one    observed
+                              per agent per price
+F_t, R, outcomes              F_t and outcome realization are outside this test's scope.
 
-    (G, M, F̂, V, H, D) ──→ C
-
-    M   the quoted price (external to the agent, supplied by the test)
-    V   ValuationRule.PRICE_TAKING -- a buyer's reservation value minus
-        the price, or a seller's price minus their cost
-    D   DecisionProcess.MAXIMIZE, plus an explicit tie_break_preference
-        (BUY for buyers, SELL for sellers) -- ties are resolved by this
-        stated preference, never by incidental F̂ order
-    C   "buy"/"do_not_buy" or "sell"/"do_not_sell", one per agent
-
-F equals F̂ for every agent. Aggregating every agent's C at a given price
-produces quantity demanded, quantity supplied, and excess demand
-(demand - supply); scanning across the price grid identifies the
-candidate price(s) where excess demand is zero.
-
-Tested TER mechanics
---------------------
-G   Objective              constant: maximize transaction value
-M   Model of reality       the quoted price -- CHANGED across the price
-                            grid, external to each agent's own decision
-V   Valuation              reservation value / cost minus or plus price
-D   Decision process       DecisionProcess.MAXIMIZE with an explicit
-                            tie_break_preference
-C   Selected action        observed result, aggregated across agents
-H   Time horizon           constant
+Test-specific market analysis: research.ter.market.evaluate_market builds
+each agent fresh, sets the quoted price in its M, has it select C through
+Model 5.1, and counts BUY and SELL as quantity demanded and quantity
+supplied; find_market_clearing_states scans the price grid for prices
+where the two are equal. This helper is an analytical tool for this test,
+not a TER primitive. It is not R, its returned values (demand, supply,
+excess demand) are not a TER system outcome, and this test introduces no
+relationship between agent-level and system-level outcomes. The quoted
+price is a test-specific market condition supplied to each agent's M, not
+a complete representation of F_t.
 
 Economic mechanism
 ------------------
@@ -57,33 +57,36 @@ a fixed grid of candidate prices and evaluates every agent's decision at
 each one; it does not run an endogenous auction or price-adjustment
 process, and no agent discovers or generates the clearing price itself
 -- the test identifies, after the fact, which externally supplied
-candidate price(s) leave aggregate demand equal to aggregate supply.
+candidate price(s) leave quantity demanded equal to quantity supplied.
 
 Assumptions
 -----------
-- Uses market.py's evaluate_market/find_market_clearing_states, not
-  Scenario/run_scenario; clearing is found by scanning a fixed price grid,
-  not a continuous auction. This is a genuinely different mechanism from
-  the rest of the suite (price discovery by search, not a time-stepped
-  Scenario), not a workaround.
-- Market clearing is identified by evaluating decentralized agent decisions
-  across a fixed grid of candidate prices; this test does not model an
-  endogenous auction or price-adjustment process.
+- The market helper is used instead of Scenario/run_scenario because
+  clearing is found by scanning a fixed price grid, not by a time-stepped
+  scenario. This is a test-specific analysis choice, not a TER mechanism.
+- Market clearing is identified on a fixed grid of candidate prices; the
+  test does not model an endogenous auction or price adjustment, and does
+  not claim real markets clear continuously or instantaneously.
 - When transacting and not transacting have equal value, `maximize_value`
   resolves the tie using each spec's own tie_break_preference
   (decision_parameters) -- BUY for buyers, SELL for sellers -- so
   zero-surplus agents transact. This is decided explicitly by D, not by
   the order of perceived_feasible_set.
+- Statements that supply and demand shift prices in general are economic
+  background. The test shows them only for the specific additional buyer
+  and seller configured here.
 
 Hypothesis
 ----------
+In this configured market:
 1. Quantity demanded falls as price rises.
 2. Quantity supplied rises as price rises.
-3. The baseline market has a clearing price.
-4. Increased demand raises the clearing price.
-5. Increased supply lowers the clearing price.
-6. Aggregate demand, supply, and a market-clearing state can be derived
-   from decentralized TER agent decisions under the specified price grid.
+3. The baseline market has one clearing price on the grid (5).
+4. Adding one buyer raises the clearing price (5 to 6).
+5. Adding one seller lowers the clearing price (5 to 4).
+6. The test-specific aggregation applied to independently selected agent
+   actions produces quantity demanded, quantity supplied, and a
+   market-clearing state over the specified price grid.
 7. Excess demand is positive below the clearing price, zero at the clearing
    price, and negative above it.
 """
@@ -137,10 +140,6 @@ BASE_BUYER = AgentSpec(
         "price_taking_action": BUY,
         "price_role": "cost",
     },
-    actual_feasible_set=[
-        BUY,
-        DO_NOT_BUY,
-    ],
     perceived_feasible_set=[
         BUY,
         DO_NOT_BUY,
@@ -174,10 +173,6 @@ BASE_SELLER = AgentSpec(
         "price_taking_action": SELL,
         "price_role": "benefit",
     },
-    actual_feasible_set=[
-        SELL,
-        DO_NOT_SELL,
-    ],
     perceived_feasible_set=[
         SELL,
         DO_NOT_SELL,

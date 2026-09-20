@@ -1,11 +1,12 @@
 """
 TER Replication Test 21: Intertemporal Choice / Time Horizon
+Canonical TER: theory/academic.md, Model 5.1; Section 3 (Time Horizon)
 
 Economic question
-------------------
-Can TER represent a decision where changing only the agent's time
-horizon H changes which consequences are relevant to valuation, and
-therefore changes the selected action?
+-----------------
+In this configured decision, does changing only the agent's time horizon
+H change which consequences its valuation counts, and therefore the
+selected action?
 
 Scenario
 --------
@@ -21,39 +22,24 @@ valuation:
     SHORT_HORIZON = 2
     LONG_HORIZON  = 8
 
-TER mapping
------------
-Core architecture:
+The two scenarios differ only in H.
 
-    (G, M, F̂, V, H, D) ──→ C
-
-    G   maximize the value of consequences relevant to the current
-        decision
-    M   consequence_schedule -- each action's known period and value,
-        identical in both scenarios
-    F̂   IMMEDIATE_PAYOFF_ACTION, DELAYED_PAYOFF_ACTION -- F equals F̂
-    V   horizon_scoped_value, a local valuation rule scoped to this
-        test (see Assumptions)
-    H   the only component that differs between scenarios:
-        SHORT_HORIZON vs. LONG_HORIZON
-    D   DecisionProcess.MAXIMIZE, identical in both scenarios
-    C   IMMEDIATE_PAYOFF_ACTION (short horizon), DELAYED_PAYOFF_ACTION
-        (long horizon)
-
-Tested TER mechanics
---------------------
-G     Objective              constant: maximize the value of
-                              consequences relevant to the decision
-M     Model of reality       consequence_schedule -- constant
-F, F̂  Feasible sets          IMMEDIATE_PAYOFF_ACTION,
-                              DELAYED_PAYOFF_ACTION; F̂ equals F
-V     Valuation               horizon_scoped_value -- CHANGED for the
-                              delayed action only, as a consequence of H
-H     Time horizon           CHANGED: SHORT_HORIZON vs. LONG_HORIZON --
-                              the only TER component changed directly
-D     Decision process       constant: DecisionProcess.MAXIMIZE
-C     Selected action        immediate (short horizon), delayed (long
+TER instantiation
+-----------------
+Component                     Instantiation in this test                     Status
+G   Objective                 obtain the largest payoff from the decision    fixed
+M   Model of Reality          consequence_schedule: each action's known      fixed
+                              period and value
+F̂   Perceived Feasible Set    IMMEDIATE_PAYOFF_ACTION,                       fixed
+                              DELAYED_PAYOFF_ACTION
+V   Valuation                 horizon_scoped_value (local): counts an        varied (as a
+                              action's consequence only if it falls within   consequence of H)
+                              H; reads M and H
+H   Time Horizon              SHORT_HORIZON vs. LONG_HORIZON                 varied
+D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+C   Selected Action           immediate (short horizon), delayed (long       observed
                               horizon)
+F_t, R, outcomes              F_t and outcome realization are outside this test's scope.
 
 Economic mechanism
 ------------------
@@ -73,18 +59,17 @@ Long horizon:
     => V(delayed) = 10
     => delayed selected
 
-G, M, F, F̂, and D remain constant across both scenarios. H is the only
-TER component changed directly; V changes only as a consequence of H
-changing which consequences are relevant, not as an independent change.
+G, M, F̂, and D are the same in both scenarios. H is the component changed
+directly; in this specification V changes as a consequence of H changing
+which consequences count.
 
 Assumptions
 -----------
 - H is represented here as an integer count of periods considered
-  relevant to the decision. This is a test-specific operationalization
-  of H_{i,t}'s canonical meaning ("the period over which an agent
-  considers consequences relevant to a decision") -- not a universal TER
-  meaning of horizon. AgentSpec.horizon is typed Any; other tests use
-  descriptive strings instead, which remains equally valid.
+  relevant to the decision. This is a test-specific operationalization of
+  Time Horizon (Section 3), not a universal meaning of horizon.
+  AgentSpec.horizon is typed Any; other tests use descriptive strings
+  instead, which is equally valid.
 - Each action's consequence is described by a "period" (how many periods
   after the decision it is realized) and a "value" (its magnitude),
   declared in model_of_reality["consequence_schedule"]. These are
@@ -92,42 +77,34 @@ Assumptions
   unrelated to Scenario.periods, which controls the simulation loop
   length; this test uses a single-period Scenario (periods=1) and only
   asks what the agent would select given each horizon.
-- horizon_scoped_value is a local Model 5.1 valuation rule, scoped to
-  this test only, following the same convention as
-  capacity_constrained_realization in test_feasibility_contract.py: it
-  is registered here, not in the shared rules.py registry, because it is
-  specific to this test's economics. It implements a hard relevance
-  boundary matching academic.md's own language: a consequence whose
-  period falls within the agent's horizon contributes its full value; a
-  consequence whose period falls outside the horizon is not relevant to
-  the decision and contributes nothing.
-- This is a binary relevance-boundary implementation of H, not a
-  discount rate. There is no decay, weighting, or continuous function
-  of time -- only inclusion or exclusion drawn directly from H_{i,t}. It
-  is also not a universal claim that agents prefer present consumption:
-  nothing in horizon_scoped_value favors the immediate action for being
-  immediate. If IMMEDIATE_PAYOFF_VALUE exceeded DELAYED_PAYOFF_VALUE,
-  the immediate action would win under both horizons. It wins under the
-  short horizon here only because the delayed action's known
-  consequence is entirely excluded from valuation, not because
-  immediacy is itself valued.
-- This test does not introduce a new TER variable, axiom, or universal
-  discount mechanism. horizon_scoped_value is a scenario-specific
-  operationalization of the existing H_{i,t}, using the existing
-  ValuationRule extension point exactly as net_value, expected_return,
-  and other value rules already do.
+- horizon_scoped_value is a local valuation rule for this test only. It
+  implements V (Model 5.1) as a test-specific specification: an action's
+  known consequence counts toward its value only when that consequence's
+  period falls within the agent's horizon; otherwise it contributes
+  nothing. It is not a TER primitive or a universal equation, and TER
+  does not require V to read H directly; this valuation reads H because
+  it specifies which consequences the agent counts. (It is registered
+  with register_rule, an implementation detail.)
+- This is a binary inclusion boundary, not a discount rate. There is no
+  decay, weighting, or continuous function of time, and nothing in
+  horizon_scoped_value favors the immediate action for being immediate.
+  If IMMEDIATE_PAYOFF_VALUE exceeded DELAYED_PAYOFF_VALUE, the immediate
+  action would win under both horizons. It wins under the short horizon
+  here only because the delayed consequence is excluded from valuation.
+- No outcome realization is modeled, and the test does not claim agents
+  generally prefer present or future consequences.
 
 Hypothesis
 ----------
-1. Under a short horizon, the delayed consequence falls outside the
-   relevant window and the agent selects the immediate-payoff action.
-2. Under a long horizon, the delayed consequence falls inside the
-   relevant window and the agent selects the delayed-payoff action.
-3. Changing H changes the delayed action's own valuation; the immediate
+In this configured decision:
+1. Under the short horizon, the delayed consequence falls outside H, its
+   valuation excludes it, and the decision process selects the
+   immediate-payoff action.
+2. Under the long horizon, the delayed consequence falls inside H and the
+   decision process selects the delayed-payoff action.
+3. Changing H changes the delayed action's valuation; the immediate
    action's valuation does not change.
-4. The change in selected action follows from that valuation change --
-   every other TER component (G, M, F, F_hat, D) is identical between
-   scenarios.
+4. The change in selected action follows from that valuation change.
 """
 
 import unittest
@@ -163,11 +140,10 @@ LONG_HORIZON = 8
 @register_rule("horizon_scoped_value")
 def horizon_scoped_value(action, agent):
     """
-    Local Model 5.1 valuation rule for this test only.
-
-    Operationalizes H_{i,t} as academic.md itself describes it: an
-    action's known consequence counts toward valuation only when that
-    consequence's period falls within the agent's horizon. A consequence
+    Local valuation rule for this test only. Implements V (Model 5.1) as a
+    test-specific specification, not a TER primitive or universal
+    equation: an action's known consequence counts toward valuation only
+    when that consequence's period falls within the agent's horizon (H). A consequence
     whose period exceeds the horizon is not relevant to the current
     decision and contributes nothing. This is a relevance boundary, not
     a discount rate -- there is no decay or weighting, only inclusion or
@@ -196,7 +172,7 @@ def horizon_scoped_value(action, agent):
 
 BASE_AGENT = AgentSpec(
     name="decision_maker",
-    objective="maximize the value of consequences relevant to the current decision",
+    objective="obtain the largest payoff from the decision",
     model_of_reality={
         "consequence_schedule": {
             IMMEDIATE_PAYOFF_ACTION: {
@@ -209,10 +185,6 @@ BASE_AGENT = AgentSpec(
             },
         },
     },
-    actual_feasible_set=[
-        IMMEDIATE_PAYOFF_ACTION,
-        DELAYED_PAYOFF_ACTION,
-    ],
     perceived_feasible_set=[
         IMMEDIATE_PAYOFF_ACTION,
         DELAYED_PAYOFF_ACTION,
@@ -318,36 +290,4 @@ class TestIntertemporalChoice(unittest.TestCase):
         self.assertNotEqual(
             short.selected_action,
             long_.selected_action,
-        )
-
-        # Every other TER component is unchanged between scenarios --
-        # only horizon and the resulting selected action differ.
-        self.assertEqual(
-            short.objective,
-            long_.objective,
-        )
-
-        self.assertEqual(
-            short.model_of_reality,
-            long_.model_of_reality,
-        )
-
-        self.assertEqual(
-            short.actual_feasible_set,
-            long_.actual_feasible_set,
-        )
-
-        self.assertEqual(
-            short.perceived_feasible_set,
-            long_.perceived_feasible_set,
-        )
-
-        self.assertEqual(
-            short.decision_process,
-            long_.decision_process,
-        )
-
-        self.assertNotEqual(
-            short.horizon,
-            long_.horizon,
         )

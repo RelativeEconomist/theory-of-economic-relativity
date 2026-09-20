@@ -1,18 +1,13 @@
 """
-TER Replication Test 23: Unsustainable Imbalance / Forced Adjustment
+TER Replication Test 23: State Persistence Under a Liquidity Constraint
+Canonical TER: theory/academic.md, Models 5.1, 5.3 and 5.5; Constraint 5.4 (State Persistence Constraint)
 
 Economic question
-------------------
-Can TER represent a growing economic imbalance that persists until
-reality's constraints make the existing trajectory unsustainable, and
-force an adjustment?
-
-This directly operationalizes TER Model 5.4's State Persistence
-Constraint (continuation of the existing state no longer feasible =>
-existing state cannot persist unchanged), using this test's own
-shorthand -- I and J are not academic.md notation -- to narrate it:
-
-    I_t -> unsustainable conditions -> J_{t+1} -> O_{t+1}
+-----------------
+In this configured bank, does growing withdrawal demand eventually exceed
+the liquidity the bank has available, so that continuation of the existing
+state -- withdrawal requests honored in full from that liquidity -- is no
+longer feasible?
 
 Scenario
 --------
@@ -25,134 +20,105 @@ failure risk (risk_signal 0.10) and request withdrawals from period 0;
     period 2: liquidity feedback has pushed the 40 confident depositors'
               perceived risk past their own threshold too -- all 42
               request -> 4200 requested, only 3600 available
-              (unsustainable) -> 3600 realized, liquidity driven to 0
+              -> 3600 realized, liquidity driven to 0
 
-TER mapping
------------
-Core architecture, with feedback carried into the next period:
-
-    (G, M, F̂, V, H, D) ──→ C ──→ R ──→ O
-                                        │
-                            feedback    │
-                     (BANK_LIQUIDITY_CONFIDENCE)
-                                        │
-                                        ▼
-                              next period's M
-
-    M         failure_probability / risk_signal -- each depositor's
-              belief about the bank
-    V         deposit_value, deposit_benefit, withdrawal_cost
-    D         DecisionProcess.MAXIMIZE
-    C         STAY, or WITHDRAW (a withdrawal request)
-    R         RealityFunction.WITHDRAWALS_REDUCE_LIQUIDITY -- the same
-              shared rule test_09 uses
-    O         requested withdrawals, realized withdrawals, remaining
-              liquidity
-    feedback  FeedbackRule.BANK_LIQUIDITY_CONFIDENCE -- the same shared
-              rule test_09 uses
-
-Model 5.4 mapping, in terms of the fields R already reports each
-period. I and J below are this test's own shorthand for narrating the
-persistence constraint, not symbols academic.md defines:
-
-    I_t                     requested_liquidity relative to available
-                            liquidity -- not a TER primitive or a
-                            separately computed quantity
-    unsustainable condition requested_liquidity > available liquidity --
-                            a plain numeric comparison this test makes,
-                            not a generic "unsustainability threshold"
-    J (adjustment)          the forced cap R already applies:
-                            realized_withdrawals = min(requested,
-                            liquidity); liquidity = max(0, liquidity -
-                            realized). Represented entirely through the
-                            existing reality function, not a new
-                            AdjustmentRule.
-    O (resulting state)     the capped realized_withdrawals and the
-                            resulting liquidity
-
-Tested TER mechanics
---------------------
-G     Objective              constant: preserve deposit value
-M     Model of reality       failure_probability, risk_signal -- CHANGED
-                              between periods by feedback
-F, F̂  Feasible sets          STAY, WITHDRAW; F̂ equals F throughout
-V     Valuation               deposit_value, deposit_benefit,
-                              withdrawal_cost -- constant
-D     Decision process       constant: DecisionProcess.MAXIMIZE
-C     Selected action        STAY or WITHDRAW (a request, not a
-                              guarantee of realization)
-R     Reality function       RealityFunction.WITHDRAWALS_REDUCE_LIQUIDITY
-O     Realized outcome       requests, realized withdrawals, remaining
-                              liquidity
-Feedback                     FeedbackRule.BANK_LIQUIDITY_CONFIDENCE,
-                              from this period's realized liquidity to
-                              the next period's M
+TER instantiation
+-----------------
+Component                         Instantiation in this test                     Status
+G   Objective                     preserve deposit value                         fixed
+M   Model of Reality              failure_probability, risk_signal               varied (by feedback)
+F̂   Perceived Feasible Set        STAY, WITHDRAW                                 fixed
+V   Valuation                     deposit_value, deposit_benefit,                fixed
+                                  withdrawal_cost (BANK_DEPOSITOR)
+H   Time Horizon                  "immediate liquidity decision"                 fixed
+D   Decision Process              DecisionProcess.MAXIMIZE                       fixed
+C   Selected Action               STAY, or WITHDRAW (a withdrawal request)       observed
+F_t aspects used by R             the bank's available liquidity (scenario       varied (by outcome)
+                                  state["liquidity"]), which limits how much
+                                  of the requests can be honored
+R   Reality Function              RealityFunction.WITHDRAWALS_REDUCE_LIQUIDITY,  fixed
+                                  applied to all 42 depositors' selected
+                                  actions and the liquidity condition
+O_t System Outcome                withdrawals, requested_liquidity,              observed
+                                  realized_withdrawals, remaining liquidity
+Feedback (Model 5.5)              FeedbackRule.BANK_LIQUIDITY_CONFIDENCE:        fixed
+                                  updates each depositor's M from the
+                                  remaining liquidity in the prior outcome
+System state (Constraint 5.4)     the existing state in which withdrawal         observed
+                                  requests are honored in full from the
+                                  bank's available liquidity
 
 Economic mechanism
 ------------------
-I_t (the gap between requested and available liquidity) starts small
-and is fully honored by R for two periods. Feedback keeps raising every
-depositor's perceived risk as liquidity falls, until the 40 previously
-confident depositors' beliefs cross their own threshold too. At that
-point requested_liquidity (4200) exceeds available liquidity (3600):
-the unsustainable condition. J is produced by nothing more than R's own
-existing cap -- realized_withdrawals is driven to the available amount
-and liquidity to zero. This test does not claim that resulting state is
-an equilibrium, an improvement, or a recovery: Model 5.4 explicitly
-leaves the resulting state open, and academic.md's Scope and Limits
-section does not assume adjustment always improves the system. Here the
-resulting state is a depleted bank: demand permanently exceeds what
-reality can supply.
+The 2 early depositors' requests are honored in full while liquidity
+covers them (periods 0 and 1), and each realized withdrawal lowers the
+bank's liquidity. The feedback rule raises every depositor's perceived
+failure risk as liquidity falls, until the 40 latent depositors' beliefs
+cross their own threshold too. In period 2, requested withdrawals (4200)
+exceed the liquidity available going into that period (3600), so the
+existing state -- requests honored in full -- cannot be continued. In
+this scenario R limits realized withdrawals to the available liquidity,
+and remaining liquidity is 0. That limit is this scenario's R, not
+something Constraint 5.4 computes: the constraint does not specify what
+state follows, and this test does not claim the resulting state is an
+equilibrium, an improvement, or a recovery.
 
 Assumptions
 -----------
 - Depositor population, risk signals, deposit terms, and starting
   liquidity are test-specific economic assumptions, not TER primitives.
-  All of them, and the resulting DecisionProcess.MAXIMIZE comparison, are
-  identical in kind to test_09's -- only the specific numbers differ,
-  chosen so a single continuous run demonstrates persistence, growth,
-  and the unsustainable crossing without needing separate scenario
-  variants the way test_09 does. test_09 studies belief contagion across
-  scenario variants; this test asks a Model 5.4 shaped question along
-  one continuous trajectory instead.
+  They match test_09's in kind and differ only in number, chosen so one
+  continuous run shows requests persisting, growing, and exceeding
+  available liquidity.
 - Given DEPOSIT_VALUE, DEPOSIT_BENEFIT, and WITHDRAWAL_COST, a depositor
   prefers withdrawing once its perceived failure_probability exceeds a
-  fixed value implied by those constants (identical arithmetic to
-  test_09's bank_depositor_value; this test does not add a new
-  threshold concept, it just uses the existing formula's own behavior).
-  EARLY_WITHDRAWAL_RISK_SIGNAL is set above that value, so those
-  depositors withdraw from period 0 regardless of liquidity conditions.
-  LATENT_RISK_SIGNAL is set below it, so those depositors only withdraw
-  once the shared liquidity_risk term (driven by the bank's own
-  depleting liquidity, identical for every depositor) pushes their
-  perceived failure_probability past it.
-- I and J are not new TER primitives, variables, or generic rules; they
-  are read directly off the existing reality function's own output
-  fields (requested_liquidity, realized_withdrawals, liquidity), the
-  same way capacity_constrained_realization (test_feasibility_contract.py)
-  is one admissible, scenario-specific realization of R.
-- Every value in the assertions below was verified by directly running
-  this scenario and reading its real, computed period-by-period output;
-  none is asserted by construction alone.
-- This test does not claim all imbalances resolve this way, that TER
-  can predict in general when an imbalance becomes unsustainable, or
-  that forced adjustment restores equilibrium. It demonstrates one
-  economically coherent, scenario-specific instance of Model 5.4, using
-  only existing, unmodified TER Core execution paths.
+  fixed value implied by those constants (the same arithmetic as
+  test_09's bank_depositor_value). EARLY_WITHDRAWAL_RISK_SIGNAL is above
+  that value, so those depositors withdraw from period 0. LATENT_RISK_SIGNAL
+  is below it, so those depositors withdraw only once the shared
+  liquidity_risk term, driven by the bank's falling liquidity and
+  identical for every depositor, pushes their perceived failure_probability
+  past it.
+- Scope: all 42 depositors are explicitly modeled, and their contemporaneous
+  requests interact through the bank's shared liquidity, so Model 5.3
+  applies. The fields reported each period are computed by R directly from
+  the joint selected actions and the liquidity condition. This test defines
+  no relationship between per-depositor outcomes and the system outcome.
+- System state versus F_t: the state whose continuation is evaluated is the
+  system of depositors and bank together (requests honored in full). F_t is
+  not that state. The bank's available liquidity is the scenario condition
+  that implements the relevant aspect of F_t, and R applies it to the
+  requests. The remaining liquidity is reported in the outcome and carried
+  into the next period's state. WITHDRAW is a request, so R decides how
+  much of it is realized.
+- withdrawal_amount (the size of each request) is an R parameter, and
+  initial_liquidity is read only by the feedback rule to scale perceived
+  risk into M; neither is a TER variable. No permission data for F_t is
+  instantiated here, so what F_t permits for STAY or WITHDRAW is outside
+  this test's scope.
+- RealityFunction.WITHDRAWALS_REDUCE_LIQUIDITY and
+  FeedbackRule.BANK_LIQUIDITY_CONFIDENCE are shared framework rules. Each is
+  one admissible implementation of R and of the Model 5.5 feedback for this
+  scenario, not a TER primitive or a universal equation. This test defines
+  no local rule.
+- This test does not claim all liquidity-constrained systems behave this
+  way, that TER predicts when continuation becomes infeasible, or that any
+  subsequent state follows from Constraint 5.4.
 
 Hypothesis
 ----------
-1. Early withdrawal demand remains within available liquidity.
-2. Withdrawal pressure persists, then grows, across periods.
-3. A later period's requested withdrawals exceed the liquidity available
-   at that point -- the unsustainable condition.
-4. At that point, realized withdrawals fall short of what was requested.
-5. Realized withdrawals are exactly capped by the liquidity actually
-   available, not by any other mechanism.
-6. The resulting state (liquidity driven to zero) reflects that forced
-   adjustment.
-7. All of this is produced entirely by existing, shared, unmodified TER
-   Core rules and execution paths.
+In this configured system:
+1. Early withdrawal requests remain within available liquidity, so requests
+   are honored in full.
+2. Withdrawal requests persist, then grow, across periods.
+3. In period 2, requested withdrawals exceed the liquidity available going
+   into that period, so continuation of the existing state (requests
+   honored in full) is no longer feasible.
+4. In that period, realized withdrawals fall short of the request: the
+   existing state does not persist unchanged.
+5. Under this scenario's R, realized withdrawals equal the available
+   liquidity.
+6. Under this scenario's R, the remaining liquidity is 0.
 """
 
 import unittest
@@ -211,10 +177,6 @@ BASE_DEPOSITOR = AgentSpec(
         "deposit_benefit": DEPOSIT_BENEFIT,
         "withdrawal_cost": WITHDRAWAL_COST,
     },
-    actual_feasible_set=[
-        STAY,
-        WITHDRAW,
-    ],
     perceived_feasible_set=[
         STAY,
         WITHDRAW,
@@ -255,8 +217,8 @@ DEPOSITORS = EARLY_WITHDRAWAL_DEPOSITORS + LATENT_DEPOSITORS
 # Scenario
 # ---------------------------------------------------------------------------
 
-UNSUSTAINABLE_IMBALANCE_SCENARIO = Scenario(
-    name="Unsustainable Imbalance / Forced Adjustment",
+LIQUIDITY_CONSTRAINT_SCENARIO = Scenario(
+    name="Liquidity Constraint / State Persistence",
     description=(
         "A small group of depositors withdraws from period 0, gradually "
         "eroding liquidity. Once liquidity has fallen far enough, the "
@@ -288,11 +250,11 @@ UNSUSTAINABLE_IMBALANCE_SCENARIO = Scenario(
 # Tests
 # ---------------------------------------------------------------------------
 
-class TestUnsustainableImbalance(unittest.TestCase):
-    TEST_NAME = "Test 23: Unsustainable Imbalance / Forced Adjustment"
+class TestStatePersistenceLiquidityConstraint(unittest.TestCase):
+    TEST_NAME = "Test 23: State Persistence Under a Liquidity Constraint"
 
-    def test_imbalance_initially_remains_within_available_liquidity(self):
-        result = run_scenario(UNSUSTAINABLE_IMBALANCE_SCENARIO)
+    def test_early_requests_remain_within_available_liquidity(self):
+        result = run_scenario(LIQUIDITY_CONSTRAINT_SCENARIO)
 
         period_0 = result.history[1]
         period_1 = result.history[2]
@@ -308,7 +270,7 @@ class TestUnsustainableImbalance(unittest.TestCase):
         )
 
     def test_withdrawal_pressure_persists_then_grows_across_periods(self):
-        result = run_scenario(UNSUSTAINABLE_IMBALANCE_SCENARIO)
+        result = run_scenario(LIQUIDITY_CONSTRAINT_SCENARIO)
 
         period_0 = result.history[1]
         period_1 = result.history[2]
@@ -337,8 +299,8 @@ class TestUnsustainableImbalance(unittest.TestCase):
             EARLY_WITHDRAWAL_DEPOSITOR_COUNT + LATENT_DEPOSITOR_COUNT,
         )
 
-    def test_a_later_period_reaches_unsustainable_conditions(self):
-        result = run_scenario(UNSUSTAINABLE_IMBALANCE_SCENARIO)
+    def test_a_later_period_requests_exceed_available_liquidity(self):
+        result = run_scenario(LIQUIDITY_CONSTRAINT_SCENARIO)
 
         period_1 = result.history[2]
         period_2 = result.history[3]
@@ -354,7 +316,7 @@ class TestUnsustainableImbalance(unittest.TestCase):
         )
 
     def test_reality_prevents_the_full_request_from_being_realized(self):
-        result = run_scenario(UNSUSTAINABLE_IMBALANCE_SCENARIO)
+        result = run_scenario(LIQUIDITY_CONSTRAINT_SCENARIO)
 
         period_2 = result.history[3]
 
@@ -364,7 +326,7 @@ class TestUnsustainableImbalance(unittest.TestCase):
         )
 
     def test_realized_withdrawals_are_constrained_by_available_liquidity(self):
-        result = run_scenario(UNSUSTAINABLE_IMBALANCE_SCENARIO)
+        result = run_scenario(LIQUIDITY_CONSTRAINT_SCENARIO)
 
         period_1 = result.history[2]
         period_2 = result.history[3]
@@ -374,8 +336,8 @@ class TestUnsustainableImbalance(unittest.TestCase):
             period_1["liquidity"],
         )
 
-    def test_the_resulting_state_reflects_the_forced_adjustment(self):
-        result = run_scenario(UNSUSTAINABLE_IMBALANCE_SCENARIO)
+    def test_the_remaining_liquidity_is_zero_under_the_scenarios_reality_function(self):
+        result = run_scenario(LIQUIDITY_CONSTRAINT_SCENARIO)
 
         period_2 = result.history[3]
 
@@ -391,25 +353,3 @@ class TestUnsustainableImbalance(unittest.TestCase):
             result.final["liquidity"],
             0,
         )
-
-    def test_the_adjustment_is_produced_through_existing_ter_core_rules_only(self):
-        self.assertEqual(
-            UNSUSTAINABLE_IMBALANCE_SCENARIO.reality_function,
-            RealityFunction.WITHDRAWALS_REDUCE_LIQUIDITY,
-        )
-
-        self.assertEqual(
-            UNSUSTAINABLE_IMBALANCE_SCENARIO.feedback_rule,
-            FeedbackRule.BANK_LIQUIDITY_CONFIDENCE,
-        )
-
-        for depositor in DEPOSITORS:
-            self.assertEqual(
-                depositor.valuation_rule,
-                ValuationRule.BANK_DEPOSITOR,
-            )
-
-            self.assertEqual(
-                depositor.decision_process,
-                DecisionProcess.MAXIMIZE,
-            )

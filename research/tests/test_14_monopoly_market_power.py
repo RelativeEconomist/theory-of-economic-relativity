@@ -1,20 +1,19 @@
 """
 TER Replication Test 14: Monopoly and Market Power
+Canonical TER: theory/academic.md, Model 5.1
 
 Economic question
-------------------
-Can TER represent a seller with market power choosing among a finite set
-of prices, where quantity sold is a genuine function of the chosen price
-(a shared demand schedule), and where the profit-maximizing choice
-produces a price above marginal cost and a quantity below what a
-price-taking competitor facing the same demand and cost would sell?
+-----------------
+In a constructed one-seller setting where quantity sold is a function of
+the chosen price (a shared demand schedule), does the seller choose a price
+above marginal cost, and a quantity below what a price-taking competitor
+facing the same demand and cost would sell?
 
 This is a finite-choice reduced-form monopoly test, not a continuous
 monopoly-optimization test: the monopolist chooses among three discrete
-candidate prices, not any real-valued price. TER's discrete F_hat is not
-a limitation here -- market power is demonstrated through the
-price-quantity-profit relationship and the competitive comparison, not
-through solving a calculus problem.
+candidate prices, not any real-valued price. Market power is
+demonstrated through the price-quantity-profit relationship and the
+competitive comparison, not through solving a calculus problem.
 
 Scenario
 --------
@@ -42,7 +41,7 @@ for what happens to this trade-off when quantity is decoupled from
 price.
 
 Competitive benchmark (derived separately, from the same demand schedule
-and cost, never chosen by the monopolist and never part of its F_hat):
+and cost, never chosen by the monopolist and never part of its F̂):
 a price-taking firm facing the same demand at price = marginal cost.
 
     COMPETITIVE_PRICE = unit_cost = 5
@@ -51,58 +50,47 @@ a price-taking firm facing the same demand at price = marginal cost.
 The monopolist's selected price (11) exceeds marginal cost (5): a markup
 of 6. The monopolist's selected quantity (50) is less than the
 competitive quantity (110): market power restricts output relative to
-the competitive benchmark. Both of these are the actual economic
-signature of market power -- not merely "the firm picked the more
-profitable of two options," which the previous version of this test
-demonstrated and nothing more.
+the competitive benchmark.
 
-TER mapping
------------
-Core architecture:
+TER instantiation
+-----------------
+Component                     Instantiation in this test                     Status
+G   Objective                 choose the price that maximizes profit         fixed
+M   Model of Reality          specified but empty -- there is one agent      fixed
+                              and no shared belief to represent
+F̂   Perceived Feasible Set    MONOPOLY_PRICE_LOW, MONOPOLY_PRICE_MID,        fixed
+                              MONOPOLY_PRICE_HIGH -- three discrete
+                              points, so the profit-maximizing choice
+                              cannot be a two-point coincidence
+V   Valuation                 monopoly_price_profit_value (local): profit    fixed
+                              from the chosen price, the shared
+                              quantity_demanded(price) schedule, and a
+                              constant unit cost
+H   Time Horizon              current pricing decision                       fixed
+D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+C   Selected Action           MONOPOLY_PRICE_MID                             observed
+F_t, R, outcomes              F_t and outcome realization are outside this test's scope.
 
-    (G, M, F̂, V, H, D) ──→ C
-
-    G   choose the price that maximizes profit
-    M   specified but empty -- there is one agent and no shared belief
-        environment to represent (contrast test_16, where two agents
-        needed a common perceived price)
-    F̂   MONOPOLY_PRICE_LOW, MONOPOLY_PRICE_MID, MONOPOLY_PRICE_HIGH --
-        F equals F̂. Three discrete points, not two, so the
-        profit-maximizing choice cannot be a two-point coincidence: it
-        must actually be the interior maximum of the three.
-    V   monopoly_price_profit_value -- profit computed from the chosen
-        price, this test's shared quantity_demanded(price) schedule, and
-        a constant unit cost. Quantity is never independently declared
-        per price; it is derived from price every time this rule runs.
-    H   current pricing decision
-    D   DecisionProcess.MAXIMIZE
-    C   the selected price
-
-No reality_function is declared: this test is about what determines C
-and about a benchmark comparison computed after C is known, not about
-realizing or aggregating an outcome from it.
+The quantity demanded and the profit are computed inside V, from the
+chosen price and the demand schedule, to value the actions. They are not
+realized outcomes.
 
 The competitive benchmark (COMPETITIVE_PRICE, COMPETITIVE_QUANTITY) is
-not part of any agent's decision architecture and is not a second agent.
-It is a plain comparison value, computed once at module scope by calling
-the same quantity_demanded function the monopolist's own valuation rule
-calls, at price = marginal cost. It represents what a different market
-structure (price-taking competition) would produce under the identical
-demand and cost assumptions -- it is not something the monopolist chose
-among, perceives, or could have selected.
+not part of any agent's decision and is not a second agent. It is a plain
+comparison value, computed once at module scope by calling the same
+quantity_demanded function the monopolist's own valuation rule calls, at
+price = marginal cost. It represents what a different market structure
+(price-taking competition) would produce under the identical demand and
+cost assumptions -- it is not something the monopolist chose among,
+perceives, or could have selected.
 
-Tested TER mechanics
---------------------
-G     Objective              constant: choose the price that maximizes
-                              profit
-M     Model of reality       specified but empty
-F, F̂  Feasible sets          three discrete monopoly prices; F̂ equals F
-V     Valuation               monopoly_price_profit_value -- derives
-                              quantity from price via the shared demand
-                              schedule, then computes profit
-H     Time horizon           constant: current pricing decision
-D     Decision process       constant: DecisionProcess.MAXIMIZE
-C     Selected action        MONOPOLY_PRICE_MID, observed result
+Economic mechanism
+------------------
+Quantity is derived from price through the demand schedule every time the
+valuation rule runs, so raising price reduces quantity sold. Profit
+(price - unit cost) * quantity is therefore not monotonic in price, and the
+interior price maximizes it. Because the selected price exceeds marginal
+cost, the selected quantity falls short of the competitive quantity.
 
 Assumptions
 -----------
@@ -115,8 +103,7 @@ Assumptions
   price-taking prediction under these same demand and cost assumptions.
   It is derived, not independently declared: it calls the same
   quantity_demanded function the monopolist's own valuation rule uses,
-  so the comparison cannot silently drift from the mechanism actually
-  driving C.
+  so the comparison cannot silently drift from the mechanism driving C.
 - Three discrete prices are used specifically so the profit-maximizing
   choice is an interior selection (neither the lowest nor the highest of
   the three), which a two-point test cannot distinguish from "the firm
@@ -129,6 +116,7 @@ Assumptions
 
 Hypothesis
 ----------
+In this configured scenario:
 1. Quantity demanded strictly decreases as price rises across the three
    candidate prices.
 2. The monopolist selects the discrete price that maximizes profit under
@@ -239,11 +227,6 @@ MONOPOLIST = AgentSpec(
         },
         "unit_cost": UNIT_COST,
     },
-    actual_feasible_set=[
-        MONOPOLY_PRICE_LOW,
-        MONOPOLY_PRICE_MID,
-        MONOPOLY_PRICE_HIGH,
-    ],
     perceived_feasible_set=[
         MONOPOLY_PRICE_LOW,
         MONOPOLY_PRICE_MID,
@@ -279,7 +262,7 @@ MONOPOLY_PRICING_SCENARIO = Scenario(
 # Competitive benchmark
 # ---------------------------------------------------------------------------
 #
-# Not an agent, not a second scenario, not part of MONOPOLIST's F_hat --
+# Not an agent, not a second scenario, not part of MONOPOLIST's F̂ --
 # a plain comparison value derived from the same demand schedule and
 # cost, at the price a price-taking competitor would charge (price =
 # marginal cost). It represents a different market structure the
@@ -298,9 +281,8 @@ COMPETITIVE_QUANTITY = quantity_demanded(COMPETITIVE_PRICE)
 # ordinary profit maximization. This local scenario holds quantity fixed
 # at 50 units (the monopoly-optimal quantity above) regardless of price,
 # using the framework's own generic ValuationRule.NET over independently
-# declared benefits/costs -- the same shape the previous version of this
-# test used throughout, and exactly the shape this test's real mechanism
-# no longer relies on.
+# declared benefits/costs. This is the shape the monopoly mechanism above
+# deliberately does not use.
 
 NO_DEMAND_RESPONSE_QUANTITY = 50
 
@@ -320,11 +302,6 @@ NO_DEMAND_RESPONSE_FIRM = AgentSpec(
             MONOPOLY_PRICE_HIGH: UNIT_COST * NO_DEMAND_RESPONSE_QUANTITY,
         },
     },
-    actual_feasible_set=[
-        MONOPOLY_PRICE_LOW,
-        MONOPOLY_PRICE_MID,
-        MONOPOLY_PRICE_HIGH,
-    ],
     perceived_feasible_set=[
         MONOPOLY_PRICE_LOW,
         MONOPOLY_PRICE_MID,
@@ -359,6 +336,8 @@ class TestMonopolyMarketPower(unittest.TestCase):
     TEST_NAME = "Test 14: Monopoly and Market Power"
 
     def test_quantity_demanded_decreases_as_price_rises(self):
+        # Scenario-premise check on the demand schedule: no TER model is
+        # exercised here.
         self.assertGreater(
             quantity_demanded(MONOPOLY_PRICE_LOW_VALUE),
             quantity_demanded(MONOPOLY_PRICE_MID_VALUE),
@@ -389,6 +368,8 @@ class TestMonopolyMarketPower(unittest.TestCase):
         )
 
     def test_profits_are_generated_from_the_shared_demand_schedule_not_precomputed_constants(self):
+        # Implementation check: the valuation rule derives profit from
+        # the schedule.
         result = run_scenario(MONOPOLY_PRICING_SCENARIO)
         monopolist = result.agent(MONOPOLIST.name)
 
@@ -431,6 +412,8 @@ class TestMonopolyMarketPower(unittest.TestCase):
         selected_price = MONOPOLIST.valuation["price_by_action"][
             monopolist.selected_action
         ]
+        # Test-specific comparison computed from the selected price; not
+        # a realized outcome.
         monopoly_quantity = quantity_demanded(selected_price)
 
         self.assertLess(

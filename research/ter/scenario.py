@@ -11,7 +11,6 @@ class AgentSpec:
     TER mapping:
     G     -> objective
     M     -> model_of_reality
-    F     -> actual_feasible_set
     F_hat -> perceived_feasible_set
     V     -> valuation + valuation_rule
     H     -> horizon
@@ -22,12 +21,15 @@ class AgentSpec:
     depth), kept separate from model_of_reality so decision-process
     configuration is never mistaken for the agent's beliefs about
     reality.
+
+    F_t, the objective feasible state of reality, is not declared here.
+    It is not agent specific: it belongs to the Scenario (see
+    Scenario.initial_state and Scenario.parameters).
     """
 
     name: str
     objective: Any
     model_of_reality: dict[str, Any]
-    actual_feasible_set: list[Any]
     perceived_feasible_set: list[Any]
     valuation_rule: str
     decision_process: str
@@ -124,9 +126,13 @@ class Scenario:
         default_factory=dict
     )
 
-    # reality_function implements R: O = R(C, F, P, S). It determines
-    # the realized outcome from the selected actions and relevant
-    # conditions; it is not the outcome itself.
+    # reality_function implements R: O_t = R(C_1,t, ..., C_n,t, F_t). It
+    # determines the realized outcome from the selected actions and the
+    # objective feasible state of reality; it is not the outcome itself.
+    # F_t is carried by the scenario's `state` (initial_state, which
+    # evolves) and `parameters` (fixed conditions). The actions F_t
+    # permits for each agent are indexed in state["permitted_actions"]
+    # (agent name -> permitted actions); see research.ter.outcome.
     reality_function: str | None = None
     feedback_rule: str | None = None
 
@@ -137,8 +143,8 @@ class Scenario:
     # -- necessary so feedback can affect later decisions, but unsafe to
     # read as historical state once a later period has mutated them.
     # snapshot_fields is the opt-in way to capture specific fields (e.g.
-    # "model_of_reality", "actual_feasible_set", "perceived_feasible_set")
-    # independently of that live state, under
+    # "model_of_reality", "perceived_feasible_set") independently of that
+    # live state, under
     # history[t]["agent_snapshots"][agent_name]. Empty by default: no
     # snapshots are taken unless requested.
     snapshot_fields: list[str] = field(
@@ -196,8 +202,7 @@ class AgentResult:
     any reality_function needs to report.
 
     Common state attributes are available directly, e.g. `firm.objective`,
-    `firm.actual_feasible_set`, `firm.perceived_feasible_set`,
-    `firm.model_of_reality`. The full AgentState remains available as
+    `firm.perceived_feasible_set`, `firm.model_of_reality`. The full AgentState remains available as
     `.state` for advanced use; normal tests should not need it.
 
     Attribute lookup precedence:
@@ -205,7 +210,7 @@ class AgentResult:
         1. per-agent outcome fields (e.g. `.social_value`) -- the data the
            scenario's reality_function reported under "agent_results"
            for this agent's name.
-        2. AgentState's own fields (`.objective`, `.actual_feasible_set`,
+        2. AgentState's own fields (`.objective`,
            `.perceived_feasible_set`, `.model_of_reality`, `.horizon`,
            `.name`, etc).
         3. AgentState.model_of_reality fields -- an agent's own declared

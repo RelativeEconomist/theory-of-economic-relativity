@@ -38,7 +38,7 @@ This does not mean every possible specification someone writes is automatically 
 
 ## Is TER predictive?
 
-Only conditionally, and only at the level of a particular specification. A specification that fixes `G`, `M`, `F̂`, `V`, `H`, and `D` from independent evidence can generate a conditional prediction — given this decision environment, this action or outcome should follow — that can then be checked against evidence.
+Only conditionally, and only at the level of a particular specification. A specification that fixes `G`, `M`, `F̂`, `V`, `H`, and `D` from independent evidence can generate a conditional prediction — given this specification, this action or outcome should follow — that can then be checked against evidence.
 
 TER itself is not an omniscient prediction system: it does not assume an observer can know every agent's objectives, beliefs, constraints, interactions, or the shocks that will occur. The presence of imbalance, feedback, or amplification does not by itself predict when or how a system state will change. See [§7.9](../theory/academic.md#79-ter-is-a-framework-for-analysis-not-an-omniscient-prediction-system).
 
@@ -48,15 +48,15 @@ No. TER does not require optimization, exhaustive comparison, or objectively rat
 
 `D` may represent satisficing, heuristics, habits, intuition, reflexive responses, strategic reasoning, or other decision processes — Axiom 4 explicitly states that evaluation "does not require exhaustive comparison or perfect optimization," and Axiom 5 that the selected action "need not be objectively optimal or result from exhaustive comparison among alternatives."
 
-A poor decision remains a poor decision if the evidence supports that interpretation — TER only requires that the selected action results from the agent's specified decision process acting on its decision environment, not that the result be good. See [Axiom 4](../theory/academic.md#axiom-4-agents-evaluate-actions-relative-to-their-objectives), [Axiom 5](../theory/academic.md#axiom-5-agents-select-actions-through-a-decision-process), and [§5.1](../theory/academic.md#51-agent-decision-model).
+A poor decision remains a poor decision if the evidence supports that interpretation — TER only requires that the selected action results from the agent's specified decision process acting on its objective, model of reality, perceived feasible set, valuation, and time horizon, not that the result be good. See [Axiom 4](../theory/academic.md#axiom-4-agents-evaluate-actions-relative-to-their-objectives), [Axiom 5](../theory/academic.md#axiom-5-agents-select-actions-through-a-decision-process), and [§5.1](../theory/academic.md#51-agent-decision-model).
 
-## Why distinguish `F` from `F̂`?
+## Why distinguish `F_t` from `F̂`?
 
-`F` is what reality actually permits. `F̂` is what the agent perceives as available. TER keeps these separate on purpose.
+`F_t` is the objective feasible state of reality: what reality actually permits. `F̂` is what the agent perceives as available. TER keeps these separate on purpose.
 
 The distinction lets TER represent overlooked opportunities, mistaken beliefs about what is possible, hidden constraints, misinformation, discovery, and learning — all without treating perceived possibility as if it were actual feasibility. An agent can select an action that later turns out infeasible; the selection itself doesn't change, only the realized outcome does.
 
-See the [Actual Feasible Set](../theory/academic.md#actual-feasible-set) and [Perceived Feasible Set](../theory/academic.md#perceived-feasible-set) definitions, and [§7.4](../theory/academic.md#74-perceived-and-actual-feasible-sets-are-distinct).
+See the [Objective Feasible State of Reality](../theory/academic.md#objective-feasible-state-of-reality) and [Perceived Feasible Set](../theory/academic.md#perceived-feasible-set) definitions, and [§7.4](../theory/academic.md#74-the-perceived-feasible-set-and-the-objective-feasible-state-of-reality-are-distinct).
 
 ## Does TER require optimization or deterministic choice?
 

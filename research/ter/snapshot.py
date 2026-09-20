@@ -12,9 +12,8 @@ class AgentSnapshot:
     in time.
 
     Unlike AgentState, whose mutable fields (model_of_reality,
-    actual_feasible_set, perceived_feasible_set) may be mutated in place
-    by feedback rules in later periods, an AgentSnapshot's captured
-    values are copies taken
+    perceived_feasible_set) may be mutated in place by feedback rules in
+    later periods, an AgentSnapshot's captured values are copies taken
     at capture time: later mutation of the live AgentState a snapshot
     was taken from can never retroactively change that snapshot.
 

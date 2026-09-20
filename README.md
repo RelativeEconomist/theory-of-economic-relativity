@@ -60,13 +60,13 @@ Decision process
   ↓
 Selected action
   ↓
-Reality + other agents + prevailing conditions
+Objective reality
   ↓
 Outcome
   ↓
 Feedback and adjustment
   ↓
-Next decision environment
+Subsequent conditions
 ```
 
 This architecture can be applied from a single decision to interacting agents and evolving economic systems.
@@ -85,8 +85,8 @@ In plain language, an agent selects an action through a decision process shaped 
 | --- | --- |
 | $G$ | Objective |
 | $M$ | Model of reality, including information and beliefs |
-| $F$ | Actual feasible actions |
-| $\hat{F}$ | Perceived feasible actions |
+| $F_t$ | Objective feasible state of reality |
+| $\hat{F}$ | Possibilities the agent perceives as available |
 | $V$ | Valuation of actions relative to the agent's objective |
 | $H$ | Time horizon |
 | $D$ | Decision process used to select among perceived feasible actions |
@@ -97,15 +97,15 @@ In plain language, an agent selects an action through a decision process shaped 
 
 The selected action is the action produced by the agent's decision process. That process may involve optimization, satisficing, heuristics, habits, intuition, strategic reasoning, or another mechanism.
 
-The distinction between $F$ and $\hat{F}$ is especially important. An agent may believe an action is possible when reality does not permit it, or fail to recognize an opportunity that actually exists.
+The distinction between $F_t$ and $\hat{F}$ is especially important. An agent may believe an action is possible when reality does not permit it, or fail to recognize an opportunity that actually exists.
 
 The selected action then encounters reality:
 
 $$
-C_{i,t} \rightarrow O_{i,t}
+O_{i,t} = R(C_{i,t}, F_t)
 $$
 
-Outcomes may depend on actual constraints, other agents, prevailing conditions, external effects, and external shocks. Those outcomes can then change future information, beliefs, feasible actions, valuations, time horizons, decision processes, and subsequent actions.
+Outcomes depend on the selected action encountering the objective feasible state of reality, which includes actual constraints, prevailing conditions, and external shocks. Other agents and external effects also shape outcomes. Those outcomes can then change future information, beliefs, feasible actions, valuations, time horizons, decision processes, and subsequent actions.
 
 For the formal definitions, axioms, and equations, see [`theory/academic.md`](theory/academic.md).
 
@@ -117,7 +117,7 @@ TER develops this architecture through three core models, a state persistence co
 2. **Action to Outcome** — how the selected action encounters actual conditions.
 3. **Multi Agent** — how interacting decisions produce system outcomes.
 4. **State Persistence Constraint** — the boundary condition for when an existing state can no longer persist unchanged under reality's constraints.
-5. **Dynamic Feedback** — how outcomes alter future decision environments.
+5. **Dynamic Feedback** — how outcomes alter the subsequent conditions shaping later decisions.
 6. **Feedback Analysis and Stability** — how feedback may amplify, damp, propagate, persist, oscillate, or change across regimes.
 
 These are not six separate theories. They describe different layers of the same framework.
