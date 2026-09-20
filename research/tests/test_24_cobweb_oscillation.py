@@ -1,23 +1,22 @@
 """
 TER Replication Test 24: Cobweb Model / Oscillatory Feedback
+Canonical TER: theory/academic.md, Models 5.1, 5.2 and 5.5; Analysis 5.6 (optional analytical methods)
 
 Economic question
-------------------
-Can TER represent an economic system in which delayed feedback causes
-decisions and outcomes to oscillate across periods? This directly
-demonstrates the "oscillation" concept named in TER Model 5.6 (Feedback
-Analysis and Stability), using simulation -- which academic.md
-explicitly permits as an alternative to Jacobian/eigenvalue analysis
-for systems "nonlinear, discontinuous, strategic, or otherwise
-unsuitable for this form of analysis."
+-----------------
+In one configured cobweb system, does delayed feedback from the realized
+price to the producer's expected price make production and price
+alternate across periods? The test observes this by simulating that one
+configuration, one of the analytical methods Analysis 5.6: Feedback
+Analysis and Stability allows.
 
 Scenario
 --------
-The classic cobweb model: a producer decides how much to produce using
-the price it expects, but the price actually realized -- determined by
-how much was produced -- only becomes known after the decision, and
-becomes the expectation for the *next* one (naive, one-period-lag
-expectations).
+A producer decides how much to produce using the price it expects. The
+price actually realized -- determined by how much was produced -- only
+becomes known after the decision, and becomes the expectation for the
+*next* one (naive, one-period-lag expectations). The cobweb structure is
+a standard textbook setup, used here as background, not as a TER claim.
 
     LOW_PRODUCTION:  quantity 20, cost 0
     HIGH_PRODUCTION: quantity 60, cost 2000
@@ -30,117 +29,86 @@ production and price alternate every period:
     production: LOW  -> HIGH -> LOW  -> HIGH
     price:       80  ->  40  ->  80  -> 40
 
-This is one of the oldest documented sources of oscillatory behavior in
-economics, not a mechanism invented for this test.
+TER instantiation
+-----------------
+Component                       Instantiation in this test                       Status
+G   Objective                   profit from current-period production            fixed
+M   Model of Reality            expected_price, plus perceived quantities and    expected_price varied
+                                costs                                            (by feedback)
+F̂   Perceived Feasible Set      LOW_PRODUCTION, HIGH_PRODUCTION                  fixed
+V   Valuation                   cobweb_producer_value (local): expected_price    varied (as a consequence
+                                * perceived quantity - perceived cost; reads M   of M)
+H   Time Horizon                current production period                        fixed
+D   Decision Process            DecisionProcess.MAXIMIZE                         fixed
+C   Selected Action             LOW_PRODUCTION or HIGH_PRODUCTION                observed (alternates)
+F_t aspects used by R           inverse demand conditions (demand_intercept,     fixed
+                                demand_slope) and the actual production
+                                quantity associated with each action
+                                (actual_quantity_by_action), encountered
+                                through R
+R   Reality Function            linear_inverse_demand_price (local): price       fixed
+                                from the actual quantity of the selected action
+O_{i,t} Realized Outcome        quantity_produced and price, from R              observed (alternates)
+Feedback (Model 5.5)            expected_price_from_realized_price (local):      fixed
+                                sets the next period's expected_price to the
+                                price just realized
 
-TER mapping
------------
-The dynamic chain, repeating each period:
-
-    M_t(expected price) ──→ V_t ──→ D ──→ C_t(production) ──→ R
-        ──→ O_t(realized quantity and price) ──→ feedback
-        ──→ M_{t+1}(expected price) ──→ next C
-
-    M         expected_price -- set by feedback to exactly last
-              period's realized price, nothing more
-    V         cobweb_producer_value (local): value(action) =
-              expected_price * quantity(action) - cost(action)
-    D         DecisionProcess.MAXIMIZE -- the same shared rule used
-              throughout the suite, unmodified
-    C         LOW_PRODUCTION or HIGH_PRODUCTION
-    R         linear_inverse_demand_price (local): price =
-              demand_intercept - demand_slope * quantity_produced,
-              quantity read from the scenario's own
-              actual_quantity_by_action, never from any agent's M
-    O         quantity_produced and price, from R
-    feedback  expected_price_from_realized_price (local): copies this
-              period's just-realized price into M for the next period
-
-G, F, F̂, and H stay constant throughout; only M (and, as a consequence,
-V, C, and O) change from period to period.
-
-Tested TER mechanics
---------------------
-G     Objective              constant: maximize the value of this
-                              period's production decision
-M     Model of reality       expected_price -- CHANGED every period by
-                              feedback
-F, F̂  Feasible sets          LOW_PRODUCTION, HIGH_PRODUCTION; F̂ equals F
-V     Valuation               cobweb_producer_value -- CHANGED each
-                              period, only as a consequence of M
-H     Time horizon           constant: current production period
-D     Decision process       constant: DecisionProcess.MAXIMIZE
-C     Selected action        oscillates: LOW, HIGH, LOW, HIGH
-R     Reality function       local: linear_inverse_demand_price
-O     Realized outcome       quantity_produced and price; oscillates
-                              in lockstep with C
-Feedback                     local: expected_price_from_realized_price
+Action permission is not modeled: what F_t permits for LOW_PRODUCTION and
+HIGH_PRODUCTION is outside this test's scope.
 
 Economic mechanism
 ------------------
-Each period's realized price pushes expected_price to the *opposite*
-side of the 50 crossover from whichever production level caused it: low
+Each period's realized price pushes expected_price to the *opposite* side
+of the 50 crossover from whichever production level caused it: low
 production (80) makes HIGH_PRODUCTION worth more next period; high
-production (40) makes LOW_PRODUCTION worth more again. That one-period
-lag -- the realized price a decision produces is invisible to that same
-decision, only to the next one -- is the entire source of the
-oscillation; it is not a separate mechanism. No existing shared rule
-fit this shape (see Assumptions), so three small, local rules implement
-V, feedback, and R -- none a new TER primitive, all registered through
-the same extension point every shared rule in rules.py uses.
-
-This is a simulation of one configured cobweb system, not a universal
-TER prediction: TER does not claim real cobweb markets always
-oscillate rather than converge or explode (both are possible depending
-on the slopes involved), and no generic oscillation rule, StabilityRule,
-universal feedback coefficient, or universal stability/equilibrium
-criterion is introduced anywhere in this test or in TER Core.
+production (40) makes LOW_PRODUCTION worth more again. The one-period
+lag -- the price a decision produces is invisible to that same decision
+and reaches only the next one -- is the source of the alternation in
+this configuration.
 
 Assumptions
 -----------
-- Production quantities, costs, and the demand curve's intercept and
-  slope are test-specific economic assumptions, not TER primitives.
-- This test assumes perceived production quantities (in the producer's
-  own M, used by V) equal actual production quantities (in
-  parameters["actual_quantity_by_action"], used by R) exactly -- but
-  the two are declared independently, so M and R remain conceptually
-  separate. R never reads the agent's model_of_reality.
+- Production quantities, costs, and the demand curve's intercept and slope
+  are test-specific economic assumptions, not TER primitives.
+- Scope: this is a single-agent specification, so Model 5.2 applies and
+  the realized outcome is O_{i,t} (quantity_produced and price). The price
+  is a market-level quantity that R computes inside this single-agent
+  specification; that does not make it a system outcome, and no
+  multi-agent interaction is modeled.
+- M and R stay separate. The producer's perceived quantities and costs (M,
+  read by V) equal the actual quantities R uses exactly, but the two are
+  declared independently (parameters["actual_quantity_by_action"] for R).
+  That equality is a scenario assumption, not a TER requirement, and R
+  never reads the agent's model_of_reality.
 - Costs are chosen so the value crossover between the two production
-  levels falls at an expected price of 50, comfortably inside the
-  range [40, 80] the trajectory actually visits, so no assertion below
-  depends on a tie or a fragile boundary.
-- No existing shared rule fits this test's economics: ValuationRule.
-  NET/MAPPED never read a live model_of_reality field; EXPECTED_RETURN
-  and PRICE_TAKING each treat one action as a flat outside option, but
-  both production levels here are genuinely price-dependent;
-  FeedbackRule.PRICE_GROWTH_EXPECTATIONS computes a growth rate, not
-  the absolute price level this test's V needs; RealityFunction.
-  DEMAND_MOVES_PRICE compounds the *previous* price rather than pricing
-  fresh off each period's quantity. Three local rules were written
-  instead, following the same convention as
-  capacity_constrained_realization (test_feasibility_contract.py) and
-  the local rules in test_21/test_22/test_23.
-- This test does not claim that all delayed-feedback markets oscillate,
-  that oscillation is desirable or stable in a normative sense, or that
-  TER predicts oscillation in general. It demonstrates one economically
-  coherent, established mechanism that produces it.
+  levels falls at an expected price of 50, comfortably inside the range
+  [40, 80] the trajectory visits, so no assertion depends on a tie.
+- Local rules: cobweb_producer_value (V), linear_inverse_demand_price (R)
+  and expected_price_from_realized_price (Model 5.5 feedback) are local to
+  this test. Each implements an existing TER component, is a
+  test-specific specification choice, and is neither a TER primitive nor a
+  universal economic equation. No shared rule fits this shape. (They are
+  registered with register_rule, an implementation detail.)
+- Analysis 5.6 is optional, and this test does not rely on it for any TER
+  claim. Oscillation here is an analytical behavior observed in one
+  configured simulation. The test does not claim that TER predicts
+  oscillation, that delayed feedback always produces it, that real cobweb
+  markets oscillate rather than converge or explode, or that Analysis 5.6
+  requires it. It introduces no oscillation rule, stability criterion, or
+  universal feedback coefficient.
 
 Hypothesis
 ----------
-1. The first production decision follows from the initial expected
-   price.
-2. That production generates the corresponding realized market price.
-3. The realized price feeds into the next decision environment and the
-   next production decision reverses direction.
+In this configured cobweb system:
+1. The first production decision follows from the initial expected price.
+2. That production generates the corresponding realized price (via R).
+3. The realized price becomes the next period's expected price (via
+   feedback), and the next production decision reverses direction.
 4. The following realized price reverses direction too.
-5. The next production decision reverses again -- establishing
-   repeated oscillation, not a one-time adjustment.
-6. The same rule, applied uniformly every period with no per-period
-   special-casing, produces every reversal.
-7. The whole sequence is produced through ordinary TER decision,
-   reality, and feedback execution, using DecisionProcess.MAXIMIZE
-   (shared) plus this file's local V/R/feedback rules via the standard
-   registration extension point.
+5. Production alternates over four periods -- repeated reversal, not a
+   one-time adjustment.
+6. The same rules, applied uniformly every period with no per-period
+   special-casing, account for every reversal.
 """
 
 import unittest
@@ -170,7 +138,7 @@ HIGH_PRODUCTION_COST = 2000
 DEMAND_INTERCEPT = 100
 DEMAND_SLOPE = 1
 
-# The "period -1" price the first decision is made under.
+# The price the producer expects when making its first decision (M_0).
 INITIAL_PRICE_SIGNAL = 40
 
 # R: actual production quantities used by the reality function to
@@ -187,11 +155,12 @@ ACTUAL_QUANTITY_BY_ACTION = {
 @register_rule("cobweb_producer_value")
 def cobweb_producer_value(action, agent):
     """
-    Local Model 5.1 valuation rule for this test only.
+    Local valuation rule for this test only. Implements V (Model 5.1) for
+    this scenario; a test-specific specification choice, not a TER
+    primitive or a universal economic equation.
 
     value(action) = expected_price * quantity(action) - cost(action).
-    Both production levels are genuinely price-dependent (see module
-    docstring for why no existing shared ValuationRule fits this shape).
+    Both production levels are genuinely price-dependent.
 
     Required model_of_reality fields:
 
@@ -209,7 +178,10 @@ def cobweb_producer_value(action, agent):
 @register_rule("expected_price_from_realized_price")
 def expected_price_from_realized_price(state, outcome, parameters):
     """
-    Local Model 5.5 feedback rule for this test only.
+    Local feedback rule for this test only. Implements the Model 5.5
+    feedback from the realized outcome to M; a test-specific specification
+    choice, not a TER primitive, universal feedback coefficient, or
+    stability criterion.
 
     Sets every agent's expected_price to exactly the current
     state["price"] -- this period's own just-realized price (see
@@ -235,7 +207,10 @@ def expected_price_from_realized_price(state, outcome, parameters):
 @register_rule("linear_inverse_demand_price")
 def linear_inverse_demand_price(state, agents, actions, parameters):
     """
-    Local Model 5.2 reality function for this test only (one producer).
+    Local reality function for this test only. Implements R (Model 5.2,
+    single-agent specification) for this scenario; the price it reports is
+    a market-level quantity computed inside that specification, part of the
+    producer's realized outcome.
 
     A standard linear inverse demand curve: price = demand_intercept -
     demand_slope * quantity_produced, applied fresh each period to
@@ -245,7 +220,8 @@ def linear_inverse_demand_price(state, agents, actions, parameters):
     model_of_reality. This is not a universal TER pricing equation -- it
     is one admissible R for this scenario, in the same sense
     capacity_constrained_realization (test_feasibility_contract.py) is
-    one admissible R for its own.
+    one admissible R for its own. It is applied to the selected actions of
+    the modeled agents, of which there is one.
 
     Required parameters:
 
@@ -277,7 +253,7 @@ def linear_inverse_demand_price(state, agents, actions, parameters):
 
 PRODUCER = AgentSpec(
     name="producer",
-    objective="maximize the value of this period's production decision",
+    objective="profit from current-period production",
     model_of_reality={
         # M_0: the producer starts period 0 already expecting the
         # market's own stated initial price -- there is no realized
@@ -298,10 +274,6 @@ PRODUCER = AgentSpec(
             HIGH_PRODUCTION: HIGH_PRODUCTION_COST,
         },
     },
-    actual_feasible_set=[
-        LOW_PRODUCTION,
-        HIGH_PRODUCTION,
-    ],
     perceived_feasible_set=[
         LOW_PRODUCTION,
         HIGH_PRODUCTION,
@@ -329,7 +301,6 @@ COBWEB_SCENARIO = Scenario(
 
     initial_state={
         "period": 0,
-        "price": INITIAL_PRICE_SIGNAL,
     },
 
     agents=[
@@ -351,7 +322,7 @@ def _producer_value(expected_price, action):
     """
     Test-side, non-TER re-derivation of cobweb_producer_value's formula,
     used only to independently verify *why* a given period's decision
-    was correct -- not to re-execute or replace any TER Core behavior.
+    was correct -- not to re-execute or replace any framework behavior.
     """
     quantity = PRODUCER.model_of_reality["quantities"][action]
     cost = PRODUCER.model_of_reality["costs"][action]
@@ -485,26 +456,3 @@ class TestCobwebOscillation(unittest.TestCase):
                 predicted,
                 f"period {period_index} did not follow the same rule as the others",
             )
-
-    def test_the_sequence_is_produced_through_normal_ter_core_execution(self):
-        self.assertEqual(
-            PRODUCER.decision_process,
-            DecisionProcess.MAXIMIZE,
-        )
-
-        self.assertEqual(
-            COBWEB_SCENARIO.reality_function,
-            "linear_inverse_demand_price",
-        )
-
-        self.assertEqual(
-            COBWEB_SCENARIO.feedback_rule,
-            "expected_price_from_realized_price",
-        )
-
-        # No scenario field varies by period; the same rules, agent, and
-        # parameters govern every step of the run.
-        self.assertEqual(
-            COBWEB_SCENARIO.periods,
-            4,
-        )

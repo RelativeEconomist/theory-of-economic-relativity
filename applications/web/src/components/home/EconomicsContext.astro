@@ -1,0 +1,98 @@
+<section class="section-sm why-ter">
+  <div class="shell">
+    <h2 class="doc-heading" data-reveal>A shared architecture for economics</h2>
+
+    <div class="interaction-row">
+      <div class="interaction-copy">
+        <p class="lede" data-reveal>
+          TER builds on established economic theories and concepts by organizing their mechanisms within a shared agent centered architecture. The same architecture can be used to study individuals and large organizations.
+        </p>
+
+        <p class="lede" data-reveal>
+          One agent's actions can change the conditions faced by others. Across many interacting agents, those effects can produce market and system outcomes.
+        </p>
+      </div>
+
+      <div class="mesh-visual" data-reveal aria-hidden="true">
+        <img class="agent-graph" src="/images/ter-organic-network-mesh-square-tight.svg" alt="" />
+      </div>
+    </div>
+
+    <div class="service-list">
+      <article data-reveal>
+        <h3>Markets and incentives</h3>
+        <p>Scarcity, opportunity cost, prices, supply and demand, incentives, and equilibrium can be represented through agents pursuing objectives, facing constraints, selecting actions, and interacting with one another.</p>
+      </article>
+
+      <article data-reveal>
+        <h3>Behavior and interaction</h3>
+        <p>Bounded rationality, asymmetric information, strategic interaction, and externalities fit within the same architecture through differences in beliefs, perceived feasible actions, valuations, decision processes, and interactions.</p>
+      </article>
+
+      <article data-reveal>
+        <h3>Institutions and dynamics</h3>
+        <p>Institutions, technological change, feedback, collective action, and adjustment can be studied through how they alter information, incentives, constraints, feasible actions, outcomes, and subsequent decisions.</p>
+      </article>
+    </div>
+
+    <div class="closing-row" data-reveal>
+      <span class="closing-marker" aria-hidden="true"></span>
+      <p class="closing-note lede">
+        TER's central research claim is that many economic phenomena traditionally described through separate models and theories can be understood as different configurations and dynamics of a common agent-centered economic architecture.
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .why-ter{
+    background: var(--surface-2);
+  }
+  .interaction-row {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: start;
+    margin-top: clamp(1rem, 2vw, 1.5rem);
+  }
+  .interaction-copy .lede:first-child { margin-top: 0; }
+  .mesh-visual { width: min(100%, 28rem); aspect-ratio: 1; margin-inline: auto; }
+  .agent-graph { display: block; width: 100%; height: 100%; }
+  .service-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    margin-top: clamp(2rem, 4vw, 3rem);
+    border-top: 1px solid var(--line);
+  }
+  article { padding: 1.5rem 1.5rem 1.5rem 0; }
+  article + article { padding-left: 1.5rem; border-left: 1px solid var(--line); }
+  article:last-child { padding-right: 0; }
+  article h3 { margin: 0 0 .5rem; }
+  article p { margin: 0; color: var(--muted); }
+  .closing-row {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: start;
+    gap: 1rem;
+    margin-top: clamp(2.5rem, 5vw, 3.5rem);
+    padding-top: 2rem;
+    border-top: 1px solid var(--line);
+  }
+  .closing-marker {
+    width: .6rem;
+    height: .6rem;
+    margin-top: .5rem;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 20%, transparent);
+  }
+  .closing-note { margin: 0; color: var(--ink); font-weight: 620; }
+  @media (max-width: 800px) {
+    .interaction-row { grid-template-columns: 1fr; text-align: center; }
+    .mesh-visual { width: min(70vw, 19rem); margin-top: 1.5rem; }
+    .service-list { grid-template-columns: 1fr; }
+    article { padding: 1.5rem 0; border-left: none; }
+    article + article { padding-left: 0; border-left: none; border-top: 1px solid var(--line); }
+    article:last-child { padding-right: 0; }
+  }
+</style>

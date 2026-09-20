@@ -1,11 +1,13 @@
 """
 TER Replication Test 17: Price Elasticity of Demand
+Canonical TER: theory/academic.md, Model 5.1
 
 Economic question
-------------------
-Can TER represent different demand responses to price changes,
-including a case where quantity demanded responds proportionally more
-strongly to price?
+-----------------
+In two constructed buyer populations facing the same price increase, does
+a test-specific aggregation of independently selected buy decisions show a
+comparatively price-insensitive demand response in one population and a
+comparatively price-sensitive response in the other?
 
 Scenario
 --------
@@ -18,39 +20,32 @@ price change, with different reservation-value distributions:
     Elastic population:   Qd 10 -> 2   (-80%)
         elasticity = 0.80 / 0.20 = 4.0
 
-Each population's demand is an emergent count of independent buyer
-decisions at a given quoted price, not a hand-picked number.
+Each population's demand is a count of independent buyer decisions at a
+given quoted price, not a hand-picked number.
 
-TER mapping
------------
-Core architecture, evaluated once per candidate price:
+TER instantiation
+-----------------
+Component                     Instantiation in this test                     Status
+G   Objective                 maximize transaction value                     fixed
+M   Model of Reality          the quoted price, set by the market helper     varied (across the
+                              at each tested price                           two tested prices)
+F̂   Perceived Feasible Set    BUY, DO_NOT_BUY                                fixed
+V   Valuation                 ValuationRule.PRICE_TAKING: reservation value  varied (by buyer)
+                              relative to price
+H   Time Horizon              current transaction                            fixed
+D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+C   Selected Action           BUY or DO_NOT_BUY, one per buyer               observed
+F_t, R, outcomes              F_t and outcome realization are outside this test's scope.
 
-    (G, M, F̂, V, H, D) ──→ C
-
-    G   maximize transaction value
-    M   the quoted price
-    F̂   BUY, DO_NOT_BUY -- F equals F̂
-    V   ValuationRule.PRICE_TAKING -- reservation value relative to
-        price
-    H   current transaction
-    D   DecisionProcess.MAXIMIZE
-    C   BUY or DO_NOT_BUY
-
-Aggregate demand at a price is the count of buyers whose C is BUY at
-that price.
-
-Tested TER mechanics
---------------------
-G     Objective              constant: maximize transaction value
-M     Model of reality       the quoted price -- CHANGED across the
-                              two tested prices, external to each
-                              buyer's own decision
-F, F̂  Feasible sets          BUY, DO_NOT_BUY; F̂ equals F
-V     Valuation               reservation value relative to price
-H     Time horizon           constant: current transaction
-D     Decision process       constant: DecisionProcess.MAXIMIZE
-C     Selected action        BUY or DO_NOT_BUY, aggregated into
-                              quantity demanded
+Test-specific market analysis: research.ter.market.evaluate_market
+(buyers only, no sellers) builds each buyer fresh, sets the quoted price in
+its M, has it select C through Model 5.1, and counts BUY as quantity
+demanded. Elasticity is then computed by the test from those counts. The
+helper and the elasticity measure are analytical tools for this test, not
+TER primitives. Neither is R, the counts are not a TER system outcome, and
+this test introduces no relationship between agent-level and system-level
+outcomes. The quoted price is a test-specific market condition supplied to
+each buyer's M, not a complete representation of F_t.
 
 Economic mechanism
 ------------------
@@ -68,24 +63,17 @@ Assumptions
 - The price is externally supplied to evaluate_market; buyers are
   assumed to observe that quoted price correctly, so it appears in M.
   This test does not model price formation.
-- Quantity demanded at a price is the count of buyers whose own MAXIMIZE
-  decision selects "buy" at that price, found with
-  research.ter.market.evaluate_market -- the same non-Scenario,
-  price-grid mechanism test_07 uses (see research/README.md). It is not a
-  hand-picked number; it is an emergent count of real agent decisions.
 - Buyer reservation values are test-specific economic assumptions, not
   TER primitives. Two different reservation-value distributions
   (INELASTIC_RESERVATION_VALUES, ELASTIC_RESERVATION_VALUES) are chosen
   so that, across the same INITIAL_PRICE -> NEW_PRICE change, one
   population's demand is comparatively price-insensitive and the other's
   is comparatively price-sensitive.
-- Elasticity is measured here, from percentage changes in TER's emergent
-  demand output, using elasticity = abs(percentage_change_in_quantity /
-  percentage_change_in_price), where each percentage change is measured
-  relative to its initial ("before") value. This is a finite-change
-  measure, not a continuous point elasticity or midpoint/arc elasticity
-  estimate. It is a measurement the test performs on TER-generated
-  demand, not a TER primitive, rule, or variable.
+- Elasticity is computed by the test as abs(percentage_change_in_quantity /
+  percentage_change_in_price), each change measured relative to its
+  initial ("before") value. This is a finite-change measure, not a
+  continuous point elasticity or midpoint/arc elasticity estimate, and not
+  a TER primitive, rule, or variable.
 - This test measures elasticity for two constructed populations; it does
   not explain what economic forces make one population's demand more or
   less price sensitive than another's.
@@ -95,6 +83,7 @@ Assumptions
 
 Hypothesis
 ----------
+In these two constructed populations:
 1. The inelastic case has elasticity below 1.
 2. The elastic case has elasticity above 1.
 3. The elastic case has a larger proportional quantity response than the
@@ -155,10 +144,6 @@ BASE_BUYER = AgentSpec(
         "price_taking_action": BUY,
         "price_role": "cost",
     },
-    actual_feasible_set=[
-        BUY,
-        DO_NOT_BUY,
-    ],
     perceived_feasible_set=[
         BUY,
         DO_NOT_BUY,

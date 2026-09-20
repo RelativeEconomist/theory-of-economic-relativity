@@ -1,10 +1,11 @@
 """
 TER Replication Test 03: Bounded Rationality and Incomplete Search
+Canonical TER: theory/academic.md, Model 5.1
 
 Economic question
-------------------
-Can TER represent a nonoptimal choice produced by limited search rather
-than universal optimization?
+-----------------
+Can a limited search process select a lower-valued action than exhaustive
+search over the same perceived feasible set?
 
 Scenario
 --------
@@ -18,50 +19,39 @@ The buyer knows all three coffees are available and values BEST_COFFEE
 most highly, but it is farther away and appears later in the search
 order. Under limited search, the buyer may stop before reaching it.
 
-TER mapping
------------
-Core architecture:
+Scenarios (only D's configuration differs):
 
-    (G, M, F̂, V, H, D) ──→ C
+    MAXIMIZE (no limit)                          -> best_coffee
+    LIMITED_SEARCH limit=2, default order        -> office_coffee
+    LIMITED_SEARCH limit=3, default order        -> best_coffee
+    LIMITED_SEARCH limit=2,
+      search_order=[nearby, best, office]        -> best_coffee
 
-This test holds G, M, F̂, V, H constant across every scenario. Only D
-changes -- and only through D's own configuration (decision_process,
-decision_parameters). F̂ itself never changes:
-
-    same G, M, F̂, V, H
-            │
-    ┌───────┼───────────────┬────────────────────┐
-    ▼       ▼               ▼                    ▼
- MAXIMIZE  LIMITED_SEARCH  LIMITED_SEARCH        LIMITED_SEARCH
- (no limit) limit=2         limit=3               limit=2
-            default order   default order         search_order=[nearby,best,office]
-    │       │                |                      │
-    ▼       ▼                ▼                      ▼
-best_coffee office_coffee   best_coffee           best_coffee
-
-
-Tested TER mechanics
---------------------
-G   Objective                 constant
-M   Model of reality          constant
-F̂   Perceived feasible set    constant -- identical, same order, in
-                               every scenario
-V   Valuation                 constant
-H   Time horizon              constant
-D   Decision process          CHANGED -- decision_process and
-                               decision_parameters vary; F̂ never does
-C   Selected action           observed result
+TER instantiation
+-----------------
+Component                     Instantiation in this test                     Status
+G   Objective                 choose preferred coffee                        fixed
+M   Model of Reality          specified but empty                            fixed
+F̂   Perceived Feasible Set    nearby_coffee, office_coffee, best_coffee      fixed (identical, same
+                              -- same order in every scenario                order, in every scenario)
+V   Valuation                 ValuationRule.MAPPED: a hand-assigned value    fixed
+                              for each coffee
+H   Time Horizon              current purchase                               fixed
+D   Decision Process          MAXIMIZE, or LIMITED_SEARCH with               varied
+                              decision_parameters search_limit and
+                              search_order
+C   Selected Action           see Scenario                                   observed
+F_t, R, outcomes              F_t and outcome realization are outside this test's scope.
 
 Economic mechanism
 ------------------
-MAXIMIZE searches every perceived feasible action and selects the
-highest-valued one.
+MAXIMIZE considers every action in the perceived feasible set and selects
+the highest-valued one.
 
-LIMITED_SEARCH considers only the first search_limit actions of a
-search sequence -- decision_parameters["search_order"] if given,
-otherwise F̂'s own order -- and selects the highest-valued action among
-those considered. It can therefore stop short of the actually best
-action.
+LIMITED_SEARCH considers only the first search_limit actions of a search
+sequence -- decision_parameters["search_order"] if given, otherwise F̂'s
+own order -- and selects the highest-valued action among those
+considered. It can therefore stop short of the highest-valued action.
 
 Assumptions
 -----------
@@ -71,17 +61,16 @@ Assumptions
 - perceived_feasible_set is identical, in the same order, across every
   scenario in this test. Search order is represented by
   decision_parameters["search_order"], never by reordering F̂.
-- The actual feasible set F is identical to the perceived feasible set
-  F̂, so this test isolates the decision process rather than mistaken
-  feasibility or Action to Outcome mechanics.
+- Mistaken feasibility and action-to-outcome mechanics are not exercised;
+  this test isolates the decision process.
 
 Hypothesis
 ----------
-1. Exhaustive search selects the highest valued action.
-2. Limited search can select a lower valued action.
+In this configured scenario:
+1. Exhaustive search selects the highest-valued action.
+2. Limited search can select a lower-valued action.
 3. Increasing search depth can change the selected action.
 4. Search order can matter under incomplete search.
-5. All cases use the same TER architecture.
 """
 
 import unittest
@@ -118,11 +107,6 @@ BASE_AGENT = AgentSpec(
     name="coffee_buyer",
     objective="choose preferred coffee",
     model_of_reality={},
-    actual_feasible_set=[
-        NEARBY_COFFEE,
-        OFFICE_COFFEE,
-        BEST_COFFEE,
-    ],
     perceived_feasible_set=[
         NEARBY_COFFEE,
         OFFICE_COFFEE,
@@ -265,14 +249,14 @@ class TestBoundedRationality(unittest.TestCase):
             BEST_COFFEE,
         )
 
-        # F̂ itself never changed -- only D's search_order configuration
-        # did.
+        # Scenario-premise check: F̂ itself never changed -- only D's
+        # search_order configuration did.
         self.assertEqual(
             original_agent.perceived_feasible_set,
             reordered_agent.perceived_feasible_set,
         )
 
-    def test_same_architecture_supports_bounded_and_exhaustive_search(self):
+    def test_selected_action_belongs_to_perceived_feasible_set_under_each_search_process(self):
         bounded_agent = run_scenario(LIMITED_SCENARIO).agent(BASE_AGENT.name)
         exhaustive_agent = run_scenario(EXHAUSTIVE_SCENARIO).agent(BASE_AGENT.name)
 

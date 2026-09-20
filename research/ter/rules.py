@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Any, Callable
 
 from research.ter.agent import AgentState
-from research.ter.outcome import RealityView
+from research.ter.outcome import RealityView, permitted_actions_for
 
 
 RULES: dict[str, Callable[..., Any]] = {}
@@ -53,12 +53,15 @@ def get_rule(name: str) -> Callable[..., Any]:
 #     Feedback rule:     (state, outcome, parameters)         -> state
 #
 # The reality function is R: a model-specific implementation of
-# O = R(C, F, P, S) that determines the realized outcome from the
-# selected actions and relevant conditions. Its return value contributes
-# to O; R is not O itself.
+# O_t = R(C_1,t, ..., C_n,t, F_t) that determines the realized outcome
+# from the selected actions and the objective feasible state of reality.
+# F_t is carried by `state` (including state["permitted_actions"], the
+# agents' permitted actions) and `parameters`. Its return value
+# contributes to O; R is not O itself.
 
 
 def build_agent_results(
+    state: dict[str, Any],
     agents: list[RealityView],
     actions: list[Any],
     compute: Callable[[RealityView, Any], dict[str, Any]],
@@ -75,14 +78,15 @@ def build_agent_results(
     instead.
 
     compute(agent, action) -> dict is called once per agent for its
-    actually selected action, and once per action in that agent's
-    actual_feasible_set, so ScenarioResult.agent(name).outcome_for(...)
-    can look up an unselected action's outcome later without any rule
-    being re-executed. Alternatives range over F, not F_hat: R (this
-    helper included) only ever receives a RealityView, which carries F
-    and never the agent's perceived_feasible_set -- reality's own "what
-    else could have happened" is a question about what was actually
-    possible, not about what the agent believed was possible.
+    actually selected action, and once per action F_t permits for that
+    agent (state["permitted_actions"]), so
+    ScenarioResult.agent(name).outcome_for(...) can look up an unselected
+    action's outcome later without any rule being re-executed.
+    Alternatives range over what F_t permits, not F_hat: R (this helper
+    included) only ever receives a RealityView, which never carries the
+    agent's perceived_feasible_set -- reality's own "what else could have
+    happened" is a question about what was actually possible, not about
+    what the agent believed was possible.
 
     Returns:
 
@@ -93,7 +97,7 @@ def build_agent_results(
             "alternative_outcomes": {
                 agent.name: {
                     action: compute(agent, action)
-                    for action in agent.actual_feasible_set
+                    for action in permitted_actions_for(state, agent)
                 },
             },
         }
@@ -106,7 +110,7 @@ def build_agent_results(
 
         alternative_outcomes[agent.name] = {
             candidate: compute(agent, candidate)
-            for candidate in agent.actual_feasible_set
+            for candidate in permitted_actions_for(state, agent)
         }
 
     return {
@@ -660,9 +664,9 @@ def social_value_outcome(
     agent's own valuation["private_values"] (V): the two are declared
     equal in every current scenario that uses this rule (see
     test_08_externalities.py), the same way that scenario's
-    perceived_external_effects (M) and external_effects (P) are declared
-    equal -- TER does not require either equality, and R must not read M
-    or V to find out.
+    perceived_external_effects (M) and external_effects (a condition of
+    F_t) are declared equal -- TER does not require either equality, and
+    R must not read M or V to find out.
 
     Required scenario parameters:
 
@@ -676,8 +680,9 @@ def social_value_outcome(
 
         agent_results         the generic outcome for the action actually
                                selected.
-        alternative_outcomes  the generic outcome for every action in that
-                               agent's actual_feasible_set (including the
+        alternative_outcomes  the generic outcome for every action F_t
+                               permits for that agent
+                               (state["permitted_actions"], including the
                                selected one). Lets a result look up an
                                unselected-but-actually-feasible action's
                                outcome (see AgentResult.outcome_for)
@@ -703,7 +708,7 @@ def social_value_outcome(
 
         alternative_outcomes[agent.name] = {
             candidate: compute_outcome(agent, candidate)
-            for candidate in agent.actual_feasible_set
+            for candidate in permitted_actions_for(state, agent)
         }
 
     return {

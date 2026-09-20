@@ -1,10 +1,12 @@
 """
 TER Replication Test 05: Prisoner's Dilemma
+Canonical TER: theory/academic.md, Models 5.1 and 5.3
 
 Economic question
-------------------
-Can TER represent the standard Prisoner's Dilemma payoff structure and
-dominant-strategy result using the same agent decision architecture?
+-----------------
+In a standard Prisoner's Dilemma payoff structure, does each player's
+own valuation of its actions select the dominant strategy, and do two such
+players jointly reach the one-shot equilibrium?
 
 Scenario
 --------
@@ -16,35 +18,38 @@ outcome using its own belief about what the other will do:
         COOPERATE/COOPERATE = 3   COOPERATE/DEFECT = 0
         DEFECT/COOPERATE    = 5   DEFECT/DEFECT    = 1
 
-TER mapping
------------
-Core architecture:
+Single-player scenarios vary the player's belief about the counterpart
+(Model 5.1 only). One two-player scenario adds R, which realizes payoffs
+from both players' selected actions (Model 5.3).
 
-    (G, M, F̂, V, H, D) ──→ C ──→ O
+TER instantiation
+-----------------
+Component                     Instantiation in this test                     Status
+G   Objective                 maximize own payoff                            fixed
+M   Model of Reality          expected_other_action: the player's belief     varied (across the
+                              about the counterpart's move                   single-player scenarios)
+F̂   Perceived Feasible Set    COOPERATE, DEFECT                              fixed
+V   Valuation                 ValuationRule.PAYOFF_MATRIX: the player's      fixed
+                              own perceived payoff_matrix, looked up
+                              against M
+H   Time Horizon              single interaction                             fixed
+D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+C   Selected Action           "cooperate" or "defect", one per player        observed
+F_t aspects used by R         actual_payoff_matrix: the scenario's own       fixed
+                              payoff structure, a scenario-specified
+                              condition R reads (not a complete
+                              representation of F_t); two-player scenario
+                              only
+R   Reality Function          RealityFunction.PAYOFF_MATRIX_OUTCOME:         fixed
+                              realizes payoffs from both players' selected
+                              actions and actual_payoff_matrix, never from
+                              any player's V
+O_t System Outcome            the realized payoffs of both players, from R   observed
+Feedback (Model 5.5)          none                                           --
 
-    M   expected_other_action -- each player's belief about the
-        counterpart's move
-    V   payoff_matrix -- each player's own perceived payoff structure,
-        used only to value actions (ValuationRule.PAYOFF_MATRIX)
-    D   DecisionProcess.MAXIMIZE
-    C   "cooperate" or "defect", one per player
-    R   RealityFunction.PAYOFF_MATRIX_OUTCOME -- realizes payoffs from
-        both players' actual selected actions and the scenario's own
-        actual_payoff_matrix, never from any player's V
-    O   each player's realized payoff
-
-F equals F̂ throughout: both actions are always actually feasible.
-
-Tested TER mechanics
---------------------
-G   Objective              constant: maximize own payoff
-M   Model of reality       expected_other_action -- CHANGED across
-                            single-player scenarios
-V   Valuation              payoff_matrix (perceived), looked up against M
-D   Decision process       constant: DecisionProcess.MAXIMIZE
-C   Selected action        observed result
-R   Reality function       RealityFunction.PAYOFF_MATRIX_OUTCOME
-O   Realized outcome       each player's realized payoff, from R
+In the two-player scenario R takes both players' selected actions
+together, so Model 5.3 applies. This test defines no individual outcomes
+O_{i,t} and no relationship between them and O_t.
 
 Economic mechanism
 ------------------
@@ -53,9 +58,9 @@ belief about the counterpart, so DEFECT is strictly dominant for each
 player under this payoff structure. When both players face that same
 structure, (DEFECT, DEFECT) is the Nash equilibrium of this one-shot
 game -- neither player can do better by unilaterally switching, given
-the other's action. TER is not running a general equilibrium solver
-here; the two independent players simply each apply the same dominant
-strategy, and the pairing of their choices is read off afterward.
+the other's action. The two players decide independently, each applying
+the same valuation and decision process; the pairing of their choices is
+read off afterward, and no equilibrium is computed.
 
 Assumptions
 -----------
@@ -67,22 +72,23 @@ Assumptions
   counterpart is a fixed model input.
 - Each player correctly understands the payoff structure: the payoff
   matrix in V (PAYOFF_MATRIX, used for valuation) matches the actual
-  payoff structure used by R (ACTUAL_PAYOFF_MATRIX, used to realize O)
+  payoff structure used by R (ACTUAL_PAYOFF_MATRIX, used to realize O_t)
   exactly. This is a simplifying assumption of this test, not a TER
   requirement -- a player could misjudge the game's true payoffs, and R
   would still realize the actual ones.
 
 Hypothesis
 ----------
+In this configured scenario:
 1. Defection is preferred when the other agent cooperates.
 2. Defection is preferred when the other agent defects.
 3. Expected_other_action changes the valuation of defection itself, even
    though defection remains selected either way.
 4. Defection is strictly dominant for each player, so (DEFECT, DEFECT)
    is the resulting one-shot Nash equilibrium.
-5. Mutual cooperation would make both agents better off.
-6. The same TER architecture represents all strategic cases.
-7. The standard Prisoner's Dilemma payoff ordering is preserved.
+5. The payoff ordering is the standard Prisoner's Dilemma ordering
+   (temptation > reward > punishment > sucker), so mutual cooperation
+   would leave both players better off than mutual defection.
 """
 
 import unittest
@@ -122,7 +128,7 @@ PAYOFF_MATRIX = {
     },
 }
 
-# R: the actual payoff structure used to realize O
+# R: the actual payoff structure used to realize O_t
 # (RealityFunction.PAYOFF_MATRIX_OUTCOME). This test assumes each
 # player understands the game correctly, so this matches PAYOFF_MATRIX
 # exactly -- but it is declared independently and read only by the
@@ -152,10 +158,6 @@ BASE_PLAYER = AgentSpec(
     valuation={
         "payoff_matrix": PAYOFF_MATRIX,
     },
-    actual_feasible_set=[
-        COOPERATE,
-        DEFECT,
-    ],
     perceived_feasible_set=[
         COOPERATE,
         DEFECT,
@@ -302,38 +304,9 @@ class TestPrisonersDilemma(unittest.TestCase):
             (1, 1),
         )
 
-    def test_mutual_cooperation_would_make_both_agents_better_off(self):
-        mutual_defection = (
-            PAYOFF_MATRIX[DEFECT][DEFECT],
-            PAYOFF_MATRIX[DEFECT][DEFECT],
-        )
-
-        mutual_cooperation = (
-            PAYOFF_MATRIX[COOPERATE][COOPERATE],
-            PAYOFF_MATRIX[COOPERATE][COOPERATE],
-        )
-
-        self.assertGreater(
-            mutual_cooperation[0],
-            mutual_defection[0],
-        )
-
-        self.assertGreater(
-            mutual_cooperation[1],
-            mutual_defection[1],
-        )
-
-        self.assertEqual(
-            mutual_cooperation,
-            (3, 3),
-        )
-
-        self.assertEqual(
-            mutual_defection,
-            (1, 1),
-        )
-
     def test_standard_payoff_ordering_is_preserved(self):
+        # Scenario-premise check on PAYOFF_MATRIX: no TER model is
+        # exercised here.
         temptation = PAYOFF_MATRIX[DEFECT][COOPERATE]
         reward = PAYOFF_MATRIX[COOPERATE][COOPERATE]
         punishment = PAYOFF_MATRIX[DEFECT][DEFECT]

@@ -1,30 +1,25 @@
 """
-Framework test: agent snapshot contract.
+Framework test: history isolation
 
 Purpose
 -------
-Not an economic replication test. Verifies research/ter/snapshot.py and
-its wiring into research/ter/runner.py::run_scenario: that requesting
-per-period AgentState snapshots via Scenario.snapshot_fields correctly
-isolates historical state from later mutation, captures only the fields
-requested, stores nothing when no fields are requested, and never
-changes execution behavior.
+Verifies that ScenarioResult.history stays a safe record after later
+periods mutate state:
 
-Why this exists
+- history[t]["agents"] holds live AgentState objects, so it reflects later
+  mutation. Scenario.snapshot_fields is the opt-in way to capture
+  independent copies under history[t]["agent_snapshots"][agent_name].
+- history[t]["permitted_actions"] (the reality-side implementation index
+  of the scenario-relevant aspects of F_t) keeps its own value per period,
+  whether a feedback rule or a reality function mutates it.
+
+Stress mutations
 ----------------
-ScenarioResult.history[t]["agents"] intentionally keeps live, mutable
-AgentState objects shared across every period -- necessary so a
-feedback rule's mutation of an agent's model_of_reality,
-actual_feasible_set, or perceived_feasible_set can affect that agent's
-later decisions. But it also means history[t]["agents"] is not a safe
-historical record: reading it after the scenario finishes shows
-whatever those objects hold *now*, not what they held at period t, once
-a later period has mutated them.
-
-Scenario.snapshot_fields is the opt-in mechanism that avoids that trap:
-independent, deep-copied captures of exactly the requested fields, taken
-once per period, stored under history[t]["agent_snapshots"][agent_name].
-This test proves that mechanism, not any economic behavior.
+The local feedback and reality rules below deliberately mutate live agent
+state and state["permitted_actions"] in place, to check that history
+entries are unaffected. They are artificial mutations used to test history
+isolation. They are not TER dynamics, not a specification of Model 5.5
+feedback, and not evidence of any direct C_t -> F_{t+1} pathway.
 """
 
 import unittest
@@ -40,11 +35,10 @@ TAG_B = "b"
 @register_rule("snapshot_contract_mutating_feedback")
 def snapshot_contract_mutating_feedback(state, outcome, parameters):
     """
-    Local feedback rule for this test only. Starting the period after
-    the agent has already made one recorded decision, mutates the live
-    agent's perceived_feasible_set in place and flips a
-    model_of_reality flag -- the worst case for aliasing, since an
-    unsafe (non-deep-copying) snapshot would still reflect this change.
+    Artificial stressor, not a TER feedback specification: after the
+    agent's first decision, mutate the live agent and permitted_actions in
+    place, to check that history is unaffected. Not a TER dynamic and not
+    evidence of a direct C_t -> F_{t+1} pathway.
     """
     previously_selected = state.get("selected_action_by_agent", {})
 
@@ -54,17 +48,30 @@ def snapshot_contract_mutating_feedback(state, outcome, parameters):
                 agent.perceived_feasible_set.append(TAG_B)
             agent.model_of_reality["mutated"] = True
 
+            permitted = state["permitted_actions"][agent.name]
+            if TAG_B in permitted:
+                permitted.remove(TAG_B)
+
     return state
+
+
+@register_rule("snapshot_contract_mutating_reality")
+def snapshot_contract_mutating_reality(state, agents, actions, parameters):
+    """
+    Artificial stressor, not a TER reality function: mutate the
+    permitted_actions it was handed in place and report nothing.
+    """
+    for agent in agents:
+        permitted = state["permitted_actions"][agent.name]
+        if TAG_B in permitted:
+            permitted.remove(TAG_B)
+
+    return {}
 
 
 @register_rule("snapshot_contract_prefer_a")
 def snapshot_contract_prefer_a(agent):
-    """
-    Local decision rule for this test only. Always selects TAG_A,
-    regardless of what else is perceived feasible -- this test is about
-    snapshot correctness, not decision behavior, so the decision itself
-    is held deliberately constant and uninteresting.
-    """
+    """Always select TAG_A, so decisions stay constant."""
     return TAG_A
 
 
@@ -78,10 +85,6 @@ BASE_AGENT = AgentSpec(
         },
         "mutated": False,
     },
-    actual_feasible_set=[
-        TAG_A,
-        TAG_B,
-    ],
     perceived_feasible_set=[
         TAG_A,
     ],
@@ -92,17 +95,18 @@ BASE_AGENT = AgentSpec(
 
 SNAPSHOT_SCENARIO = Scenario(
     name="Agent Snapshot Contract",
-    description=(
-        "A minimal scenario for verifying snapshot isolation, "
-        "selectivity, and non-interference with execution."
-    ),
+    description="Minimal scenario for verifying history isolation.",
     periods=2,
     initial_state={
         "period": 0,
+        "permitted_actions": {
+            BASE_AGENT.name: [TAG_A, TAG_B],
+        },
     },
     agents=[
         BASE_AGENT,
     ],
+    # Artificial mutation used to test history isolation; not a TER dynamic.
     feedback_rule="snapshot_contract_mutating_feedback",
     snapshot_fields=["model_of_reality", "perceived_feasible_set"],
 )
@@ -117,62 +121,26 @@ SINGLE_FIELD_SNAPSHOT_SCENARIO = SNAPSHOT_SCENARIO.variant(
 
 
 class TestAgentSnapshotContract(unittest.TestCase):
-    TEST_NAME = "Framework: Agent Snapshot Contract"
+    TEST_NAME = "Framework: History Isolation Contract"
 
     def test_an_earlier_snapshot_is_unaffected_by_a_later_mutation(self):
         result = run_scenario(SNAPSHOT_SCENARIO)
 
-        period_0_snapshot = result.history[0]["agent_snapshots"][BASE_AGENT.name]
+        snapshot = result.history[0]["agent_snapshots"][BASE_AGENT.name]
+        live_agent = result.final["agents"][0]
 
-        self.assertEqual(
-            period_0_snapshot.perceived_feasible_set,
-            [TAG_A],
-        )
+        # The live agent was mutated by feedback; the snapshot was not.
+        self.assertIn(TAG_B, live_agent.perceived_feasible_set)
+        self.assertTrue(live_agent.model_of_reality["mutated"])
 
-        self.assertFalse(
-            period_0_snapshot.model_of_reality["mutated"],
-        )
-
-        # The live agent has since been mutated by feedback...
-        final_agent = result.final["agents"][0]
-
-        self.assertIn(
-            TAG_B,
-            final_agent.perceived_feasible_set,
-        )
-
-        self.assertTrue(
-            final_agent.model_of_reality["mutated"],
-        )
-
-        # ...but reading the period 0 snapshot again now still shows the
-        # original values: it was never aliased to the live object.
-        self.assertEqual(
-            period_0_snapshot.perceived_feasible_set,
-            [TAG_A],
-        )
-
-        self.assertFalse(
-            period_0_snapshot.model_of_reality["mutated"],
-        )
-
-        self.assertIsNot(
-            period_0_snapshot.fields["perceived_feasible_set"],
-            final_agent.perceived_feasible_set,
-        )
+        self.assertEqual(snapshot.perceived_feasible_set, [TAG_A])
+        self.assertFalse(snapshot.model_of_reality["mutated"])
 
     def test_different_periods_contain_independent_snapshot_values(self):
         result = run_scenario(SNAPSHOT_SCENARIO)
 
-        # Feedback runs after a period's own decision and realization,
-        # using that period's own recorded selection, and updates the
-        # environment the *following* period decides from. TAG_A is
-        # only on record once period 0's own step has run, so the
-        # mutation is applied at the end of period 0's step -- after
-        # period 0's own snapshot (history[1]) was already taken, and
-        # before period 1's decision. It first appears in history[2]
-        # (period 1's snapshot, taken before period 1's own feedback),
-        # not history[1] (period 0's).
+        # Snapshots are taken before that period's feedback, so period 0's
+        # mutation first appears in history[2], not history[1].
         before_mutation = result.history[1]["agent_snapshots"][BASE_AGENT.name]
         after_mutation = result.history[2]["agent_snapshots"][BASE_AGENT.name]
 
@@ -250,3 +218,30 @@ class TestAgentSnapshotContract(unittest.TestCase):
                 for state in without_snapshots.history[1:]
             ],
         )
+
+    def test_history_keeps_each_periods_permitted_actions_when_a_later_period_mutates_them(self):
+        history = run_scenario(SNAPSHOT_SCENARIO).history
+
+        self.assertEqual(
+            history[0]["permitted_actions"],
+            {BASE_AGENT.name: [TAG_A, TAG_B]},
+        )
+
+        self.assertEqual(
+            history[1]["permitted_actions"],
+            {BASE_AGENT.name: [TAG_A]},
+        )
+
+    def test_a_reality_function_mutating_permitted_actions_does_not_alter_history(self):
+        history = run_scenario(
+            SNAPSHOT_SCENARIO.variant(
+                reality_function="snapshot_contract_mutating_reality",
+                feedback_rule=None,
+            )
+        ).history
+
+        for entry in history:
+            self.assertEqual(
+                entry["permitted_actions"],
+                {BASE_AGENT.name: [TAG_A, TAG_B]},
+            )

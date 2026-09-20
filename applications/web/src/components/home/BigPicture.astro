@@ -1,0 +1,147 @@
+---
+import SectionIntro from "../ui/SectionIntro.astro";
+---
+<section class="big-picture section-sm">
+  <div class="shell">
+    <SectionIntro
+      eyebrow=""
+      title="Economic outcomes emerge from agent decisions."
+      description="Agents make decisions, their actions interact with reality and with one another, and those interactions produce outcomes that can shape what happens next."
+    />
+
+    <div class="flow" role="list" aria-label="Agents, Decisions, Interactions, Outcomes, Feedback">
+      <div class="flow-step" role="listitem" data-reveal>
+        <span class="flow-index">01</span>
+        <h3>Agents</h3>
+        <p>Individuals, businesses, governments, and organizations act in relation to objectives.</p>
+      </div>
+
+      <div class="flow-connector" aria-hidden="true"></div>
+
+      <div class="flow-step" role="listitem" data-reveal>
+        <span class="flow-index">02</span>
+        <h3>Decisions</h3>
+        <p>Agents choose from the actions they perceive as available.</p>
+      </div>
+
+      <div class="flow-connector" aria-hidden="true"></div>
+
+      <div class="flow-step" role="listitem" data-reveal>
+        <span class="flow-index">03</span>
+        <h3>Interactions</h3>
+        <p>Selected actions encounter reality and other agents.</p>
+      </div>
+
+      <div class="flow-connector" aria-hidden="true"></div>
+
+      <div class="flow-step" role="listitem" data-reveal>
+        <span class="flow-index">04</span>
+        <h3>Outcomes</h3>
+        <p>Those interactions produce economic outcomes.</p>
+      </div>
+
+      <div class="flow-connector" aria-hidden="true"></div>
+
+      <div class="flow-step" role="listitem" data-reveal>
+        <span class="flow-index">05</span>
+        <h3>Feedback</h3>
+        <p>Outcomes can change the conditions shaping future decisions.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .big-picture {
+    background: var(--surface-2);
+  }
+
+  /* Main TER flow */
+
+  .flow {
+    display: flex;
+    align-items: stretch;
+    margin-top: clamp(3rem, 6vw, 5rem);
+  }
+
+  .flow-step {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 13rem;
+    padding: 1.75rem 1.5rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+  }
+
+  .flow-index {
+    color: var(--muted);
+    font-size: 0.9rem;
+    font-weight: 750;
+    line-height: 1;
+  }
+
+  .flow-step h3 {
+    margin: 1rem 0 0;
+    font-size: clamp(1.35rem, 1.8vw, 1.65rem);
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+  }
+
+  .flow-step p {
+    margin: 0.8rem 0 0;
+    color: var(--muted);
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .flow-connector {
+    position: relative;
+    flex: 0 0 2rem;
+    align-self: center;
+    height: 1px;
+    background: var(--line);
+  }
+
+  .flow-connector::after {
+    position: absolute;
+    top: 50%;
+    right: -1px;
+    width: 0;
+    height: 0;
+    border-top: 0.3rem solid transparent;
+    border-bottom: 0.3rem solid transparent;
+    border-left: 0.4rem solid var(--line);
+    content: "";
+    transform: translateY(-50%);
+  }
+
+  @media (max-width: 900px) {
+    .flow {
+      flex-direction: column;
+    }
+
+    .flow-step {
+      min-height: auto;
+    }
+
+    .flow-connector {
+      width: 1px;
+      height: 1.75rem;
+      flex-basis: 1.75rem;
+      align-self: center;
+    }
+
+    .flow-connector::after {
+      top: auto;
+      right: 50%;
+      bottom: -1px;
+      border-top: 0.4rem solid var(--line);
+      border-right: 0.3rem solid transparent;
+      border-bottom: 0;
+      border-left: 0.3rem solid transparent;
+      transform: translateX(50%);
+    }
+  }
+</style>

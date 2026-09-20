@@ -1,11 +1,13 @@
 """
 TER Replication Test 06: Coordination and Multiple Equilibria
+Canonical TER: theory/academic.md, Models 5.1 and 5.3
 
 Economic question
-------------------
-Can TER represent a coordination game with multiple equilibria, where
-each agent's belief about the counterpart's choice determines which of
-several mutually consistent outcomes is realized?
+-----------------
+In a coordination game with multiple equilibria, does each firm's belief
+about the counterpart's choice determine which standard it selects, and
+which of several mutually consistent outcomes is realized when two firms
+share a belief?
 
 Scenario
 --------
@@ -13,42 +15,45 @@ Two firms must each adopt one of two incompatible technology standards,
 A or B. Compatibility, not intrinsic quality, determines payoff:
 
     both choose A          -> payoff 4 each
-    both choose B           -> payoff 3 each
+    both choose B          -> payoff 3 each
     different standards    -> payoff 0 each
 
 This is a concrete instance of the general coordination mechanism:
 whichever standard each firm expects the other to adopt, matching it is
 that firm's best response.
 
-TER mapping
------------
-Core architecture:
+Single-firm scenarios vary the firm's belief about the counterpart
+(Model 5.1 only). Two-firm scenarios add R, which realizes payoffs from
+both firms' selected actions (Model 5.3).
 
-    (G, M, F̂, V, H, D) ──→ C ──→ O
+TER instantiation
+-----------------
+Component                     Instantiation in this test                     Status
+G   Objective                 maximize coordination payoff                   fixed
+M   Model of Reality          expected_other_action: the firm's belief       varied (across
+                              about which standard the counterpart will      scenarios)
+                              adopt
+F̂   Perceived Feasible Set    standard_a, standard_b                         fixed
+V   Valuation                 ValuationRule.PAYOFF_MATRIX: the firm's own    fixed
+                              perceived payoff_matrix, looked up against M
+H   Time Horizon              current coordination decision                  fixed
+D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+C   Selected Action           "standard_a" or "standard_b", one per firm     observed
+F_t aspects used by R         actual_payoff_matrix: the scenario's own       fixed
+                              payoff structure, a scenario-specified
+                              condition R reads (not a complete
+                              representation of F_t); two-firm scenarios
+                              only
+R   Reality Function          RealityFunction.PAYOFF_MATRIX_OUTCOME:         fixed
+                              realizes payoffs from both firms' selected
+                              actions and actual_payoff_matrix, never from
+                              any firm's V
+O_t System Outcome            the realized payoffs of both firms, from R     observed
+Feedback (Model 5.5)          none                                           --
 
-    M   expected_other_action -- each firm's belief about which
-        standard the counterpart will adopt
-    V   payoff_matrix -- each firm's own perceived payoff structure,
-        used only to value actions (ValuationRule.PAYOFF_MATRIX)
-    D   DecisionProcess.MAXIMIZE
-    C   "standard_a" or "standard_b", one per firm
-    R   RealityFunction.PAYOFF_MATRIX_OUTCOME -- realizes payoffs from
-        both firms' actual selected actions and the scenario's own
-        actual_payoff_matrix, never from any firm's V
-    O   each firm's realized payoff
-
-F equals F̂ throughout: both standards are always actually feasible.
-
-Tested TER mechanics
---------------------
-G   Objective              constant: maximize coordination payoff
-M   Model of reality       expected_other_action -- CHANGED across
-                            scenarios
-V   Valuation              payoff_matrix (perceived), looked up against M
-D   Decision process       constant: DecisionProcess.MAXIMIZE
-C   Selected action        observed result
-R   Reality function       RealityFunction.PAYOFF_MATRIX_OUTCOME
-O   Realized outcome       each firm's realized payoff, from R
+In the two-firm scenarios R takes both firms' selected actions together,
+so Model 5.3 applies. This test defines no individual outcomes O_{i,t}
+and no relationship between them and O_t.
 
 Economic mechanism
 ------------------
@@ -59,11 +64,11 @@ share the same expectation, (A, A) and (B, B) are both mutual
 best-response Nash equilibria of this one-shot game -- neither firm can
 do better by unilaterally switching, given the other's action. (A, A)
 Pareto-dominates (B, B) under the stated payoff structure: both firms
-are strictly better off. TER is not running a general equilibrium
-solver here; the two independent firms simply each apply the same
-best-response rule, and the pairing of their choices is read off
-afterward. When their expectations disagree, neither firm's choice
-matches the other's, and both realize the miscoordination payoff.
+are strictly better off. The two firms decide independently, each
+applying the same valuation and decision process; the pairing of their
+choices is read off afterward, and no equilibrium is computed. When
+their expectations disagree, neither firm's choice matches the other's,
+and both realize the miscoordination payoff.
 
 Assumptions
 -----------
@@ -75,13 +80,14 @@ Assumptions
   is a fixed model input.
 - Each firm correctly understands the payoff structure: the payoff
   matrix in V (PAYOFF_MATRIX, used for valuation) matches the actual
-  payoff structure used by R (ACTUAL_PAYOFF_MATRIX, used to realize O)
+  payoff structure used by R (ACTUAL_PAYOFF_MATRIX, used to realize O_t)
   exactly. This is a simplifying assumption of this test, not a TER
   requirement -- a firm could misjudge the game's true payoffs, and R
   would still realize the actual ones.
 
 Hypothesis
 ----------
+In this configured scenario:
 1. Expecting standard A leads to choosing A.
 2. Expecting standard B leads to choosing B.
 3. (A, A) and (B, B) are both mutual best-response Nash equilibria of
@@ -89,7 +95,6 @@ Hypothesis
 4. (A, A) Pareto-dominates (B, B) under the stated payoff structure.
 5. Miscoordination produces lower payoffs than either coordinated
    equilibrium.
-6. The same TER architecture represents all cases.
 """
 
 import unittest
@@ -129,7 +134,7 @@ PAYOFF_MATRIX = {
     },
 }
 
-# R: the actual payoff structure used to realize O
+# R: the actual payoff structure used to realize O_t
 # (RealityFunction.PAYOFF_MATRIX_OUTCOME). This test assumes each firm
 # understands the game correctly, so this matches PAYOFF_MATRIX exactly
 # -- but it is declared independently and read only by the reality
@@ -159,10 +164,6 @@ BASE_AGENT = AgentSpec(
     valuation={
         "payoff_matrix": PAYOFF_MATRIX,
     },
-    actual_feasible_set=[
-        STANDARD_A,
-        STANDARD_B,
-    ],
     perceived_feasible_set=[
         STANDARD_A,
         STANDARD_B,
@@ -321,14 +322,10 @@ class TestCoordination(unittest.TestCase):
             STANDARD_B,
         )
 
+        # Scenario-premise check: only M differs between the two agents.
         self.assertEqual(
             expects_a.objective,
             expects_b.objective,
-        )
-
-        self.assertEqual(
-            expects_a.actual_feasible_set,
-            expects_b.actual_feasible_set,
         )
 
     def test_both_coordinated_outcomes_are_equilibria(self):

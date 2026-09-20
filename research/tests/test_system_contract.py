@@ -1,23 +1,28 @@
 """
-Framework test: multi-agent system contract.
+Framework test: multi-agent system contract
+
+Canonical TER: theory/academic.md, Model 5.3
 
 Purpose
 -------
-Not an economic replication test. Verifies TER Model 5.3's system step
-(research/ter/system.py::run_system) structurally, independent of any
-specific economic scenario:
+Verifies the Model 5.3 system step (research/ter/system.py::run_system)
+structurally, independent of any economic scenario:
 
-1. Every agent independently selects an action through the standard TER
+1. Every agent independently selects an action through the standard
    decision process (Model 5.1); run_system collects one action per
    agent.
 2. Actions correspond to the correct agent -- ordering is preserved,
    regardless of the order agents are supplied in.
 3. The outcome function receives the complete joint action set, not a
    subset and not a re-derived one.
-4. run_system reports exactly one system outcome, taken directly from
-   whatever the outcome function returns.
+4. run_system reports exactly one system outcome (O_t), taken directly
+   from whatever the outcome function returns.
 
-This does not exercise research.ter.market's separate multi-agent
+Out of scope
+------------
+F_t: run_system passes the outcome function only agents and actions. No
+relationship between individual outcomes O_{i,t} and O_t is defined or
+tested. This does not exercise research.ter.market's separate multi-agent
 mechanism (evaluate_market/find_market_clearing_states) or any
 Scenario/run_scenario machinery -- both already have their own coverage.
 """
@@ -39,7 +44,6 @@ def make_agent(name: str) -> AgentState:
     return AgentState(
         objective="test objective",
         model_of_reality={},
-        actual_feasible_set=[action],
         perceived_feasible_set=[action],
         value=lambda a, agent: 0.0,
         horizon=None,

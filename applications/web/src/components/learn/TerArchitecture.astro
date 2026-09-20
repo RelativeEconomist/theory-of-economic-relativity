@@ -6,6 +6,9 @@ interface Props {
 }
 
 const { components } = Astro.props;
+
+// Symbols such as "F_t" are stored as plain text; render the time index as a subscript.
+const renderSymbol = (symbol: string) => symbol.replace(/_(\w+)/, "<sub>$1</sub>");
 ---
 <section class="ter-architecture doc-section">
   <p class="eyebrow">TER architecture</p>
@@ -31,7 +34,7 @@ const { components } = Astro.props;
     {components.map((component) => (
       <div class="architecture-row" role="row">
         <span class="component-name" role="cell">
-          <b>{component.symbol}</b> {component.name}
+          <b set:html={renderSymbol(component.symbol)} /> {component.name}
         </span>
         <span class="component-meaning" role="cell">{component.definition}</span>
         <span class="component-mapping" role="cell">{component.mapping}</span>

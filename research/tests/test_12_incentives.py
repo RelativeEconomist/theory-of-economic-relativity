@@ -1,10 +1,11 @@
 """
 TER Replication Test 12: Incentives and Behavioral Response
+Canonical TER: theory/academic.md, Model 5.1
 
 Economic question
-------------------
-Can TER represent an incentive change where adding a cost to one action
-changes the action selected by the same agent?
+-----------------
+Can adding a cost to one action change the action selected by the same
+agent?
 
 Scenario
 --------
@@ -15,33 +16,21 @@ A commuter chooses DRIVE or TAKE_TRANSIT:
 
 Without a tax, DRIVE (10) beats TAKE_TRANSIT (7). With a driving tax of
 4, DRIVE's net value falls to 6 while TAKE_TRANSIT remains 7 -- the same
-agent switches from DRIVE to TAKE_TRANSIT.
+agent switches from DRIVE to TAKE_TRANSIT. Only DRIVE's cost differs
+between the two scenarios.
 
-TER mapping
------------
-Core architecture:
-
-    (G, M, F̂, V, H, D) ──→ C
-
-    G   choose the most valuable way to commute
-    M   specified but empty
-    F̂   DRIVE, TAKE_TRANSIT -- F equals F̂
-    V   ValuationRule.NET -- benefit minus cost
-    H   current commute decision
-    D   DecisionProcess.MAXIMIZE
-    C   the selected commute action
-
-Tested TER mechanics
---------------------
-G     Objective              constant: choose the most valuable way to
-                              commute
-M     Model of reality       specified but empty
-F, F̂  Feasible sets          DRIVE, TAKE_TRANSIT; F̂ equals F
-V     Valuation               ValuationRule.NET -- CHANGED between
-                              scenarios (DRIVE's cost only)
-H     Time horizon           constant: current commute decision
-D     Decision process       constant: DecisionProcess.MAXIMIZE
-C     Selected action        DRIVE or TAKE_TRANSIT, observed result
+TER instantiation
+-----------------
+Component                     Instantiation in this test                     Status
+G   Objective                 choose the most valuable way to commute        fixed
+M   Model of Reality          specified but empty                            fixed
+F̂   Perceived Feasible Set    DRIVE, TAKE_TRANSIT                            fixed
+V   Valuation                 ValuationRule.NET: benefit minus cost          varied (DRIVE's cost
+                                                                             only)
+H   Time Horizon              current commute decision                       fixed
+D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+C   Selected Action           DRIVE or TAKE_TRANSIT                          observed
+F_t, R, outcomes              F_t and outcome realization are outside this test's scope.
 
 Economic mechanism
 ------------------
@@ -69,10 +58,9 @@ Assumptions
 
 Hypothesis
 ----------
+In this configured scenario:
 1. Without the tax, the agent selects DRIVE.
 2. With the tax, the same agent selects TAKE_TRANSIT.
-3. The behavioral change occurs while the objective, feasible actions,
-   and decision process remain unchanged.
 """
 
 import unittest
@@ -116,10 +104,6 @@ BASE_COMMUTER = AgentSpec(
             TAKE_TRANSIT: 0,
         },
     },
-    actual_feasible_set=[
-        DRIVE,
-        TAKE_TRANSIT,
-    ],
     perceived_feasible_set=[
         DRIVE,
         TAKE_TRANSIT,
@@ -193,33 +177,4 @@ class TestIncentives(unittest.TestCase):
         self.assertEqual(
             agent.value_of(TAKE_TRANSIT),
             TAKE_TRANSIT_PRIVATE_VALUE,
-        )
-
-    def test_behavioral_change_leaves_the_rest_of_the_agent_unchanged(self):
-        without_tax = run_scenario(NO_TAX_SCENARIO).agent(BASE_COMMUTER.name)
-        with_tax = run_scenario(DRIVING_TAX_SCENARIO).agent(BASE_COMMUTER.name)
-
-        self.assertNotEqual(
-            without_tax.selected_action,
-            with_tax.selected_action,
-        )
-
-        self.assertEqual(
-            without_tax.objective,
-            with_tax.objective,
-        )
-
-        self.assertEqual(
-            without_tax.actual_feasible_set,
-            with_tax.actual_feasible_set,
-        )
-
-        self.assertEqual(
-            without_tax.perceived_feasible_set,
-            with_tax.perceived_feasible_set,
-        )
-
-        self.assertEqual(
-            without_tax.decision_process,
-            with_tax.decision_process,
         )

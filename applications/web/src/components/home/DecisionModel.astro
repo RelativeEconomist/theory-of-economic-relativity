@@ -1,0 +1,146 @@
+---
+import SectionIntro from "../ui/SectionIntro.astro";
+---
+
+<section class="section-sm process">
+  <div class="shell">
+    <SectionIntro
+      eyebrow=""
+      title="Agents choose from perceived possibilities"
+      description="Agents make decisions based on their goals, model of reality, perceived possibilities, valuations, time horizon, and decision process. The selected action then encounters reality, where actual possibilities determine the realized outcome."
+    />
+
+    <div class="progression" role="list" aria-label="Decision environment, action selected, reality, outcome">
+      <div class="step" role="listitem" data-reveal style="--row-accent: var(--accent)">
+        <h3>Decision environment</h3>
+        <p>Goal · Model of reality · Perceived possibilities · Valuation · Time horizon · Decision process</p>
+      </div>
+
+      <div class="connector" aria-hidden="true"></div>
+
+      <div class="step" role="listitem" data-reveal style="--row-accent: var(--violet)">
+        <h3>Action selected</h3>
+        <p>From that environment, the agent selects an action from what it perceives as possible.</p>
+      </div>
+
+      <div class="connector" aria-hidden="true"></div>
+
+      <div class="step" role="listitem" data-reveal style="--row-accent: var(--orange)">
+        <h3>Reality</h3>
+        <p>That selected action then encounters the actual possibilities permitted by reality.</p>
+      </div>
+
+      <div class="connector" aria-hidden="true"></div>
+
+      <div class="step" role="listitem" data-reveal style="--row-accent: var(--orange)">
+        <h3>Outcome</h3>
+        <p>From that interaction, a realized outcome follows.</p>
+      </div>
+    </div>
+
+    <p class="bridge" data-reveal>
+      The next section shows this same structure in TER notation.
+    </p>
+  </div>
+</section>
+
+<style>
+  .process {
+    overflow: hidden;
+  }
+
+  .progression {
+    display: flex;
+    align-items: stretch;
+    margin-top: clamp(2.25rem, 4.5vw, 3.5rem);
+  }
+
+  .step {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 0.9rem;
+    min-height: 8.5rem;
+    padding: 1.25rem 1.5rem;
+    border: 1px solid var(--line);
+    border-top: 2px solid var(--row-accent, var(--line));
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    text-align: left;
+  }
+
+  .step h3 {
+    margin: 0;
+    color: var(--muted);
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.005em;
+  }
+
+  .detail {
+    margin: 0;
+    color: var(--ink);
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: -0.015em;
+  }
+
+  .connector {
+    position: relative;
+    flex: 0 0 2rem;
+    align-self: center;
+    height: 1px;
+    background: var(--line);
+  }
+
+  .connector::after {
+    position: absolute;
+    top: 50%;
+    right: -1px;
+    width: 0;
+    height: 0;
+    border-top: 0.3rem solid transparent;
+    border-bottom: 0.3rem solid transparent;
+    border-left: 0.4rem solid var(--line);
+    content: "";
+    transform: translateY(-50%);
+  }
+
+  .bridge {
+    max-width: 44rem;
+    margin: clamp(1.5rem, 3vw, 2rem) 0 0;
+    color: var(--muted);
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 900px) {
+    .progression {
+      flex-direction: column;
+    }
+
+    .step {
+      min-height: auto;
+    }
+
+    .connector {
+      width: 1px;
+      height: 1.75rem;
+      flex-basis: 1.75rem;
+    }
+
+    .connector::after {
+      top: auto;
+      right: 50%;
+      bottom: -1px;
+      border-top: 0.4rem solid var(--line);
+      border-right: 0.3rem solid transparent;
+      border-bottom: 0;
+      border-left: 0.3rem solid transparent;
+      transform: translateX(50%);
+    }
+  }
+</style>

@@ -49,32 +49,32 @@ The one deliberate exception is [`test_07_supply_and_demand.py`](tests/test_07_s
 
 ## The TER Components, in Plain Language
 
-Every TER agent decision can be described with nine components. Full formal definitions live in [`theory/academic.md`](../theory/academic.md) §3; boundary distinctions between components (e.g. `M` vs. `F_hat`, `G` vs. `V`) live in [`ter-methodology-notes.md`](ter-methodology-notes.md) §2. Notation is given for reference; you don't need to know it to read or write a test.
+Every TER agent decision can be described with nine components. Full formal definitions live in [`theory/academic.md`](../theory/academic.md) §3; boundary distinctions between components (e.g. `M` vs. `F̂`, `G` vs. `V`) live in [`ter-methodology-notes.md`](ter-methodology-notes.md) (Variable Placement). Notation is given for reference; you don't need to know it to read or write a test.
 
 - **Objective (G)** — what the agent is trying to achieve.
 - **Model of reality (M)** — what the agent believes or knows, right or wrong.
-- **Actual feasibility (F)** — what is really possible, regardless of belief.
-- **Perceived feasibility (F_hat)** — what the agent believes is possible.
+- **Objective feasible state of reality (F_t)** — what reality permits, regardless of belief. It is not agent specific: it is one state that every action taken at time `t` encounters. It is never an input to `D`.
+- **Perceived feasible set (F̂)** — what the agent believes is possible.
 - **Valuation (V)** — how the agent scores a possible action.
 - **Horizon (H)** — how far ahead the agent looks when it decides.
 - **Decision process (D)** — how the agent picks among what it believes is feasible.
 - **Selected action (C)** — the action the agent actually chose.
-- **Outcome (O)** — what actually happened once the choice met reality.
+- **Outcome (O)** — what happened once the choice met reality: `O_{i,t}` in an agent-level specification, `O_t` where contemporaneous interactions among agents are explicitly modeled. `R` is the reality function that produces it.
 
-A test's docstring should name only the components that matter for *that* test, in this plain-language-first style — not repeat this whole list every time. See `test_01`'s or `test_08`'s "TER mapping" and "Tested TER mechanics" sections for the pattern.
+A test's docstring should name only the components that matter for *that* test, in this plain-language-first style — not repeat this whole list every time. See `test_01`'s or `test_08`'s "TER instantiation" table for the pattern.
 
 ## The Building Blocks
 
-- **`AgentSpec`** — one agent's G, M, F, F_hat, V, H, D, declared as data: `objective`, `model_of_reality`, `actual_feasible_set`, `perceived_feasible_set`, `valuation`, `valuation_rule`, `decision_process`, `decision_parameters`, `horizon`.
+- **`AgentSpec`** — one agent's G, M, F̂, V, H, D, declared as data: `objective`, `model_of_reality`, `perceived_feasible_set`, `valuation`, `valuation_rule`, `decision_process`, `decision_parameters`, `horizon`.
 - **`AgentGroup`** — a convenience for declaring several structurally identical agents at once: `AgentGroup(base=BASE_AGENT, count=3, name_prefix="seller", model_of_reality={...})` produces `seller_1`, `seller_2`, `seller_3` as ordinary `AgentSpec`s. It's sugar for a loop over `AgentSpec.variant()`, not a TER primitive — reach for it only when a test would otherwise repeat the same agent construction several times (see `test_04_asymmetric_information.py`, `test_09_bank_run.py`).
-- **`Scenario`** — the agents, initial state, and (optionally) which `reality_function`/`feedback_rule` govern interaction and change over time.
-- **`DecisionProcess` / `ValuationRule` / `RealityFunction` / `FeedbackRule`** — enums naming every shared, reusable D/V/O-and-feedback implementation, e.g. `DecisionProcess.MAXIMIZE`, `DecisionProcess.SATISFICE`, `ValuationRule.NET`, `RealityFunction.SOCIAL_VALUE`. Pick from these before writing anything new.
+- **`Scenario`** — the agents, initial state and `parameters` (scenario conditions a `reality_function` may read), and (optionally) which `reality_function`/`feedback_rule` govern interaction and change over time.
+- **`DecisionProcess` / `ValuationRule` / `RealityFunction` / `FeedbackRule`** — enums naming every shared, reusable D/V/R-and-feedback implementation, e.g. `DecisionProcess.MAXIMIZE`, `DecisionProcess.SATISFICE`, `ValuationRule.NET`, `RealityFunction.SOCIAL_VALUE`. Pick from these before writing anything new.
 - **`run_scenario(scenario)`** — executes it and returns a `ScenarioResult`.
 - **`AgentResult`** — what `result.agent(name)` gives you back: one agent's final state and outcome, addressed by name.
 
 ## How TER Maps to Python
 
-The canonical architecture is defined in `theory/academic.md` §3 and §5.2; this section only names the current `research.ter` objects that implement or configure each part of it. For *why* a fact belongs in one TER variable rather than another, see [`ter-methodology-notes.md`](ter-methodology-notes.md) §2 — this section doesn't repeat that reasoning.
+The canonical architecture is defined in `theory/academic.md` §3 and §5; this section only names the current `research.ter` objects that implement or configure each part of it. For *why* a fact belongs in one TER variable rather than another, see [`ter-methodology-notes.md`](ter-methodology-notes.md) (Variable Placement) — this section doesn't repeat that reasoning.
 
 ### TER variable to Python mapping
 
@@ -82,27 +82,27 @@ The canonical architecture is defined in `theory/academic.md` §3 and §5.2; thi
 | --- | --- | --- |
 | `G` | `AgentSpec.objective` / `AgentState.objective` | the objective value itself |
 | `M` | `AgentSpec.model_of_reality` / `AgentState.model_of_reality` | a dict of beliefs; a `FeedbackRule` may update it between periods |
-| `F` | `AgentSpec.actual_feasible_set` / `AgentState.actual_feasible_set` | checked by `is_actually_feasible()` (`research/ter/outcome.py`); never read by a decision process |
-| `F̂` | `AgentSpec.perceived_feasible_set` / `AgentState.perceived_feasible_set` | what a `DecisionProcess` selects from |
+| `F_t` | no dedicated field: scenario `state` (`Scenario.initial_state`, evolving) and `Scenario.parameters` may encode conditions and constraints relevant to what `F_t` permits | implementation fields, not TER primitives; no single field is identical to `F_t`. Not an `AgentSpec`/`AgentState` field; never read by a decision process |
+| `F̂` | `AgentSpec.perceived_feasible_set` / `AgentState.perceived_feasible_set` | agent-side; what a `DecisionProcess` selects from. Not a copy of what the scenario permits |
 | `V` | `AgentSpec.valuation` (data) + `AgentSpec.valuation_rule` (a `ValuationRule` member) | `valuation` is declarative data (e.g. a value map); `valuation_rule` names the function that reads it and returns a score. Neither the dict nor the enum member is a new TER primitive — together they implement `V`. |
 | `H` | `AgentSpec.horizon` / `AgentState.horizon` | carried as data; no shared rule currently reads it |
-| `D` | `AgentSpec.decision_process` (a `DecisionProcess` member) + `AgentSpec.decision_parameters` (data) | the named rule implements `D`; `decision_parameters` configures it (e.g. `search_limit`) — not a new primitive |
+| `D` | `AgentSpec.decision_process` (a `DecisionProcess` member) + `AgentSpec.decision_parameters` (data) | the named rule implements `D`, which reads `F̂`, `G`, `M`, `V`, `H` and never `F_t`; `decision_parameters` configures it (e.g. `search_limit`, `search_order`) — not a new primitive |
 | `C` | return value of `select_action()` (`research/ter/decision.py`); read back as `AgentResult.selected_action` | the action actually selected |
-| `O` | the dict a `RealityFunction` returns, merged into `ScenarioResult.history[t]`; read back per agent via `AgentResult` | |
-| `R` | `Scenario.reality_function` (a `RealityFunction` member) | implements $O = R(C, F, P, S)$ — the rule itself, not its output |
+| `O` | the dict a `RealityFunction` returns, merged into `ScenarioResult.history[t]`; read back per agent via `AgentResult` | `O_{i,t}` (Model 5.2) or `O_t` (Model 5.3), by the scope of the specification; the framework defines no aggregation of `O_{i,t}` into `O_t` |
+| `R` | `Scenario.reality_function` (a `RealityFunction` member) | implements the Model 5.2 relation for `O_{i,t}` in an agent-level specification and the Model 5.3 relation for `O_t` where interactions are explicitly modeled — the rule itself, not its output |
 
-`P` (prevailing conditions) and `S` (external shocks) have no dedicated field. A `RealityFunction` reads whatever it needs for them from `state` and `Scenario.parameters` — see `ter-methodology-notes.md` §2.12 for the boundary between the two. `FeedbackRule` is the Model 5.5 mechanism (not a TER primitive) that updates `state`/`model_of_reality` between periods.
+Prevailing conditions, shocks, laws, institutions, resources, physical and market conditions, and other objective constraints are aspects of `F_t` (`theory/academic.md` §3), not separate variables. In an implementation, a `RealityFunction` reads the scenario-relevant conditions from `state` (conditions that change over time, e.g. `liquidity`, `price`) and `Scenario.parameters` (fixed conditions, e.g. `actual_payoff_matrix`). Some specifications also use permission data, `state["permitted_actions"]`, which maps an agent name to the actions the scenario permits for that agent. It is an implementation representation of a scenario-relevant constraint, indexed by agent for convenience — not `F_t` itself, not an agent-specific `F_t`, and not agent state. It is read only on the reality side, through `permitted_actions_for()` and `is_actually_feasible()` (`research/ter/outcome.py`, a per-agent membership check), never by a decision process. `FeedbackRule` is the Model 5.5 mechanism (not a TER primitive): it receives the realized outcome and updates `state`/`model_of_reality` between periods. A shock that changes what reality permits is a scenario-specific change to `state` or `parameters` independent of realized outcomes.
 
 ### Agent specification vs. Scenario
 
 > If it changes how an agent chooses, it usually belongs in the agent specification. If it describes objective scenario conditions or configures how reality responds, it usually belongs in the Scenario.
 
-In practice: `objective`, `model_of_reality`, `valuation`, `valuation_rule`, `decision_process`, `decision_parameters`, `horizon`, `actual_feasible_set`, and `perceived_feasible_set` all live on `AgentSpec`. `initial_state`, `parameters`, `reality_function`, and `feedback_rule` all live on `Scenario`. "Usually," because placement still depends on the role a concept plays — e.g. a price an agent merely observes is scenario state (`model_of_reality["price"]` reads it, but the price itself moves in `Scenario.parameters`/`reality_function`), while a price threshold that changes how the agent decides is agent data (`valuation`).
+In practice: `objective`, `model_of_reality`, `valuation`, `valuation_rule`, `decision_process`, `decision_parameters`, `horizon`, and `perceived_feasible_set` all live on `AgentSpec`. `initial_state` (which may include permission data such as `permitted_actions`), `parameters`, `reality_function`, and `feedback_rule` all live on `Scenario`. `F_t` is not agent specific, so it is never declared on an `AgentSpec`. "Usually," because placement still depends on the role a concept plays — e.g. a price an agent merely observes is scenario state (`model_of_reality["price"]` reads it, but the price itself moves in `Scenario.parameters`/`reality_function`), while a price threshold that changes how the agent decides is agent data (`valuation`).
 
 ### Configuration distinction
 
 - `AgentSpec.decision_parameters` configures `D` — e.g. `search_limit`, `search_order`, `satisficing_threshold`, `tie_break_preference` (all read by the `decision_process` rule named on that same `AgentSpec`).
-- `Scenario.parameters` configures the model-specific `reality_function`/`feedback_rule` mechanics — e.g. `withdrawal_amount`, `initial_liquidity`, `price_sensitivity`, `feedback_strength`, `actual_payoff_matrix`, `external_effects`.
+- `Scenario.parameters` configures the model-specific `reality_function`/`feedback_rule` mechanics and encodes fixed scenario conditions a `reality_function` reads — e.g. `withdrawal_amount`, `initial_liquidity`, `price_sensitivity`, `feedback_strength`, `actual_payoff_matrix`, `external_effects`.
 
 ### Result API
 
@@ -113,11 +113,12 @@ In practice: `objective`, `model_of_reality`, `valuation`, `valuation_rule`, `de
 
 ## Standard Test Structure
 
-Organize a test file in this order, using section comments, and keep the docstring to these seven parts:
+Organize a test file in this order, using section comments, and keep the docstring to these parts:
 
 ```python
 """
 TER Replication Test NN: <Title>
+Canonical TER: theory/academic.md, <the models the test actually exercises>
 
 Economic question
 ------------------
@@ -127,17 +128,12 @@ Scenario
 --------
 What the agents/actions/setup actually are, in plain language.
 
-TER mapping
------------
-The canonical dynamic path this test follows, e.g.
-C_t -> R -> O_t -> feedback -> C_{t+1}, with each symbol named
-concretely for this test.
-
-Tested TER mechanics
----------------------
-Only the components central to this test, plain-language first (see
-above): which of G, M, F, F_hat, V, H, D, C, R, O are held constant and
-which change, and how.
+TER instantiation
+-----------------
+A table of the components this test instantiates -- G, M, F̂, V, H, D, C,
+plus R, O and feedback only where used -- each marked fixed, varied, or
+observed. A Model 5.1-only test states that F_t and outcome realization
+are outside its scope.
 
 Economic mechanism
 -------------------
@@ -149,7 +145,7 @@ Test-specific choices that are not part of TER itself.
 
 Hypothesis
 ----------
-A numbered, pre-registered prediction.
+Numbered claims, scoped to the configured specification.
 """
 
 # Actions
@@ -184,7 +180,7 @@ agent.value_of("coffee_c")     # V: the agent's own valuation of any action, sel
 agent.outcome_for(DO_NOT_PRODUCE).social_value   # outcome for an action that wasn't selected
 ```
 
-`.agent(name)` looks up by name, never by position — there should be no `result.final["..."][0]`-style indexing in a test. Attribute lookup checks, in order: outcome data a `reality_function` reported for this agent, then the agent's own fields (`objective`, `actual_feasible_set`, `perceived_feasible_set`, `model_of_reality`, ...), then that agent's `model_of_reality` dict directly — so `agent.model_of_reality["x"]` and `agent.x` both work, and you should prefer the latter.
+`.agent(name)` looks up by name, never by position — there should be no `result.final["..."][0]`-style indexing in a test. Attribute lookup checks, in order: outcome data a `reality_function` reported for this agent, then the agent's own fields (`objective`, `perceived_feasible_set`, `model_of_reality`, ...), then that agent's `model_of_reality` dict directly — so `agent.model_of_reality["x"]` and `agent.x` both work, and you should prefer the latter.
 
 `.value_of()` and `.outcome_for()` never execute or re-run anything: `.value_of()` reads the agent's own value function directly (the same one its decision used), and `.outcome_for()` looks up data a `reality_function` already computed during the run.
 
@@ -201,7 +197,7 @@ The trigger to promote a local rule into the shared registry is simple: a **seco
 Changing a test is encouraged. You can experiment with:
 
 - agent information or beliefs (`model_of_reality`)
-- perceived or actual feasible actions
+- perceived feasible actions, or permission data (`state["permitted_actions"]`) where the specification uses it
 - objectives, decision rules, valuation rules
 - interactions between agents (`reality_function`)
 - feedback between outcomes and future decisions (`feedback_rule`)
@@ -235,7 +231,7 @@ Only needed if you're authoring a new **shared** reusable rule or working on the
 - [`ter/rules.py`](ter/rules.py) — the registry behind the public enums, and the four rule signatures every reusable rule follows (decision, value, reality, feedback — see the comment block near the top of the file)
 - [`ter/agent.py`](ter/agent.py) — `AgentState`, the executable form of an agent
 - [`ter/decision.py`](ter/decision.py) — `select_action`, the shared decision step
-- [`ter/outcome.py`](ter/outcome.py) — `is_actually_feasible`, the Model 5.2 check for whether a selected action was actually feasible
+- [`ter/outcome.py`](ter/outcome.py) — `is_actually_feasible` and `permitted_actions_for`, the per-agent lookups against the permission data in `state["permitted_actions"]`, used on the reality side (Model 5.2)
 - [`ter/system.py`](ter/system.py) — `run_system`, multi-agent interaction for one period
 - [`ter/market.py`](ter/market.py) — `evaluate_market`, `find_market_clearing_states`; the price-grid comparative-statics path `test_07_supply_and_demand.py` uses instead of `run_scenario`
 

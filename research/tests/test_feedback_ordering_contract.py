@@ -1,28 +1,34 @@
 """
-Framework test: feedback ordering contract.
+Framework test: feedback ordering contract
+
+Canonical TER: theory/academic.md, Models 5.1, 5.2 and 5.5
 
 Purpose
 -------
-Not an economic replication test. Verifies the full execution ordering
-inside run_scenario (research/ter/runner.py::run_scenario):
+Verifies the execution ordering inside run_scenario
+(research/ter/runner.py::run_scenario):
 
-    decision -> reality -> feedback
+    decision -> realized outcome -> feedback -> later conditions
 
 Each period's feedback_rule runs only after that period's own decision
-and reality function have produced a genuine realized outcome (O), and
-it changes only the *following* period's decision environment -- never
-the period O was computed from, and never before the first decision
-(there is no realized outcome yet to feed back). The local feedback
-rule below requires and reads that realized outcome directly, so if
-feedback ever ran before reality had produced one, this test would
-raise instead of silently passing.
+and reality function have produced a realized outcome (O_{i,t}, single
+agent), and it changes only the conditions seen by the *following*
+period's decision -- never the period the outcome was computed from, and
+never before the first decision (there is no realized outcome yet to feed
+back). The local feedback rule below requires and reads that realized
+outcome directly, and does not read the selected action, so if feedback
+ever ran before reality had produced an outcome this test would raise
+instead of silently passing.
 
-The bank run (test_09) and speculative bubble (test_10) replication
-tests demonstrate feedback producing particular economic outcomes across
-multiple periods. This test isolates the ordering guarantee itself,
-using a minimal local rule triple scoped to this file only, so it cannot
-be confused with -- or accidentally weakened by a change to -- either
-economic replication test.
+The bank run (test_09) and speculative bubble (test_10) replication tests
+demonstrate feedback producing particular economic outcomes across
+multiple periods. This test isolates the ordering guarantee itself, using
+a minimal local rule triple scoped to this file only.
+
+Out of scope
+------------
+F_t. The local feedback rule updates an agent-side model_of_reality field
+from the realized outcome; it represents no change to F_t.
 """
 
 import unittest
@@ -40,10 +46,10 @@ def record_realized_action(state, agents, actions, parameters):
     """
     Local Model 5.2 reality function for this test only.
 
-    Realizes O_t as simply the action each agent actually selected --
-    this contract needs nothing more elaborate than "the agent's
-    selected action was realized." Read by record_feedback_flag as a
-    genuine O, never inferred from state alone.
+    Realizes O_{i,t} as simply the action each agent selected -- this
+    contract needs nothing more elaborate than "the agent's selected
+    action was realized." Read by record_feedback_flag as a genuine
+    realized outcome, never inferred from state alone.
     """
     return {
         "realized_action_by_agent": {
@@ -56,13 +62,14 @@ def record_realized_action(state, agents, actions, parameters):
 @register_rule("record_feedback_flag")
 def record_feedback_flag(state, outcome, parameters):
     """
-    Local Model 5.5 feedback rule for this test only. Requires O_t (from
-    record_realized_action) and sets a model_of_reality field every
-    agent's *next* decision can observe, only once O_t records that
-    this agent's realized action was LOW.
+    Local Model 5.5 feedback rule for this test only. Requires O_{i,t}
+    (from record_realized_action) and sets a model_of_reality field every
+    agent's *next* decision can observe, only once the realized outcome
+    records that this agent's realized action was LOW. It reads the
+    realized outcome, not the selected action.
 
     Reading outcome["realized_action_by_agent"] directly (no default)
-    is deliberate: if feedback ever ran before reality had produced O_t,
+    is deliberate: if feedback ever ran before reality had produced O_{i,t},
     this would raise instead of silently succeeding -- proving reality
     necessarily precedes feedback, not just that feedback runs after
     decision.
@@ -100,7 +107,6 @@ AGENT = AgentSpec(
     name="agent",
     objective="test objective",
     model_of_reality={},
-    actual_feasible_set=[LOW, HIGH],
     perceived_feasible_set=[LOW, HIGH],
     valuation_rule="mapped_value",
     decision_process="choose_by_flag",
@@ -175,7 +181,7 @@ class TestFeedbackOrderingContract(unittest.TestCase):
         first_period_realization = result.history[1]["realized_action_by_agent"]
 
         # record_realized_action (R) reports exactly what was selected,
-        # so O_0 must match C_0 for the same agent, same period.
+        # so O_{i,0} must match C_{i,0} for the same agent, same period.
         self.assertEqual(
             first_period_realization[AGENT.name],
             first_period_selection[AGENT.name],
@@ -189,10 +195,10 @@ class TestFeedbackOrderingContract(unittest.TestCase):
         # record_feedback_flag (feedback) reads
         # outcome["realized_action_by_agent"] with no fallback -- it
         # would raise KeyError rather than silently pass if the runner
-        # ever invoked feedback before reality had produced O_t. The
+        # ever invoked feedback before reality had produced O_{i,t}. The
         # flag having been set (proved by the HIGH selection in the
         # following period, above) is therefore itself evidence that R
-        # ran and produced O_0 before feedback ran.
+        # ran and produced O_{i,0} before feedback ran.
         second_period_selection = result.history[2]["selected_action_by_agent"]
 
         self.assertEqual(

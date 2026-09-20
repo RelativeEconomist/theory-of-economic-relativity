@@ -1,33 +1,33 @@
 ---
 import SectionIntro from "../ui/SectionIntro.astro";
 ---
-<section class="section examples">
+<section class="section-sm examples">
   <div class="shell">
     <SectionIntro
-      eyebrow="Learn by exploring"
+      eyebrow=""
       title="Learn TER through economic scenarios"
-      description="TER includes an executable suite of economic scenarios designed to test whether established mechanisms can be represented consistently within the framework. Each scenario can be inspected, changed, and rerun as part of TER's open research process."
+      description="Explore TER through executable economic scenarios that can be inspected, changed, and rerun."
     />
 
     <div class="examples-grid hairline-grid">
-      <a href="/learn/supply-and-demand/" class="example-card" data-reveal>
+      <a href="/learn/basic-agent-choice/" class="example-card" data-reveal>
         <span>01</span>
+        <h3>Basic agent choice</h3>
+      </a>
+
+      <a href="/learn/bounded-rationality/" class="example-card" data-reveal>
+        <span>02</span>
+        <h3>Bounded rationality</h3>
+      </a>
+
+      <a href="/learn/supply-and-demand/" class="example-card" data-reveal>
+        <span>03</span>
         <h3>Supply & demand</h3>
       </a>
 
       <a href="/learn/asymmetric-information/" class="example-card" data-reveal>
-        <span>02</span>
-        <h3>Asymmetric information</h3>
-      </a>
-
-      <a href="/learn/externalities/" class="example-card" data-reveal>
-        <span>03</span>
-        <h3>Externalities</h3>
-      </a>
-
-      <a href="/learn/actual-vs-perceived-feasibility/" class="example-card" data-reveal>
         <span>04</span>
-        <h3>Actual vs. perceived feasibility</h3>
+        <h3>Asymmetric information</h3>
       </a>
     </div>
 
@@ -57,13 +57,13 @@ import SectionIntro from "../ui/SectionIntro.astro";
 
 .examples-grid {
   grid-template-columns: repeat(4, 1fr);
-  margin-top: clamp(2.5rem, 5vw, 4rem);
+  margin-top: clamp(1.5rem, 3vw, 2.25rem);
   border-block: 1px solid var(--line);
 }
 
 .example-card {
-  min-height: 12rem;
-  padding: 1.5rem;
+  min-height: 8rem;
+  padding: 1.1rem;
   color: var(--ink);
   text-decoration: none;
 }
@@ -75,7 +75,7 @@ import SectionIntro from "../ui/SectionIntro.astro";
 }
 
 .example-card h3 {
-  margin-top: 3rem;
+  margin-top: 1.75rem;
   font-size: 1.4rem;
 }
 
@@ -95,13 +95,13 @@ import SectionIntro from "../ui/SectionIntro.astro";
   }
 
   .example-card h3 {
-    margin-top: 2rem;
+    margin-top: 1.5rem;
   }
 }
 
 .learning-levels {
-  margin-top: clamp(2.5rem, 5vw, 4rem);
-  padding-top: 1.5rem;
+  margin-top: clamp(1.5rem, 3vw, 2.25rem);
+  padding-top: 1rem;
 }
 
 .learning-levels__head {

@@ -1,10 +1,11 @@
 """
 TER Replication Test 02: Decision Processes: Optimization vs. Satisficing
+Canonical TER: theory/academic.md, Model 5.1
 
 Economic question
-------------------
-Can the same TER architecture produce different choices when agents use
-different decision processes?
+-----------------
+Can two different decision processes, applied to the same perceived
+feasible set and valuations, select different actions?
 
 Scenario
 --------
@@ -14,41 +15,26 @@ The same coffee buyer evaluates:
     coffee_b ── V=7
     coffee_c ── V=10
 
-TER mapping
------------
-Core architecture:
+Only the decision process differs between the two scenarios. For
+satisficing, threshold = 7.
 
-    (G, M, F̂, V, H, D) ──→ C
-
-This test holds everything constant except D:
-
-    same G, M, F̂, V, H
-            │
-      ┌─────┴─────┐
-      ▼           ▼
- D = MAXIMIZE  D = SATISFICE
-      │           │
-      ▼           ▼
- coffee_c      coffee_b
-
-
-For satisficing:
-
-    threshold = 7
-
-Tested TER mechanics
---------------------
-G   Objective                 constant
-M   Model of reality          constant
-F̂   Perceived feasible set    constant
-V   Valuation                 constant
-H   Time horizon              constant
-D   Decision process          CHANGED
-C   Selected action           observed result
+TER instantiation
+-----------------
+Component                     Instantiation in this test                     Status
+G   Objective                 choose coffee                                  fixed
+M   Model of Reality          specified but empty                            fixed
+F̂   Perceived Feasible Set    coffee_a, coffee_b, coffee_c                   fixed
+V   Valuation                 ValuationRule.MAPPED: a hand-assigned value    fixed
+                              for each coffee
+H   Time Horizon              current decision                               fixed
+D   Decision Process          DecisionProcess.MAXIMIZE vs.                   varied
+                              DecisionProcess.SATISFICE (threshold 7)
+C   Selected Action           coffee_c (MAXIMIZE), coffee_b (SATISFICE)      observed
+F_t, R, outcomes              F_t and outcome realization are outside this test's scope.
 
 Economic mechanism
 ------------------
-MAXIMIZE selects the highest-valued perceived feasible action.
+MAXIMIZE selects the highest-valued action in the perceived feasible set.
 
 SATISFICE evaluates actions in order and selects the first action meeting
 the threshold.
@@ -60,15 +46,14 @@ Assumptions
 - SATISFICING_THRESHOLD is a test-specific decision_parameters entry, not
   a TER primitive. It is set equal to COFFEE_B_VALUE so the relationship
   between the threshold and the satisficing choice is explicit.
-- The actual feasible set F is identical to the perceived feasible set F̂,
-  so this test isolates the decision process rather than mistaken
-  feasibility or Action to Outcome mechanics.
+- Mistaken feasibility and action-to-outcome mechanics are not exercised;
+  this test isolates the decision process.
 
 Hypothesis
 ----------
+In this configured scenario:
 1. Maximizing selects the highest-valued action.
 2. Satisficing may select an acceptable but lower-valued action.
-3. Both decision processes operate through the same TER architecture.
 """
 
 import unittest
@@ -111,11 +96,6 @@ BASE_AGENT = AgentSpec(
             COFFEE_C: COFFEE_C_VALUE,
         },
     },
-    actual_feasible_set=[
-        COFFEE_A,
-        COFFEE_B,
-        COFFEE_C,
-    ],
     perceived_feasible_set=[
         COFFEE_A,
         COFFEE_B,
@@ -186,28 +166,4 @@ class TestDecisionProcesses(unittest.TestCase):
         self.assertLess(
             agent.value_of(agent.selected_action),
             agent.value_of(COFFEE_C),
-        )
-
-    def test_both_decision_processes_use_the_same_ter_architecture(self):
-        maximizing_agent = run_scenario(MAXIMIZING_SCENARIO).agent(BASE_AGENT.name)
-        satisficing_agent = run_scenario(SATISFICING_SCENARIO).agent(BASE_AGENT.name)
-
-        self.assertEqual(
-            maximizing_agent.selected_action,
-            COFFEE_C,
-        )
-
-        self.assertEqual(
-            satisficing_agent.selected_action,
-            COFFEE_B,
-        )
-
-        self.assertEqual(
-            maximizing_agent.objective,
-            satisficing_agent.objective,
-        )
-
-        self.assertEqual(
-            maximizing_agent.perceived_feasible_set,
-            satisficing_agent.perceived_feasible_set,
         )
