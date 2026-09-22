@@ -91,3 +91,46 @@ def find_market_clearing_states(
         for state in states
         if state.demand == state.supply
     ]
+
+
+def allocate_single_unit(bids: dict[str, float]) -> str | None:
+    """
+    Allocate one scarce unit to the highest bidder.
+
+    `bids` maps a competing agent's name to the amount it offers for the
+    unit. Returns the winning agent's name, or None if there are no
+    bidders.
+
+    A tie for the highest bid raises ValueError rather than resolving
+    silently: which tied bidder wins is a tie-breaking rule a caller must
+    supply, not one this helper should pick on the caller's behalf (e.g.
+    by dict iteration order). This helper is deliberately silent on that
+    question until a caller actually needs one.
+
+    This is a one-unit scarcity resolution helper for a reality function
+    (R) to call when more than one agent's selected action competes for a
+    single unit that only exists once. It does not select, override, or
+    re-run any agent's action, and it does not inspect or verify F_t --
+    it only resolves which one of several competing eligible bids
+    receives the scarce unit. It is not R itself and not a general
+    market-clearing mechanism.
+    """
+    if not bids:
+        return None
+
+    highest_bid = max(bids.values())
+
+    winners = [
+        name
+        for name, bid in bids.items()
+        if bid == highest_bid
+    ]
+
+    if len(winners) > 1:
+        raise ValueError(
+            f"Tied highest bid ({highest_bid}) among {sorted(winners)}. "
+            "allocate_single_unit does not resolve ties; the caller must "
+            "provide or implement a tie resolution rule."
+        )
+
+    return winners[0]
