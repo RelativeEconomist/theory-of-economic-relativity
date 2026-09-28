@@ -46,9 +46,9 @@ TER itself is not an omniscient prediction system: it does not assume an observe
 
 No. TER does not require optimization, exhaustive comparison, or objectively rational behavior.
 
-`D` may represent satisficing, heuristics, habits, intuition, reflexive responses, strategic reasoning, or other decision processes — Axiom 4 explicitly states that evaluation "does not require exhaustive comparison or perfect optimization," and Axiom 5 that the selected action "need not be objectively optimal or result from exhaustive comparison among alternatives."
+`D` may represent satisficing, heuristics, habits, intuition, reflexive responses, strategic reasoning, or other decision processes — Axiom 3 explicitly states that evaluation "need not be conscious, exhaustive, or perfectly optimizing," and Axiom 4 that the selected action "need not be objectively optimal or result from exhaustive comparison among alternatives."
 
-A poor decision remains a poor decision if the evidence supports that interpretation — TER only requires that the selected action results from the agent's specified decision process acting on its objective, model of reality, perceived feasible set, valuation, and time horizon, not that the result be good. See [Axiom 4](../theory/academic.md#axiom-4-agents-evaluate-actions-relative-to-their-objectives), [Axiom 5](../theory/academic.md#axiom-5-agents-select-actions-through-a-decision-process), and [§5.1](../theory/academic.md#51-agent-decision-model).
+A poor decision remains a poor decision if the evidence supports that interpretation — TER only requires that the selected action results from the agent's specified decision process acting on its objective, model of reality, perceived feasible set, valuation, and time horizon, not that the result be good. See [Axiom 3](../theory/academic.md#axiom-3-valuation-is-relative-to-objectives), [Axiom 4](../theory/academic.md#axiom-4-agents-select-actions-through-a-decision-process), and [§5.1](../theory/academic.md#51-agent-decision-model).
 
 ## Why distinguish `F_t` from `F̂`?
 
