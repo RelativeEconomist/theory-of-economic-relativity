@@ -122,9 +122,7 @@ NO_TAX_SCENARIO = Scenario(
     name="Commute Without a Driving Tax",
     description="A commuter chooses between driving and transit with no cost on either option.",
     periods=1,
-    initial_state={
-        "period": 0,
-    },
+    initial_state={},
     agents=[
         BASE_COMMUTER,
     ],

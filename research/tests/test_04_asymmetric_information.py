@@ -37,11 +37,13 @@ TER instantiation
 -----------------
 Component                     Instantiation in this test                     Status
 G   Objective                 maximize value from the sale decision          fixed
-M   Model of Reality          known_quality: each seller's own belief        fixed (by seller type)
-                              about its own car; not read by R
+M   Model of Reality          price: the offered price the seller observes;  varied (price: pooled
+                              known_quality: each seller's own belief about  vs. verified)
+                              its own car. Neither is read by R
 F̂   Perceived Feasible Set    sell, hold                                     fixed
-V   Valuation                 ValuationRule.NET: benefit (price offered)     varied (offered price:
-                              minus cost (reservation value)                 pooled vs. verified)
+V   Valuation                 ValuationRule.PRICE_TAKING: the observed       fixed (by seller type)
+                              price (M) minus the seller's reservation
+                              value (valuation["costs"])
 H   Time Horizon              current sale decision                          fixed
 D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
 C   Selected Action           sell or hold, one per seller                   observed
@@ -49,7 +51,7 @@ F_t aspects used by R         actual_quality_by_seller: the actual quality   fix
                               of each seller's car, a scenario-specified
                               condition R reads (not a complete
                               representation of F_t)
-R   Reality Function          RealityFunction.QUALITY_MARKET: counts sales   fixed
+R   Reality Function          RealityRule.QUALITY_MARKET: counts sales       fixed
                               by actual quality from the sellers' selected
                               actions
 O_t System Outcome            sold_high, sold_low, total_sold, from R        observed
@@ -74,17 +76,20 @@ Assumptions
   valuation["costs"]). Actual quality -- which determines who sold
   high vs low quality goods -- is a scenario-level fact
   (parameters["actual_quality_by_seller"]), read only by
-  RealityFunction.QUALITY_MARKET, never by any agent or valuation rule.
+  RealityRule.QUALITY_MARKET, never by any agent or valuation rule.
 - This test assumes sellers know their own quality perfectly: each
   seller's known_quality is set to match its actual quality exactly
   (see ACTUAL_QUALITY_BY_SELLER). TER does not require this.
-- Buyers are not modeled as agents; the price each seller is offered
-  enters its V directly.
+- Buyers are not modeled as agents. The price each seller is offered is
+  information the seller observes when deciding, so it is held in the
+  seller's M (model_of_reality["price"]); V values selling at that
+  observed price against the seller's reservation value. Each seller is
+  assumed to observe its offered price correctly.
 - Both prices (pooled and verified) are fixed functions of scenario
   parameters (and, for the verified price, actual seller quality) --
   never of a realized outcome -- so this is not feedback in the sense
-  of Model 5.5. Each seller's initial price is set directly in its
-  initial valuation (V).
+  of Model 5.5. Each seller's offered price is set directly in its
+  initial model of reality (M_0).
 - Divergence between F̂ and what reality permits is not modeled in this
   test.
 
@@ -109,7 +114,7 @@ from research.ter import (
     AgentGroup,
     AgentSpec,
     DecisionProcess,
-    RealityFunction,
+    RealityRule,
     Scenario,
     ValuationRule,
     run_scenario,
@@ -144,8 +149,8 @@ LOW_QUALITY_SELLER_COUNT = 3
 
 # Both prices are fixed functions of scenario parameters (and, for the
 # true price, actual seller quality) -- never of a realized outcome --
-# so they are set directly in each seller's initial valuation (V), not
-# in a FeedbackRule.
+# so they are set directly in each seller's initial model of reality
+# (M_0) as the offered price it observes, not in an update rule.
 POOLED_PRICE = (
     BELIEVED_SHARE_HIGH * VALUE_IF_HIGH
     + (1 - BELIEVED_SHARE_HIGH) * VALUE_IF_LOW
@@ -161,12 +166,11 @@ BASE_SELLER = AgentSpec(
     objective="maximize value from the sale decision",
     model_of_reality={
         "known_quality": None,
+        "price": 0,
     },
     valuation={
-        "benefits": {
-            SELL: 0,
-            HOLD: 0,
-        },
+        "price_taking_action": SELL,
+        "price_role": "benefit",
         "costs": {
             SELL: 0,
             HOLD: 0,
@@ -176,7 +180,7 @@ BASE_SELLER = AgentSpec(
         SELL,
         HOLD,
     ],
-    valuation_rule=ValuationRule.NET,
+    valuation_rule=ValuationRule.PRICE_TAKING,
     decision_process=DecisionProcess.MAXIMIZE,
     horizon="current sale decision",
 )
@@ -188,14 +192,11 @@ HIGH_QUALITY_SELLERS = AgentGroup(
     name_prefix="high_quality_seller",
     model_of_reality={
         "known_quality": HIGH,
+        "price": POOLED_PRICE,
     },
     valuation={
         "costs": {
             SELL: HIGH_RESERVATION_VALUE,
-            HOLD: 0,
-        },
-        "benefits": {
-            SELL: POOLED_PRICE,
             HOLD: 0,
         },
     },
@@ -207,14 +208,11 @@ LOW_QUALITY_SELLERS = AgentGroup(
     name_prefix="low_quality_seller",
     model_of_reality={
         "known_quality": LOW,
+        "price": POOLED_PRICE,
     },
     valuation={
         "costs": {
             SELL: LOW_RESERVATION_VALUE,
-            HOLD: 0,
-        },
-        "benefits": {
-            SELL: POOLED_PRICE,
             HOLD: 0,
         },
     },
@@ -243,15 +241,12 @@ ACTUAL_QUALITY_BY_SELLER = {
 # any seller's belief about itself.
 TRUE_PRICED_SELLERS = [
     seller.variant(
-        valuation={
-            "benefits": {
-                SELL: (
-                    VALUE_IF_HIGH
-                    if ACTUAL_QUALITY_BY_SELLER[seller.name] == HIGH
-                    else VALUE_IF_LOW
-                ),
-                HOLD: 0,
-            },
+        model_of_reality={
+            "price": (
+                VALUE_IF_HIGH
+                if ACTUAL_QUALITY_BY_SELLER[seller.name] == HIGH
+                else VALUE_IF_LOW
+            ),
         },
     )
     for seller in SELLERS
@@ -270,9 +265,7 @@ ASYMMETRIC_INFORMATION_SCENARIO = Scenario(
     ),
     periods=1,
 
-    initial_state={
-        "period": 0,
-    },
+    initial_state={},
 
     agents=SELLERS,
 
@@ -283,7 +276,7 @@ ASYMMETRIC_INFORMATION_SCENARIO = Scenario(
         "actual_quality_by_seller": ACTUAL_QUALITY_BY_SELLER,
     },
 
-    reality_function=RealityFunction.QUALITY_MARKET,
+    reality=RealityRule.QUALITY_MARKET,
 )
 
 
@@ -310,7 +303,7 @@ class TestAsymmetricInformation(unittest.TestCase):
         )
 
         self.assertEqual(
-            result.final["sold_high"],
+            result.trace[-1].reality.system["sold_high"],
             0,
         )
 
@@ -320,7 +313,7 @@ class TestAsymmetricInformation(unittest.TestCase):
         )
 
         self.assertEqual(
-            result.final["sold_low"],
+            result.trace[-1].reality.system["sold_low"],
             LOW_QUALITY_SELLER_COUNT,
         )
 
@@ -330,17 +323,17 @@ class TestAsymmetricInformation(unittest.TestCase):
         )
 
         self.assertEqual(
-            result.final["sold_high"],
+            result.trace[-1].reality.system["sold_high"],
             0,
         )
 
         self.assertEqual(
-            result.final["sold_low"],
+            result.trace[-1].reality.system["sold_low"],
             LOW_QUALITY_SELLER_COUNT,
         )
 
         self.assertEqual(
-            result.final["total_sold"],
+            result.trace[-1].reality.system["total_sold"],
             LOW_QUALITY_SELLER_COUNT,
         )
 
@@ -350,17 +343,17 @@ class TestAsymmetricInformation(unittest.TestCase):
         )
 
         self.assertEqual(
-            result.final["sold_high"],
+            result.trace[-1].reality.system["sold_high"],
             HIGH_QUALITY_SELLER_COUNT,
         )
 
         self.assertEqual(
-            result.final["sold_low"],
+            result.trace[-1].reality.system["sold_low"],
             LOW_QUALITY_SELLER_COUNT,
         )
 
         self.assertEqual(
-            result.final["total_sold"],
+            result.trace[-1].reality.system["total_sold"],
             HIGH_QUALITY_SELLER_COUNT + LOW_QUALITY_SELLER_COUNT,
         )
 
@@ -374,17 +367,17 @@ class TestAsymmetricInformation(unittest.TestCase):
         )
 
         self.assertNotEqual(
-            asymmetric.final["sold_high"],
-            symmetric.final["sold_high"],
+            asymmetric.trace[-1].reality.system["sold_high"],
+            symmetric.trace[-1].reality.system["sold_high"],
         )
 
         self.assertEqual(
-            asymmetric.final["sold_high"],
+            asymmetric.trace[-1].reality.system["sold_high"],
             0,
         )
 
         self.assertEqual(
-            symmetric.final["sold_high"],
+            symmetric.trace[-1].reality.system["sold_high"],
             HIGH_QUALITY_SELLER_COUNT,
         )
 
@@ -401,7 +394,7 @@ class TestAsymmetricInformation(unittest.TestCase):
         )
 
         self.assertEqual(
-            result.final["sold_high"],
+            result.trace[-1].reality.system["sold_high"],
             0,
         )
 
@@ -420,10 +413,11 @@ class TestAsymmetricInformation(unittest.TestCase):
         self.assertNotEqual(expected_price, VALUE_IF_HIGH)
         self.assertNotEqual(expected_price, VALUE_IF_LOW)
 
-        # Every seller sees the same pooled price, regardless of its own
-        # quality -- pooled pricing is population-level, not individual.
+        # Every seller observes the same pooled price (M), regardless of
+        # its own quality -- pooled pricing is population-level, not
+        # individual.
         for seller in SELLERS:
             self.assertEqual(
-                result.agent(seller.name).valuation["benefits"]["sell"],
+                result.agent(seller.name).model_of_reality["price"],
                 expected_price,
             )

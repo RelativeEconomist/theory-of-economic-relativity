@@ -47,17 +47,19 @@ F_t aspects used by R         actual_payoff_matrix: the scenario's own       fix
                               condition R reads (not a complete
                               representation of F_t); two-business
                               scenario only
-R   Reality Function          RealityFunction.PAYOFF_MATRIX_OUTCOME:         fixed
+R   Reality Function          RealityRule.PAYOFF_MATRIX:                     fixed
                               realizes payoffs from both businesses'
                               selected actions and actual_payoff_matrix,
                               never from any business's V
-O_t System Outcome            the realized payoffs of both businesses,       observed
-                              from R
+O_{i,t} Agent Outcomes        each business's realized payoff, derived       observed
+                              from the one joint realization
 Feedback (Model 5.5)          none                                           --
 
 In the two-business scenario R takes both businesses' selected actions
-together, so Model 5.3 applies. This test defines no individual outcomes
-O_{i,t} and no relationship between them and O_t.
+together, so Model 5.3 applies. Each business's payoff depends on the
+other's action, so it is an agent-level outcome derived from that same
+joint R (Model 5.3, "Agent-level outcomes"). No separate system outcome
+O_t is defined, and no aggregation of the O_{i,t} into one.
 
 Economic mechanism
 ------------------
@@ -74,6 +76,14 @@ afterward, and no equilibrium is computed. Mutual contribution would
 produce a higher combined payoff (3 + 3 = 6) than mutual free riding
 (1 + 1 = 2), but is not selected under this payoff structure. The
 combined payoff is a sum computed by this test, not an output of R.
+
+Equilibrium concept: pure-strategy one-shot Nash equilibrium, verified
+afterward against the stated payoff structure -- not embedded in R and
+not reached through dynamics. Belief consistency: in the two-business
+scenario each business expects FREE_RIDE and the counterpart selects
+FREE_RIDE, so each expectation matches the realized profile. Because
+FREE_RIDE is strictly dominant, the equilibrium does not depend on that
+consistency.
 
 Assumptions
 -----------
@@ -118,7 +128,7 @@ import unittest
 from research.ter import (
     AgentSpec,
     DecisionProcess,
-    RealityFunction,
+    RealityRule,
     Scenario,
     ValuationRule,
     run_scenario,
@@ -156,7 +166,7 @@ PAYOFF_MATRIX = {
 }
 
 # R: the actual payoff structure used to realize O_t
-# (RealityFunction.PAYOFF_MATRIX_OUTCOME). This test assumes each
+# (RealityRule.PAYOFF_MATRIX). This test assumes each
 # business understands the game correctly, so this matches
 # PAYOFF_MATRIX exactly -- but it is declared independently and read
 # only by the reality side, never derived from any business's own
@@ -218,9 +228,7 @@ EXPECTS_CONTRIBUTION_SCENARIO = Scenario(
     name="Agent Expecting Contribution",
     description="A single agent values actions assuming the other agent contributes.",
     periods=1,
-    initial_state={
-        "period": 0,
-    },
+    initial_state={},
     agents=[
         BASE_AGENT,
     ],
@@ -248,8 +256,18 @@ MUTUAL_FREE_RIDING_SCENARIO = EXPECTS_CONTRIBUTION_SCENARIO.variant(
     parameters={
         "actual_payoff_matrix": ACTUAL_PAYOFF_MATRIX,
     },
-    reality_function=RealityFunction.PAYOFF_MATRIX_OUTCOME,
+    reality=RealityRule.PAYOFF_MATRIX,
 )
+
+def payoffs_of(result):
+    """
+    Each business's realized payoff O_{i,t}, derived from the one joint R
+    at the scenario's single decision point.
+    """
+    return {
+        name: outcome["payoff"]
+        for name, outcome in result.trace[-1].reality.agents.items()
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -305,10 +323,10 @@ class TestPublicGoods(unittest.TestCase):
             (FREE_RIDE, FREE_RIDE),
         )
 
-        # Realized payoffs come from O (RealityFunction.
-        # PAYOFF_MATRIX_OUTCOME), not from re-deriving them off
+        # Realized payoffs come from O (RealityRule.PAYOFF_MATRIX), not
+        # from re-deriving them off
         # PAYOFF_MATRIX by hand.
-        realized_payoffs = result.final["payoffs"]
+        realized_payoffs = payoffs_of(result)
 
         self.assertEqual(
             (
@@ -322,15 +340,32 @@ class TestPublicGoods(unittest.TestCase):
         # FREE_RIDE strictly dominates CONTRIBUTE under this payoff
         # structure (see Assumptions), so no MAXIMIZE-driven scenario
         # ever actually selects mutual contribution. This counterfactual
-        # payoff is read directly off the actual payoff structure (R),
-        # never the perceived/valuation PAYOFF_MATRIX.
+        # payoff is a re-run of the same joint R with both actions
+        # replaced -- the actual payoff structure, never the
+        # perceived/valuation PAYOFF_MATRIX -- and is not another
+        # realized outcome.
+        result = run_scenario(MUTUAL_FREE_RIDING_SCENARIO)
+
+        counterfactual = result.counterfactual(
+            0,
+            {
+                AGENT_1.name: CONTRIBUTE,
+                AGENT_2.name: CONTRIBUTE,
+            },
+        )
         counterfactual_mutual_contribution_payoff = (
-            ACTUAL_PAYOFF_MATRIX[CONTRIBUTE][CONTRIBUTE] * 2
+            counterfactual.agent(AGENT_1.name)["payoff"]
+            + counterfactual.agent(AGENT_2.name)["payoff"]
+        )
+
+        self.assertEqual(
+            counterfactual_mutual_contribution_payoff,
+            ACTUAL_PAYOFF_MATRIX[CONTRIBUTE][CONTRIBUTE] * 2,
         )
 
         # Mutual free riding, by contrast, is a real, realized outcome:
         # read from O, not from PAYOFF_MATRIX.
-        realized_payoffs = run_scenario(MUTUAL_FREE_RIDING_SCENARIO).final["payoffs"]
+        realized_payoffs = payoffs_of(result)
         realized_mutual_free_riding_payoff = (
             realized_payoffs[AGENT_1.name] + realized_payoffs[AGENT_2.name]
         )

@@ -6,9 +6,11 @@ Canonical TER: theory/academic.md, Models 5.1 and 5.2
 Purpose
 -------
 Verifies that the decision step (research/ter/decision.py::select_action)
-gives D only agent-side inputs -- F̂ (perceived_feasible_set), G
-(objective), M (model_of_reality), V (value) and H (horizon) -- and never
-F_t. D receives a DecisionView, which has no F_t field.
+gives D only agent-side inputs -- F̂ (perceived_feasible_set), M
+(model_of_reality) and V (value) -- and never F_t. D receives a
+DecisionView, which has no F_t field. G (objective) and H (horizon) are
+not direct inputs to D either: they reach D only through V, which is
+evaluated against a ValuationView carrying G, M and H.
 
 F_t, the Objective Feasible State of Reality, is not agent-specific. In
 this implementation, scenario state carries state["permitted_actions"]
@@ -35,7 +37,7 @@ scenario.
 import unittest
 
 from research.ter.agent import AgentState
-from research.ter.decision import DecisionView, select_action
+from research.ter.decision import DecisionView, ValuationView, select_action
 from research.ter.outcome import is_actually_feasible
 
 
@@ -52,13 +54,13 @@ STATE = {
 }
 
 
-def make_agent(decision_process):
+def make_agent(decision_process, value=lambda action, view: 0.0, horizon=None):
     return AgentState(
         objective="test objective",
         model_of_reality={},
         perceived_feasible_set=[PERCEIVED_ACTION],
-        value=lambda action, view: 0.0,
-        horizon=None,
+        value=value,
+        horizon=horizon,
         decision_process=decision_process,
         name="agent",
         valuation={},
@@ -98,6 +100,50 @@ class TestDecisionFeasibilityBoundaryContract(unittest.TestCase):
 
         with self.assertRaises(AttributeError):
             select_action(agent)
+
+    def test_decision_process_cannot_access_the_objective_or_horizon(self):
+        captured = {}
+
+        def capturing_decision_process(view):
+            captured["view"] = view
+            return view.perceived_feasible_set[0]
+
+        select_action(make_agent(capturing_decision_process))
+
+        self.assertFalse(hasattr(captured["view"], "objective"))
+        self.assertFalse(hasattr(captured["view"], "horizon"))
+
+    def test_valuation_still_receives_the_objective_and_horizon(self):
+        captured = {}
+
+        def recording_value(action, valuation_view):
+            captured["valuation_view"] = valuation_view
+            return 0.0
+
+        # D consults V through view.value, in the same call shape the
+        # generic decision rules use.
+        def valuing_decision_process(view):
+            view.value(view.perceived_feasible_set[0], view)
+            return view.perceived_feasible_set[0]
+
+        select_action(
+            make_agent(
+                valuing_decision_process,
+                value=recording_value,
+                horizon="test horizon",
+            )
+        )
+
+        valuation_view = captured["valuation_view"]
+
+        self.assertIsInstance(valuation_view, ValuationView)
+        self.assertEqual(valuation_view.objective, "test objective")
+        self.assertEqual(valuation_view.horizon, "test horizon")
+        self.assertEqual(valuation_view.model_of_reality, {})
+
+        # V is evaluated against the ValuationView, never D's own view.
+        self.assertNotIsInstance(valuation_view, DecisionView)
+        self.assertFalse(hasattr(valuation_view, "permitted_actions"))
 
     def test_selection_still_produces_an_action_from_the_perceived_feasible_set(self):
         agent = make_agent(lambda view: view.perceived_feasible_set[0])

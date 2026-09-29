@@ -141,9 +141,7 @@ BASE_SCENARIO = Scenario(
     name="Coffee Buyer",
     description="A single agent searches among three coffees under varying search depth and order.",
     periods=1,
-    initial_state={
-        "period": 0,
-    },
+    initial_state={},
     agents=[
         BASE_AGENT,
     ],

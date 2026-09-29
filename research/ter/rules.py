@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Any, Callable
 
 from research.ter.agent import AgentState
-from research.ter.outcome import RealityView, permitted_actions_for
+from research.ter.reality import RealityResult
 
 
 RULES: dict[str, Callable[..., Any]] = {}
@@ -16,7 +16,7 @@ def register_rule(name: str):
 
         decision_process="maximize_value"
         decision_process="satisfice"
-        feedback_rule="price_growth_expectations"
+        reality="payoff_matrix_reality"
     """
 
     def decorator(function: Callable[..., Any]):
@@ -29,10 +29,17 @@ def register_rule(name: str):
     return decorator
 
 
-def get_rule(name: str) -> Callable[..., Any]:
+def get_rule(name: str | Callable[..., Any]) -> Callable[..., Any]:
     """
-    Resolve a named TER rule.
+    Resolve a TER rule.
+
+    A registered name (or public enum member) is looked up in the
+    registry, which remains optional shorthand; a callable is used as
+    the rule directly.
     """
+    if callable(name) and not isinstance(name, str):
+        return name
+
     try:
         return RULES[name]
     except KeyError as exc:
@@ -43,80 +50,46 @@ def get_rule(name: str) -> Callable[..., Any]:
 # Rule contracts
 # ---------------------------------------------------------------------------
 #
-# Every registered rule fits exactly one of these four shapes. A rule
-# declares which one it implements only by its argument names and return
-# type; there is no base class to inherit from.
+# Every rule fits exactly one of these six shapes. A rule declares which
+# one it implements only by its argument names and return type; there is
+# no base class to inherit from. Rules may be registered by name (and
+# listed in the public enums below) or passed to AgentSpec/Scenario as
+# plain callables.
 #
-#     Decision rule:     (agent)                             -> action
-#     Value rule:        (action, agent)                     -> float
-#     Reality function:  (state, agents, actions, parameters) -> dict
-#     Feedback rule:     (state, outcome, parameters)         -> state
+#     Decision rule:     (agent)                                -> action
+#     Value rule:        (action, agent)                        -> float
+#     Reality rule:      (actions, objective_state, parameters)
+#                            -> RealityResult
+#     Transition rule:   (objective_state, reality, parameters)
+#                            -> objective_state
+#     Observation rule:  (agents, actions, reality, objective_state,
+#                         parameters) -> {agent name: data}
+#     Update rule:       (agent, observation) -> {component: new value}
 #
-# The reality function is R: a model-specific implementation of
+# The reality rule is R: a model-specific implementation of
 # O_t = R(C_1,t, ..., C_n,t, F_t) that determines the realized outcome
 # from the selected actions and the objective feasible state of reality.
-# F_t is carried by `state` (including state["permitted_actions"], the
-# agents' permitted actions) and `parameters`. Its return value
-# contributes to O; R is not O itself.
-
-
-def build_agent_results(
-    state: dict[str, Any],
-    agents: list[RealityView],
-    actions: list[Any],
-    compute: Callable[[RealityView, Any], dict[str, Any]],
-) -> dict[str, Any]:
-    """
-    Build the standard named per-agent outcome shape for a reality
-    function.
-
-    Internal rule-authoring helper. Not part of the public research.ter
-    API -- researchers select rules through the public enums and never
-    call this directly. Use it only when writing a reality function that
-    has genuinely per-agent results to report; aggregate-only outcomes
-    (bank liquidity, market price) should keep returning a flat dict
-    instead.
-
-    compute(agent, action) -> dict is called once per agent for its
-    actually selected action, and once per action F_t permits for that
-    agent (state["permitted_actions"]), so
-    ScenarioResult.agent(name).outcome_for(...) can look up an unselected
-    action's outcome later without any rule being re-executed.
-    Alternatives range over what F_t permits, not F_hat: R (this helper
-    included) only ever receives a RealityView, which never carries the
-    agent's perceived_feasible_set -- reality's own "what else could have
-    happened" is a question about what was actually possible, not about
-    what the agent believed was possible.
-
-    Returns:
-
-        {
-            "agent_results": {
-                agent.name: compute(agent, selected_action),
-            },
-            "alternative_outcomes": {
-                agent.name: {
-                    action: compute(agent, action)
-                    for action in permitted_actions_for(state, agent)
-                },
-            },
-        }
-    """
-    agent_results = {}
-    alternative_outcomes = {}
-
-    for agent, action in zip(agents, actions):
-        agent_results[agent.name] = compute(agent, action)
-
-        alternative_outcomes[agent.name] = {
-            candidate: compute(agent, candidate)
-            for candidate in permitted_actions_for(state, agent)
-        }
-
-    return {
-        "agent_results": agent_results,
-        "alternative_outcomes": alternative_outcomes,
-    }
+# Its return value is O (RealityResult); R is not O itself.
+#
+# actions maps each acting agent's name to C_i,t; inactive agents are
+# absent. objective_state is F_t for R (frozen) and a mutable copy of
+# F_t for a transition, which returns F_t+1. F_t is carried by
+# objective_state (including objective_state["permitted_actions"], the
+# agents' permitted actions) and parameters. An observation rule sees
+# F_t+1 and decides what each agent receives; an update rule sees only
+# its own agent (research.ter.observation.UpdateView) and that
+# Observation, and returns replacements for agent-side components.
+#
+# Division of labor, one decision point:
+#
+#     R           realizes O from C and F_t          -- never changes F
+#     transition  F_t -> F_t+1 from O                -- never touches agents
+#     observation O, F_t+1 -> what each agent learns -- never changes state
+#     update      agent + its observation -> agent'  -- never reads F or O
+#
+# Every rule is a deterministic function of its arguments; there is no
+# randomness source yet. ScenarioResult.counterfactual relies on that
+# and checks it.
 
 
 # ---------------------------------------------------------------------------
@@ -370,229 +343,6 @@ def bank_depositor_value(action: Any, agent: AgentState) -> float:
     )
 
 
-@register_rule("bank_liquidity_confidence")
-def bank_liquidity_confidence(
-    state: dict[str, Any],
-    outcome: Any,
-    parameters: dict[str, Any],
-):
-    """
-    Update depositor failure beliefs from bank liquidity.
-
-    Each depositor may also have an independent risk signal.
-
-    Required state fields:
-
-        liquidity
-        agents
-
-    Required parameter:
-
-        initial_liquidity
-    """
-    liquidity_ratio = (
-        state["liquidity"]
-        / parameters["initial_liquidity"]
-    )
-
-    liquidity_risk = max(
-        0.0,
-        min(1.0, 1 - liquidity_ratio),
-    )
-
-    for agent in state["agents"]:
-        signal = agent.model_of_reality.get(
-            "risk_signal",
-            0.0,
-        )
-
-        agent.model_of_reality["failure_probability"] = max(
-            signal,
-            liquidity_risk,
-        )
-
-    return state
-
-
-@register_rule("withdrawals_reduce_liquidity")
-def withdrawals_reduce_liquidity(
-    state: dict[str, Any],
-    agents: list[AgentState],
-    actions: list[Any],
-    parameters: dict[str, Any],
-):
-    """
-    Aggregate withdrawals and apply the bank's actual liquidity constraint.
-
-    Required state field:
-
-        liquidity
-
-    Required parameter:
-
-        withdrawal_amount
-    """
-    withdrawals = actions.count("withdraw")
-
-    requested = (
-        withdrawals
-        * parameters["withdrawal_amount"]
-    )
-
-    realized = min(
-        requested,
-        state["liquidity"],
-    )
-
-    remaining = max(
-        0,
-        state["liquidity"] - realized,
-    )
-
-    return {
-        "withdrawals": withdrawals,
-        "requested_liquidity": requested,
-        "realized_withdrawals": realized,
-        "liquidity": remaining,
-    }
-
-# ---------------------------------------------------------------------------
-# Shared dynamic rules
-# ---------------------------------------------------------------------------
-
-
-@register_rule("price_growth_expectations")
-def price_growth_expectations(
-    state: dict[str, Any],
-    outcome: Any,
-    parameters: dict[str, Any],
-):
-    """
-    Update expected appreciation from observed price growth.
-
-    Required state fields:
-
-        previous_price
-        price
-        agents
-
-    Required parameter:
-
-        feedback_strength
-
-    feedback_strength is scenario specific, not a TER primitive.
-    """
-    previous_price = state["previous_price"]
-    current_price = state["price"]
-
-    if previous_price == 0:
-        growth = 0.0
-    else:
-        growth = (
-            current_price - previous_price
-        ) / previous_price
-
-    expected_appreciation = (
-        parameters["feedback_strength"]
-        * growth
-    )
-
-    for agent in state["agents"]:
-        agent.model_of_reality["expected_appreciation"] = (
-            expected_appreciation
-        )
-
-    return state
-
-
-@register_rule("demand_moves_price")
-def demand_moves_price(
-    state: dict[str, Any],
-    agents: list[AgentState],
-    actions: list[Any],
-    parameters: dict[str, Any],
-):
-    """
-    Simple model specific price response to aggregate buying.
-
-    Required state field:
-
-        price
-
-    Required parameter:
-
-        price_sensitivity
-
-    This is not a universal TER asset pricing equation.
-
-    Reports previous_price (the price before this period's update)
-    alongside the new price, since this rule is the one place that
-    actually changes price. The generic runner does not special case
-    any field name.
-    """
-    buyers = actions.count("buy")
-
-    next_price = state["price"] * (
-        1
-        + parameters["price_sensitivity"] * buyers
-    )
-
-    return {
-        "buyers": buyers,
-        "previous_price": state["price"],
-        "price": next_price,
-    }
-
-
-# ---------------------------------------------------------------------------
-# Quality market rules (asymmetric information)
-# ---------------------------------------------------------------------------
-#
-# Pooled/true quality pricing is not modeled here as feedback: both
-# prices are fixed functions of scenario parameters (and, for the true
-# price, actual seller quality), never of a realized outcome, so they
-# belong in each seller's initial valuation (V_0) instead. See
-# test_04_asymmetric_information.py.
-
-
-@register_rule("quality_market_outcome")
-def quality_market_outcome(
-    state: dict[str, Any],
-    agents: list[AgentState],
-    actions: list[Any],
-    parameters: dict[str, Any],
-):
-    """
-    Aggregate seller sell/hold decisions by actual quality.
-
-    Actual quality is a fact about reality, not any seller's belief --
-    read from the scenario side, never from agent.model_of_reality.
-
-    Required parameter:
-
-        actual_quality_by_seller   seller name -> "high" or "low"
-    """
-    actual_quality_by_seller = parameters["actual_quality_by_seller"]
-
-    sold_high = 0
-    sold_low = 0
-
-    for agent, action in zip(agents, actions):
-        if action != "sell":
-            continue
-
-        if actual_quality_by_seller[agent.name] == "high":
-            sold_high += 1
-        else:
-            sold_low += 1
-
-    return {
-        "sold_high": sold_high,
-        "sold_low": sold_low,
-        "total_sold": sold_high + sold_low,
-    }
-
-
 # ---------------------------------------------------------------------------
 # Externality rules
 # ---------------------------------------------------------------------------
@@ -641,82 +391,6 @@ def internalized_value(action: Any, agent: AgentState) -> float:
     )
 
 
-@register_rule("social_value_outcome")
-def social_value_outcome(
-    state: dict[str, Any],
-    agents: list[RealityView],
-    actions: list[Any],
-    parameters: dict[str, Any],
-):
-    """
-    Calculate social value under this scenario's stated welfare measure
-    as the actual private value plus the actual external effect.
-
-    Reads the scenario's actual private_values and actual external_effects
-    -- both facts about reality, not any agent's belief or valuation --
-    never the agent's own decision valuation (agent.value or
-    agent.valuation) or perceived external effect. This keeps social
-    value tied entirely to what actually happens, while remaining a
-    scenario-specific welfare measure rather than a universal TER outcome
-    equation.
-
-    private_values is deliberately a scenario parameter here, not the
-    agent's own valuation["private_values"] (V): the two are declared
-    equal in every current scenario that uses this rule (see
-    test_08_externalities.py), the same way that scenario's
-    perceived_external_effects (M) and external_effects (a condition of
-    F_t) are declared equal -- TER does not require either equality, and
-    R must not read M or V to find out.
-
-    Required scenario parameters:
-
-        private_values      action -> actual private value
-        external_effects    action -> actual external effect
-
-    Reports two things, both keyed by agent name rather than position, and
-    neither carrying a "selected_action" marker: which action was actually
-    selected comes from the core scenario execution result
-    (AgentResult.selected_action), not from a reality function.
-
-        agent_results         the generic outcome for the action actually
-                               selected.
-        alternative_outcomes  the generic outcome for every action F_t
-                               permits for that agent
-                               (state["permitted_actions"], including the
-                               selected one). Lets a result look up an
-                               unselected-but-actually-feasible action's
-                               outcome (see AgentResult.outcome_for)
-                               without any rule being re-executed later.
-    """
-
-    def compute_outcome(agent, action):
-        private_value = parameters["private_values"][action]
-        external_effect = parameters["external_effects"][action]
-
-        return {
-            "action": action,
-            "private_value": private_value,
-            "external_effect": external_effect,
-            "social_value": private_value + external_effect,
-        }
-
-    agent_results = {}
-    alternative_outcomes = {}
-
-    for agent, action in zip(agents, actions):
-        agent_results[agent.name] = compute_outcome(agent, action)
-
-        alternative_outcomes[agent.name] = {
-            candidate: compute_outcome(agent, candidate)
-            for candidate in permitted_actions_for(state, agent)
-        }
-
-    return {
-        "agent_results": agent_results,
-        "alternative_outcomes": alternative_outcomes,
-    }
-
-
 # ---------------------------------------------------------------------------
 # Strategic interaction rules
 # ---------------------------------------------------------------------------
@@ -746,47 +420,6 @@ def payoff_matrix_value(action: Any, agent: AgentState) -> float:
     expected_other_action = agent.model_of_reality["expected_other_action"]
 
     return payoff_matrix[action][expected_other_action]
-
-
-@register_rule("payoff_matrix_outcome")
-def payoff_matrix_outcome(
-    state: dict[str, Any],
-    agents: list[AgentState],
-    actions: list[Any],
-    parameters: dict[str, Any],
-):
-    """
-    Realize each of two players' payoff from the scenario's actual
-    payoff matrix and both players' selected actions.
-
-    The actual payoff matrix is a fact about reality, not any player's
-    valuation -- read from parameters, never from agent.valuation. A
-    player's own payoff_matrix_value may or may not match it (see
-    test_05_prisoners_dilemma.py for the case where a test assumes they
-    do).
-
-    Required parameter:
-
-        actual_payoff_matrix   action -> counterpart_action -> payoff
-
-    Requires exactly two agents -- one two-player game per period.
-    """
-    if len(agents) != 2:
-        raise ValueError(
-            "payoff_matrix_outcome requires exactly two agents."
-        )
-
-    actual_payoff_matrix = parameters["actual_payoff_matrix"]
-
-    (agent_a, agent_b) = agents
-    (action_a, action_b) = actions
-
-    return {
-        "payoffs": {
-            agent_a.name: actual_payoff_matrix[action_a][action_b],
-            agent_b.name: actual_payoff_matrix[action_b][action_a],
-        },
-    }
 
 
 # ---------------------------------------------------------------------------
@@ -839,6 +472,338 @@ def price_taking_value(action: Any, agent: AgentState) -> float:
 
 
 # ---------------------------------------------------------------------------
+# Reality, transition, observation, and update rules
+# ---------------------------------------------------------------------------
+
+
+@register_rule("social_value_reality")
+def social_value_reality(actions, objective_state, parameters):
+    """
+    Realize each actor's
+    private value, actual external effect, and this scenario's
+    social-value measure (their sum) from the scenario's actual
+    parameters -- never from any agent's belief or valuation.
+
+    Each actor's outcome depends only on its own action, so this suits
+    agent-level specifications (Model 5.2): it reports O_i,t per agent
+    and no O_t. An unselected action's outcome comes from a
+    counterfactual re-run (ScenarioResult.counterfactual), not from
+    precomputed alternatives.
+
+    Required parameters:
+
+        private_values      action -> actual private value
+        external_effects    action -> actual external effect
+    """
+    agents = {}
+
+    for name, action in actions.items():
+        private_value = parameters["private_values"][action]
+        external_effect = parameters["external_effects"][action]
+
+        agents[name] = {
+            "action": action,
+            "private_value": private_value,
+            "external_effect": external_effect,
+            "social_value": private_value + external_effect,
+        }
+
+    return RealityResult(agents=agents)
+
+
+@register_rule("payoff_matrix_reality")
+def payoff_matrix_reality(actions, objective_state, parameters):
+    """
+    Realize both players' payoffs from the scenario's actual payoff matrix and both
+    selected actions.
+
+    Each player's payoff depends on the other's action, so it is derived
+    from this one joint realization (Model 5.3, "Agent-level outcomes")
+    and reported as O_i,t per player. No separate O_t is defined.
+
+    Required parameter:
+
+        actual_payoff_matrix   action -> counterpart_action -> payoff
+
+    Requires exactly two acting agents.
+    """
+    if len(actions) != 2:
+        raise ValueError(
+            "payoff_matrix_reality requires exactly two acting agents."
+        )
+
+    actual_payoff_matrix = parameters["actual_payoff_matrix"]
+
+    ((name_a, action_a), (name_b, action_b)) = actions.items()
+
+    return RealityResult(
+        agents={
+            name_a: {"payoff": actual_payoff_matrix[action_a][action_b]},
+            name_b: {"payoff": actual_payoff_matrix[action_b][action_a]},
+        },
+    )
+
+
+@register_rule("withdrawal_liquidity_reality")
+def withdrawal_liquidity_reality(actions, objective_state, parameters):
+    """
+    Realize aggregate withdrawals against the bank's actual liquidity in F_t.
+
+    Reports O_t only. remaining_liquidity is what the realized
+    withdrawals leave; folding it into F_t+1 is the transition's job
+    (remaining_liquidity_transition), not R's.
+
+    Required objective_state field:
+
+        liquidity
+
+    Required parameter:
+
+        withdrawal_amount
+    """
+    withdrawals = list(actions.values()).count("withdraw")
+
+    requested = withdrawals * parameters["withdrawal_amount"]
+    realized = min(requested, objective_state["liquidity"])
+
+    return RealityResult(
+        system={
+            "withdrawals": withdrawals,
+            "requested_liquidity": requested,
+            "realized_withdrawals": realized,
+            "remaining_liquidity": objective_state["liquidity"] - realized,
+        },
+    )
+
+
+@register_rule("quality_market_reality")
+def quality_market_reality(actions, objective_state, parameters):
+    """
+    Aggregate seller sell/hold decisions by actual quality.
+
+    Pooled/true quality pricing is not modeled here as feedback: both
+    prices are fixed functions of scenario parameters (and, for the true
+    price, actual seller quality), never of a realized outcome, so they
+    belong in each seller's initial valuation (V_0) instead. See
+    test_04_asymmetric_information.py.
+
+    Actual quality is a fact about reality, not any seller's belief --
+    read from parameters, never from any agent's model_of_reality.
+    Reports O_t only.
+
+    Required parameter:
+
+        actual_quality_by_seller   seller name -> "high" or "low"
+    """
+    actual_quality_by_seller = parameters["actual_quality_by_seller"]
+
+    sold = [
+        actual_quality_by_seller[name]
+        for name, action in actions.items()
+        if action == "sell"
+    ]
+
+    sold_high = sold.count("high")
+    sold_low = len(sold) - sold_high
+
+    return RealityResult(
+        system={
+            "sold_high": sold_high,
+            "sold_low": sold_low,
+            "total_sold": sold_high + sold_low,
+        },
+    )
+
+
+@register_rule("demand_price_reality")
+def demand_price_reality(actions, objective_state, parameters):
+    """
+    A simple model-specific price response to aggregate buying against the price in F_t. Not a
+    universal TER asset pricing equation.
+
+    Reports O_t: the number of buyers, the price they met
+    (previous_price), and the price their buying realized (price).
+    Carrying the new price into F_t+1 is the transition's job
+    (realized_price_transition).
+
+    Required objective_state field:
+
+        price
+
+    Required parameter:
+
+        price_sensitivity
+    """
+    buyers = list(actions.values()).count("buy")
+
+    return RealityResult(
+        system={
+            "buyers": buyers,
+            "previous_price": objective_state["price"],
+            "price": objective_state["price"] * (
+                1 + parameters["price_sensitivity"] * buyers
+            ),
+        },
+    )
+
+
+@register_rule("realized_price_transition")
+def realized_price_transition(objective_state, reality, parameters):
+    """
+    O_t -> F_t+1: the market price at the next decision point is the
+    price this decision point realized, and the price before it becomes
+    previous_price.
+    """
+    objective_state["previous_price"] = reality.system["previous_price"]
+    objective_state["price"] = reality.system["price"]
+    return objective_state
+
+
+@register_rule("remaining_liquidity_transition")
+def remaining_liquidity_transition(objective_state, reality, parameters):
+    """
+    O_t -> F_t+1: the bank's liquidity at the next decision point is
+    what this decision point's realized withdrawals left.
+    """
+    objective_state["liquidity"] = reality.system["remaining_liquidity"]
+    return objective_state
+
+
+@register_rule("observe_own_outcome")
+def observe_own_outcome(agents, actions, reality, objective_state, parameters):
+    """
+    Each agent observes its own realized outcome O_i,t, exactly, and
+    nothing else. Agents with no O_i,t observe nothing.
+    """
+    return {
+        name: dict(reality.agent(name))
+        for name in agents
+        if name in reality.agents
+    }
+
+
+@register_rule("observe_public_actions")
+def observe_public_actions(agents, actions, reality, objective_state, parameters):
+    """
+    Every agent observes every action selected at this decision point,
+    exactly -- the information structure of a sequential game with
+    observed moves. Nothing about the outcome is observed.
+
+    Observation data:
+
+        actions   acting agent name -> selected action
+    """
+    return {
+        name: {"actions": dict(actions)}
+        for name in agents
+    }
+
+
+@register_rule("observe_liquidity")
+def observe_liquidity(agents, actions, reality, objective_state, parameters):
+    """
+    Every agent observes the bank's liquidity as it stands after this
+    decision point's withdrawals (F_t+1), exactly.
+
+    Observation data:
+
+        liquidity
+    """
+    return {
+        name: {"liquidity": objective_state["liquidity"]}
+        for name in agents
+    }
+
+
+@register_rule("observe_price")
+def observe_price(agents, actions, reality, objective_state, parameters):
+    """
+    Every agent observes the market price as it stands after this
+    decision point (F_t+1), and the price before it, exactly.
+
+    Observation data:
+
+        previous_price
+        price
+    """
+    return {
+        name: {
+            "previous_price": objective_state["previous_price"],
+            "price": objective_state["price"],
+        }
+        for name in agents
+    }
+
+
+@register_rule("price_growth_expectation_update")
+def price_growth_expectation_update(agent, observation):
+    """
+    Applied by one agent to what it observed: its expected appreciation becomes its own
+    extrapolation weight times the observed price growth.
+
+    feedback_strength is the agent's own belief (M) about how strongly
+    observed growth carries forward -- not a TER primitive -- so two
+    agents observing the same prices may still expect different things.
+
+    Required model_of_reality field:
+
+        feedback_strength
+
+    Required observation fields:
+
+        previous_price
+        price
+    """
+    previous_price = observation["previous_price"]
+
+    if previous_price == 0:
+        growth = 0.0
+    else:
+        growth = (observation["price"] - previous_price) / previous_price
+
+    model = agent.model_of_reality
+    model["expected_appreciation"] = model["feedback_strength"] * growth
+
+    return {"model_of_reality": model}
+
+
+@register_rule("liquidity_risk_update")
+def liquidity_risk_update(agent, observation):
+    """
+    Applied by one depositor to what it observed: its perceived failure probability
+    becomes the larger of its own independent risk signal and the
+    shortfall of observed liquidity against the liquidity it regards as
+    normal.
+
+    Both inputs besides the observation are the depositor's own beliefs
+    (M), so two depositors observing the same liquidity may still reach
+    different conclusions.
+
+    Required model_of_reality fields:
+
+        risk_signal
+        reference_liquidity
+
+    Required observation field:
+
+        liquidity
+    """
+    model = agent.model_of_reality
+
+    liquidity_risk = max(
+        0.0,
+        min(1.0, 1 - observation["liquidity"] / model["reference_liquidity"]),
+    )
+
+    model["failure_probability"] = max(
+        model.get("risk_signal", 0.0),
+        liquidity_risk,
+    )
+
+    return {"model_of_reality": model}
+
+
+# ---------------------------------------------------------------------------
 # Public rule enums
 # ---------------------------------------------------------------------------
 #
@@ -873,14 +838,26 @@ class ValuationRule(str, Enum):
     PRICE_TAKING = "price_taking_value"
 
 
-class RealityFunction(str, Enum):
-    WITHDRAWALS_REDUCE_LIQUIDITY = "withdrawals_reduce_liquidity"
-    DEMAND_MOVES_PRICE = "demand_moves_price"
-    QUALITY_MARKET = "quality_market_outcome"
-    SOCIAL_VALUE = "social_value_outcome"
-    PAYOFF_MATRIX_OUTCOME = "payoff_matrix_outcome"
+class RealityRule(str, Enum):
+    SOCIAL_VALUE = "social_value_reality"
+    PAYOFF_MATRIX = "payoff_matrix_reality"
+    WITHDRAWALS = "withdrawal_liquidity_reality"
+    QUALITY_MARKET = "quality_market_reality"
+    DEMAND_MOVES_PRICE = "demand_price_reality"
 
 
-class FeedbackRule(str, Enum):
-    BANK_LIQUIDITY_CONFIDENCE = "bank_liquidity_confidence"
-    PRICE_GROWTH_EXPECTATIONS = "price_growth_expectations"
+class TransitionRule(str, Enum):
+    REMAINING_LIQUIDITY = "remaining_liquidity_transition"
+    REALIZED_PRICE = "realized_price_transition"
+
+
+class ObservationRule(str, Enum):
+    OWN_OUTCOME = "observe_own_outcome"
+    PUBLIC_ACTIONS = "observe_public_actions"
+    LIQUIDITY = "observe_liquidity"
+    PRICE = "observe_price"
+
+
+class UpdateRule(str, Enum):
+    LIQUIDITY_RISK = "liquidity_risk_update"
+    PRICE_GROWTH_EXPECTATIONS = "price_growth_expectation_update"

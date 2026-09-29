@@ -261,9 +261,7 @@ SPECIALIZATION_SCENARIO = Scenario(
         "price, choosing which good to produce."
     ),
     periods=1,
-    initial_state={
-        "period": 0,
-    },
+    initial_state={},
     agents=[
         PRODUCER_A,
         PRODUCER_B,

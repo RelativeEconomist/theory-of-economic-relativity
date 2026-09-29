@@ -66,7 +66,7 @@ which consequences count.
 Assumptions
 -----------
 - H is represented here as an integer count of periods considered
-  relevant to the decision. This is a test-specific operationalization of
+  relevant to valuation. This is a test-specific operationalization of
   Time Horizon (Section 3), not a universal meaning of horizon.
   AgentSpec.horizon is typed Any; other tests use descriptive strings
   instead, which is equally valid.
@@ -145,7 +145,7 @@ def horizon_scoped_value(action, agent):
     equation: an action's known consequence counts toward valuation only
     when that consequence's period falls within the agent's horizon (H). A consequence
     whose period exceeds the horizon is not relevant to the current
-    decision and contributes nothing. This is a relevance boundary, not
+    valuation and contributes nothing. This is a relevance boundary, not
     a discount rate -- there is no decay or weighting, only inclusion or
     exclusion.
 
@@ -156,7 +156,7 @@ def horizon_scoped_value(action, agent):
     Required agent field:
 
         horizon   an integer number of periods considered relevant to
-                  this decision (see module docstring Assumptions)
+                  valuation (see module docstring Assumptions)
     """
     consequence = agent.model_of_reality["consequence_schedule"][action]
 
@@ -203,9 +203,7 @@ SHORT_HORIZON_SCENARIO = Scenario(
     name="Short Horizon",
     description="The agent considers only consequences within a short horizon.",
     periods=1,
-    initial_state={
-        "period": 0,
-    },
+    initial_state={},
     agents=[
         BASE_AGENT,
     ],

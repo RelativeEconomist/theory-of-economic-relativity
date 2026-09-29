@@ -5,52 +5,54 @@ Canonical TER: theory/academic.md, Model 5.3
 
 Purpose
 -------
-Verifies the Model 5.3 system step (research/ter/system.py::run_system)
-structurally, independent of any economic scenario:
+Verifies the Model 5.3 system step of the engine
+(research/ter/runner.py::run_scenario) structurally, independent of any
+economic scenario:
 
-1. Every agent independently selects an action through the standard
-   decision process (Model 5.1); run_system collects one action per
-   agent.
-2. Actions correspond to the correct agent -- ordering is preserved,
-   regardless of the order agents are supplied in.
-3. The outcome function receives the complete joint action set, not a
-   subset and not a re-derived one.
-4. run_system reports exactly one system outcome (O_t), taken directly
-   from whatever the outcome function returns.
+1. Every acting agent independently selects an action through the
+   standard decision process (Model 5.1); the step collects one action
+   per actor.
+2. Actions correspond to the correct agent -- keyed by agent name, in the
+   order the agents are declared, regardless of what that order is.
+3. R receives the complete joint action set, not a subset and not a
+   re-derived one.
+4. The step reports exactly one system outcome (O_t), taken directly from
+   what R returns.
+
+The rules here are passed as plain callables rather than registered
+names, which the engine supports alongside the registry.
 
 Out of scope
 ------------
-F_t: run_system passes the outcome function only agents and actions. No
-relationship between individual outcomes O_{i,t} and O_t is defined or
-tested. This does not exercise research.ter.market's separate multi-agent
-mechanism (evaluate_market/find_market_clearing_states) or any
-Scenario/run_scenario machinery -- both already have their own coverage.
+F_t: the probes ignore the objective state. No relationship between
+individual outcomes O_{i,t} and O_t is defined or tested. This does not
+exercise research.ter.market's separate price-grid mechanism
+(evaluate_market/find_market_clearing_states), which has its own
+coverage.
 """
 
 import unittest
 
-from research.ter.agent import AgentState
-from research.ter.system import run_system
+from research.ter import AgentSpec, RealityResult, Scenario, run_scenario
 
 
-def make_agent(name: str) -> AgentState:
+def select_own_action(agent):
     """
-    An agent whose only perceived feasible action is derived from its
-    own name, so a selected action can always be traced back to the
-    agent that selected it.
+    Each agent's only perceived feasible action is derived from its own
+    name, so a selected action can always be traced back to the agent
+    that selected it.
     """
-    action = f"{name}_action"
+    return agent.perceived_feasible_set[0]
 
-    return AgentState(
+
+def make_agent(name: str) -> AgentSpec:
+    return AgentSpec(
+        name=name,
         objective="test objective",
         model_of_reality={},
-        perceived_feasible_set=[action],
-        value=lambda a, agent: 0.0,
-        horizon=None,
-        decision_process=lambda agent: agent.perceived_feasible_set[0],
-        name=name,
-        valuation={},
-        decision_parameters={},
+        perceived_feasible_set=[f"{name}_action"],
+        valuation_rule=lambda action, agent: 0.0,
+        decision_process=select_own_action,
     )
 
 
@@ -59,35 +61,37 @@ AGENT_B = make_agent("agent_b")
 AGENT_C = make_agent("agent_c")
 
 
+def count_actions(actions, objective_state, parameters):
+    return RealityResult(system={"action_count": len(actions)})
+
+
+def scenario(agents, reality=count_actions):
+    return Scenario(
+        name="System Contract",
+        description="Minimal multi-agent step.",
+        periods=1,
+        initial_state={},
+        agents=agents,
+        reality=reality,
+    )
+
+
 class TestSystemContract(unittest.TestCase):
     TEST_NAME = "Framework: Multi-Agent System Contract"
 
     def test_every_agent_independently_selects_its_own_action(self):
-        result = run_system(
-            agents=[AGENT_A, AGENT_B, AGENT_C],
-            outcome_function=lambda agents, actions: None,
-        )
+        result = run_scenario(scenario([AGENT_A, AGENT_B, AGENT_C]))
 
         self.assertEqual(
-            result.actions,
+            list(result.trace[0].actions.values()),
             ["agent_a_action", "agent_b_action", "agent_c_action"],
         )
 
     def test_actions_correspond_to_the_correct_agent_in_input_order(self):
-        agents = [AGENT_C, AGENT_A, AGENT_B]
-
-        result = run_system(
-            agents=agents,
-            outcome_function=lambda agents, actions: None,
-        )
+        result = run_scenario(scenario([AGENT_C, AGENT_A, AGENT_B]))
 
         self.assertEqual(
-            list(
-                zip(
-                    (agent.name for agent in agents),
-                    result.actions,
-                )
-            ),
+            list(result.trace[0].actions.items()),
             [
                 ("agent_c", "agent_c_action"),
                 ("agent_a", "agent_a_action"),
@@ -95,27 +99,18 @@ class TestSystemContract(unittest.TestCase):
             ],
         )
 
-    def test_outcome_function_receives_the_complete_joint_action_set(self):
+    def test_reality_receives_the_complete_joint_action_set(self):
         captured = {}
 
-        def capture(agents, actions):
-            captured["agents"] = list(agents)
-            captured["actions"] = list(actions)
-            return "captured outcome"
+        def capture(actions, objective_state, parameters):
+            captured["actions"] = dict(actions)
+            return RealityResult()
 
-        result = run_system(
-            agents=[AGENT_A, AGENT_B, AGENT_C],
-            outcome_function=capture,
-        )
-
-        self.assertEqual(
-            captured["agents"],
-            [AGENT_A, AGENT_B, AGENT_C],
-        )
+        result = run_scenario(scenario([AGENT_A, AGENT_B, AGENT_C], capture))
 
         self.assertEqual(
             captured["actions"],
-            result.actions,
+            dict(result.trace[0].actions),
         )
 
         self.assertEqual(
@@ -124,12 +119,9 @@ class TestSystemContract(unittest.TestCase):
         )
 
     def test_one_system_outcome_is_produced_from_the_joint_actions(self):
-        result = run_system(
-            agents=[AGENT_A, AGENT_B, AGENT_C],
-            outcome_function=lambda agents, actions: len(actions),
-        )
+        result = run_scenario(scenario([AGENT_A, AGENT_B, AGENT_C]))
 
         self.assertEqual(
-            result.outcome,
-            3,
+            result.trace[0].reality.system,
+            {"action_count": 3},
         )

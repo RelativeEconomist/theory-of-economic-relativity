@@ -108,7 +108,7 @@ In this configured scenario:
 
 import unittest
 
-from research.ter import AgentSpec, DecisionProcess, Scenario, ValuationRule, run_scenario
+from research.ter import AgentSpec, DecisionProcess, RealityResult, Scenario, ValuationRule, run_scenario
 from research.ter.rules import register_rule
 
 
@@ -135,9 +135,9 @@ PRINCIPAL_OUTCOME_LOW_EFFORT = 8
 
 
 @register_rule("principal_outcome_by_effort")
-def principal_outcome_by_effort(state, agents, actions, parameters):
+def principal_outcome_by_effort(actions, objective_state, parameters):
     """
-    Local Model 5.2 reality function for this test only.
+    Local Model 5.2 reality rule for this test only.
 
     Realizes the principal's outcome from the worker's actual selected
     effort and the scenario's own principal_outcomes_by_effort mapping
@@ -146,22 +146,29 @@ def principal_outcome_by_effort(state, agents, actions, parameters):
     worker's V: the worker's compensation/effort-cost valuation and the
     principal's outcome are computed from entirely separate data.
 
-    Requires exactly one agent (the worker).
+    Reports the principal's outcome as O_{i,t}, the realized outcome
+    associated with the worker's selected action; no O_t is defined.
+
+    Requires exactly one acting agent (the worker).
 
     Required parameter:
 
         principal_outcomes_by_effort   effort -> principal outcome
     """
-    if len(agents) != 1:
+    if len(actions) != 1:
         raise ValueError(
-            "principal_outcome_by_effort requires exactly one agent."
+            "principal_outcome_by_effort requires exactly one acting agent."
         )
 
-    (selected_effort,) = actions
+    ((worker, selected_effort),) = actions.items()
 
-    return {
-        "principal_outcome": parameters["principal_outcomes_by_effort"][selected_effort],
-    }
+    return RealityResult(
+        agents={
+            worker: {
+                "principal_outcome": parameters["principal_outcomes_by_effort"][selected_effort],
+            },
+        },
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -200,9 +207,7 @@ FIXED_COMPENSATION_SCENARIO = Scenario(
     name="Fixed Compensation (No Performance Incentive)",
     description="The worker is paid the same base compensation regardless of effort; only effort cost differs.",
     periods=1,
-    initial_state={
-        "period": 0,
-    },
+    initial_state={},
     agents=[
         BASE_WORKER,
     ],
@@ -212,7 +217,7 @@ FIXED_COMPENSATION_SCENARIO = Scenario(
             LOW_EFFORT: PRINCIPAL_OUTCOME_LOW_EFFORT,
         },
     },
-    reality_function="principal_outcome_by_effort",
+    reality="principal_outcome_by_effort",
 )
 
 PERFORMANCE_INCENTIVE_SCENARIO = FIXED_COMPENSATION_SCENARIO.variant(
@@ -248,7 +253,7 @@ class TestPrincipalAgentMoralHazard(unittest.TestCase):
 
     def test_high_effort_produces_the_better_principal_outcome(self):
         # Realized principal outcomes come from O (the local
-        # principal_outcome_by_effort reality function), driven by each
+        # principal_outcome_by_effort reality rule), driven by each
         # scenario's own actually selected effort -- not compared by
         # hand off the PRINCIPAL_OUTCOME_* constants.
         fixed_result = run_scenario(FIXED_COMPENSATION_SCENARIO)
@@ -260,7 +265,7 @@ class TestPrincipalAgentMoralHazard(unittest.TestCase):
         )
 
         self.assertEqual(
-            fixed_result.final["principal_outcome"],
+            fixed_result.agent(BASE_WORKER.name).principal_outcome,
             PRINCIPAL_OUTCOME_LOW_EFFORT,
         )
 
@@ -270,13 +275,13 @@ class TestPrincipalAgentMoralHazard(unittest.TestCase):
         )
 
         self.assertEqual(
-            incentivized_result.final["principal_outcome"],
+            incentivized_result.agent(BASE_WORKER.name).principal_outcome,
             PRINCIPAL_OUTCOME_HIGH_EFFORT,
         )
 
         self.assertGreater(
-            incentivized_result.final["principal_outcome"],
-            fixed_result.final["principal_outcome"],
+            incentivized_result.agent(BASE_WORKER.name).principal_outcome,
+            fixed_result.agent(BASE_WORKER.name).principal_outcome,
         )
 
     def test_performance_bonus_makes_high_effort_privately_preferred(self):

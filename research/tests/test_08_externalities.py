@@ -40,11 +40,10 @@ H   Time Horizon              current production decision                    fix
 D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
 C   Selected Action           PRODUCE or DO_NOT_PRODUCE                      observed
 F_t aspects used by R         the scenario's actual private_values and       fixed
-                              external_effects for each action, and the
-                              actions permitted for the firm --
+                              external_effects for each action --
                               scenario-specified conditions R reads (not a
                               complete representation of F_t)
-R   Reality Function          RealityFunction.SOCIAL_VALUE: realizes O from  fixed
+R   Reality Function          RealityRule.SOCIAL_VALUE: realizes O from      fixed
                               the firm's selected action and the scenario's
                               own parameters, never from the firm's belief
                               or declared valuation
@@ -106,7 +105,7 @@ Assumptions
 - valuation_rule determines what the firm's own decision process sees:
   private_value ignores perceived_external_effects; internalized_value
   adds it in.
-- social_value_outcome always reads parameters["private_values"] and
+- social_value_reality always reads parameters["private_values"] and
   parameters["external_effects"] directly, never the firm's own decision
   valuation (agent.value), declared valuation (agent.valuation), or
   belief, so social value is not double counted when internalized_value
@@ -121,9 +120,10 @@ Assumptions
 - The selected action produces the realized outcome O_{i,t}.
   AgentResult.outcome_for(action) is used only for counterfactual
   comparison with the alternative action and must not be interpreted as
-  another realized outcome. It is a lookup into outcomes
-  social_value_outcome already computed for every action permitted for
-  the firm during scenario execution; it does not re-run any rule.
+  another realized outcome. It re-runs R once, deterministically, at
+  the firm's decision point with only the firm's action replaced and
+  F_t held as recorded (ScenarioResult.counterfactual); nothing
+  downstream of R is re-run.
 
 Hypothesis
 ----------
@@ -139,7 +139,7 @@ In this configured scenario:
 
 import unittest
 
-from research.ter import AgentSpec, DecisionProcess, RealityFunction, Scenario, ValuationRule, run_scenario
+from research.ter import AgentSpec, DecisionProcess, RealityRule, Scenario, ValuationRule, run_scenario
 
 
 # ---------------------------------------------------------------------------
@@ -203,24 +203,13 @@ PRIVATE_INCENTIVE_SCENARIO = Scenario(
     name="Private Incentive",
     description="A firm decides whether to produce based on private value alone.",
     periods=1,
-    initial_state={
-        "period": 0,
-        # Reality-side index of the actions permitted for each agent
-        # (an implementation detail read by social_value_outcome, not a
-        # TER variable).
-        "permitted_actions": {
-            BASE_FIRM.name: [
-                PRODUCE,
-                DO_NOT_PRODUCE,
-            ],
-        },
-    },
+    initial_state={},
     agents=[
         BASE_FIRM,
     ],
     # The actual private value and external effect: what actually
     # results from producing, regardless of the firm's own valuation or
-    # belief. Read by social_value_outcome to compute the realized
+    # belief. Read by social_value_reality to compute the realized
     # social value, not by any valuation rule. Declared equal to
     # BASE_FIRM's valuation["private_values"] here -- this test assumes
     # the firm's own valuation matches reality exactly, the same
@@ -236,7 +225,7 @@ PRIVATE_INCENTIVE_SCENARIO = Scenario(
             DO_NOT_PRODUCE: DO_NOT_PRODUCE_EXTERNAL_EFFECT,
         },
     },
-    reality_function=RealityFunction.SOCIAL_VALUE,
+    reality=RealityRule.SOCIAL_VALUE,
 )
 
 

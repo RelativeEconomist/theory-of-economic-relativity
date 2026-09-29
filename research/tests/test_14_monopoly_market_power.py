@@ -56,54 +56,65 @@ TER instantiation
 -----------------
 Component                     Instantiation in this test                     Status
 G   Objective                 choose the price that maximizes profit         fixed
-M   Model of Reality          specified but empty -- there is one agent      fixed
-                              and no shared belief to represent
+M   Model of Reality          demand_intercept, demand_slope: the firm's     fixed
+                              perceived linear demand for its product
+                              (quantity = intercept - slope * price)
 F̂   Perceived Feasible Set    MONOPOLY_PRICE_LOW, MONOPOLY_PRICE_MID,        fixed
                               MONOPOLY_PRICE_HIGH -- three discrete
                               points, so the profit-maximizing choice
                               cannot be a two-point coincidence
 V   Valuation                 monopoly_price_profit_value (local): profit    fixed
-                              from the chosen price, the shared
-                              quantity_demanded(price) schedule, and a
-                              constant unit cost
+                              from the chosen price, the quantity the
+                              firm's perceived demand (M) implies at that
+                              price, and a constant unit cost
 H   Time Horizon              current pricing decision                       fixed
 D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
 C   Selected Action           MONOPOLY_PRICE_MID                             observed
 F_t, R, outcomes              F_t and outcome realization are outside this test's scope.
 
 The quantity demanded and the profit are computed inside V, from the
-chosen price and the demand schedule, to value the actions. They are not
-realized outcomes.
+chosen price and the firm's perceived demand (M), to value the actions.
+They are not realized outcomes.
 
 The competitive benchmark (COMPETITIVE_PRICE, COMPETITIVE_QUANTITY) is
-not part of any agent's decision and is not a second agent. It is a plain
-comparison value, computed once at module scope by calling the same
-quantity_demanded function the monopolist's own valuation rule calls, at
-price = marginal cost. It represents what a different market structure
-(price-taking competition) would produce under the identical demand and
-cost assumptions -- it is not something the monopolist chose among,
-perceives, or could have selected.
+not part of any agent's decision and is not a second agent. It is a
+plain comparison value, computed once at module scope by calling the
+same quantity_demanded function the monopolist's own valuation rule
+calls (with the analyst's demand parameters rather than the firm's
+perceived ones, which are equal here), at price = marginal cost. It
+represents what a different market structure (price-taking competition)
+would produce under the identical demand and cost assumptions -- it is
+not something the monopolist chose among, perceives, or could have
+selected.
 
 Economic mechanism
 ------------------
-Quantity is derived from price through the demand schedule every time the
-valuation rule runs, so raising price reduces quantity sold. Profit
-(price - unit cost) * quantity is therefore not monotonic in price, and the
-interior price maximizes it. Because the selected price exceeds marginal
-cost, the selected quantity falls short of the competitive quantity.
+Quantity is derived from price through the firm's perceived demand
+schedule (M) every time the valuation rule runs, so raising price
+reduces quantity sold. Profit (price - unit cost) * quantity is
+therefore not monotonic in price, and the interior price maximizes it.
+Because the selected price exceeds marginal cost, the selected quantity
+falls short of the competitive quantity.
 
 Assumptions
 -----------
 - quantity_demanded is a linear demand schedule (a test-specific economic
   assumption, not a TER primitive): quantity = 160 - 10 * price. TER does
   not supply or require any particular demand curve.
+- The monopolist perceives demand correctly: its model_of_reality
+  demand_intercept and demand_slope are declared equal to
+  DEMAND_INTERCEPT and DEMAND_SLOPE, the demand the competitive
+  benchmark uses. This is a simplifying assumption of this
+  specification; TER does not require correct beliefs, and a firm that
+  misperceived demand would value its prices differently.
 - Marginal (unit) cost is constant at 5, a test-specific economic
   assumption.
 - The competitive benchmark (price = marginal cost) is the standard
   price-taking prediction under these same demand and cost assumptions.
   It is derived, not independently declared: it calls the same
   quantity_demanded function the monopolist's own valuation rule uses,
-  so the comparison cannot silently drift from the mechanism driving C.
+  with the same declared demand constants, so the comparison cannot
+  silently drift from the mechanism driving C.
 - Three discrete prices are used specifically so the profit-maximizing
   choice is an interior selection (neither the lowest nor the highest of
   the three), which a two-point test cannot distinguish from "the firm
@@ -138,7 +149,7 @@ In this configured scenario:
 
 import unittest
 
-from research.ter import AgentSpec, DecisionProcess, Scenario, ValuationRule, run_scenario
+from research.ter import AgentSpec, DecisionProcess, Scenario, run_scenario
 from research.ter.rules import register_rule
 
 
@@ -165,20 +176,23 @@ DEMAND_INTERCEPT = 160
 DEMAND_SLOPE = 10
 
 
-def quantity_demanded(price):
+def quantity_demanded(price, intercept=DEMAND_INTERCEPT, slope=DEMAND_SLOPE):
     """
     Shared linear demand schedule for this test only:
 
-        quantity_demanded(price) = DEMAND_INTERCEPT - DEMAND_SLOPE * price
+        quantity_demanded(price) = intercept - slope * price
 
     Both monopoly_price_profit_value (the monopolist's own valuation
     rule, below) and this test's separately derived competitive
-    benchmark call this exact same function. Neither hand-declares a
-    quantity for any price; quantity is always computed from price
-    through this one shared schedule, so the monopoly and competitive
-    figures cannot silently diverge from a common mechanism.
+    benchmark call this exact same function. The valuation rule passes
+    the firm's perceived demand parameters from its M; the benchmark and
+    premise checks use the defaults, DEMAND_INTERCEPT and DEMAND_SLOPE.
+    Neither hand-declares a quantity for any price; quantity is always
+    computed from price through this one shared schedule, so the
+    monopoly and competitive figures cannot silently diverge from a
+    common mechanism.
     """
-    return DEMAND_INTERCEPT - DEMAND_SLOPE * price
+    return intercept - slope * price
 
 
 @register_rule("monopoly_price_profit_value")
@@ -190,10 +204,16 @@ def monopoly_price_profit_value(action, agent):
                     - unit_cost * quantity_demanded(price)
 
     Quantity is derived from the chosen price via quantity_demanded on
-    every call -- it is never an independently declared per-action
-    constant. This is what makes "raising price reduces quantity sold"
-    a mechanism this rule enforces, not a coincidence between two
-    unrelated numbers a test author picked to agree with each other.
+    every call, using the firm's perceived demand parameters (M) -- it
+    is never an independently declared per-action constant. This is what
+    makes "raising price reduces quantity sold" a mechanism this rule
+    enforces, not a coincidence between two unrelated numbers a test
+    author picked to agree with each other.
+
+    Required model_of_reality fields:
+
+        demand_intercept   perceived demand intercept
+        demand_slope       perceived demand slope
 
     Required valuation fields:
 
@@ -203,7 +223,11 @@ def monopoly_price_profit_value(action, agent):
     price = agent.valuation["price_by_action"][action]
     unit_cost = agent.valuation["unit_cost"]
 
-    quantity = quantity_demanded(price)
+    quantity = quantity_demanded(
+        price,
+        intercept=agent.model_of_reality["demand_intercept"],
+        slope=agent.model_of_reality["demand_slope"],
+    )
 
     revenue = price * quantity
     cost = unit_cost * quantity
@@ -218,7 +242,10 @@ def monopoly_price_profit_value(action, agent):
 MONOPOLIST = AgentSpec(
     name="monopolist",
     objective="choose the price that maximizes profit",
-    model_of_reality={},
+    model_of_reality={
+        "demand_intercept": DEMAND_INTERCEPT,
+        "demand_slope": DEMAND_SLOPE,
+    },
     valuation={
         "price_by_action": {
             MONOPOLY_PRICE_LOW: MONOPOLY_PRICE_LOW_VALUE,
@@ -249,9 +276,7 @@ MONOPOLY_PRICING_SCENARIO = Scenario(
         "at each is derived from one shared demand schedule."
     ),
     periods=1,
-    initial_state={
-        "period": 0,
-    },
+    initial_state={},
     agents=[
         MONOPOLIST,
     ],
@@ -278,50 +303,29 @@ COMPETITIVE_QUANTITY = quantity_demanded(COMPETITIVE_PRICE)
 #
 # If quantity sold did not respond to the firm's own price choice, there
 # would be no trade-off, and nothing distinguishing market power from
-# ordinary profit maximization. This local scenario holds quantity fixed
-# at 50 units (the monopoly-optimal quantity above) regardless of price,
-# using the framework's own generic ValuationRule.NET over independently
-# declared benefits/costs. This is the shape the monopoly mechanism above
-# deliberately does not use.
+# ordinary profit maximization. This local scenario uses the monopolist's
+# own valuation rule, prices, and unit cost unchanged; only the firm's
+# perceived demand (M) differs, holding quantity fixed at 50 units (the
+# monopoly-optimal quantity above) regardless of price (slope 0).
 
 NO_DEMAND_RESPONSE_QUANTITY = 50
 
-NO_DEMAND_RESPONSE_FIRM = AgentSpec(
+NO_DEMAND_RESPONSE_FIRM = MONOPOLIST.variant(
     name="firm_with_no_demand_response",
-    objective="choose the price that maximizes profit",
-    model_of_reality={},
-    valuation={
-        "benefits": {
-            MONOPOLY_PRICE_LOW: MONOPOLY_PRICE_LOW_VALUE * NO_DEMAND_RESPONSE_QUANTITY,
-            MONOPOLY_PRICE_MID: MONOPOLY_PRICE_MID_VALUE * NO_DEMAND_RESPONSE_QUANTITY,
-            MONOPOLY_PRICE_HIGH: MONOPOLY_PRICE_HIGH_VALUE * NO_DEMAND_RESPONSE_QUANTITY,
-        },
-        "costs": {
-            MONOPOLY_PRICE_LOW: UNIT_COST * NO_DEMAND_RESPONSE_QUANTITY,
-            MONOPOLY_PRICE_MID: UNIT_COST * NO_DEMAND_RESPONSE_QUANTITY,
-            MONOPOLY_PRICE_HIGH: UNIT_COST * NO_DEMAND_RESPONSE_QUANTITY,
-        },
+    model_of_reality={
+        "demand_intercept": NO_DEMAND_RESPONSE_QUANTITY,
+        "demand_slope": 0,
     },
-    perceived_feasible_set=[
-        MONOPOLY_PRICE_LOW,
-        MONOPOLY_PRICE_MID,
-        MONOPOLY_PRICE_HIGH,
-    ],
-    valuation_rule=ValuationRule.NET,
-    decision_process=DecisionProcess.MAXIMIZE,
-    horizon="current pricing decision",
 )
 
 NO_DEMAND_RESPONSE_SCENARIO = Scenario(
     name="Pricing Without a Demand Response",
     description=(
         "Diagnostic only: the same three prices and the same unit cost, "
-        "but quantity sold is fixed and does not respond to price."
+        "but the firm perceives quantity sold as fixed, not responding to price."
     ),
     periods=1,
-    initial_state={
-        "period": 0,
-    },
+    initial_state={},
     agents=[
         NO_DEMAND_RESPONSE_FIRM,
     ],

@@ -4,8 +4,9 @@ Framework test: public rule enums.
 Purpose
 -------
 This is not an economic replication test. It verifies the researcher-facing
-API itself: every member of DecisionProcess, ValuationRule, RealityFunction, and
-FeedbackRule (research/ter/__init__.py) must resolve through the existing
+API itself: every member of DecisionProcess, ValuationRule, RealityRule,
+TransitionRule, ObservationRule, and UpdateRule (research/ter/__init__.py)
+must resolve through the existing
 rule registry (research/ter/rules.py) to the exact same callable as its
 underlying string, and framework internals must not be part of the public
 research.ter surface.
@@ -26,10 +27,12 @@ from research.ter import (
     AgentResult,
     AgentSpec,
     DecisionProcess,
-    FeedbackRule,
-    RealityFunction,
+    ObservationRule,
+    RealityRule,
     Scenario,
     ScenarioResult,
+    TransitionRule,
+    UpdateRule,
     ValuationRule,
     run_scenario,
 )
@@ -39,8 +42,10 @@ from research.ter.rules import RULES, get_rule
 ALL_PUBLIC_RULE_ENUMS = (
     DecisionProcess,
     ValuationRule,
-    RealityFunction,
-    FeedbackRule,
+    RealityRule,
+    TransitionRule,
+    ObservationRule,
+    UpdateRule,
 )
 
 
@@ -93,8 +98,12 @@ class TestPublicSurface(unittest.TestCase):
             "AgentResult",
             "DecisionProcess",
             "ValuationRule",
-            "RealityFunction",
-            "FeedbackRule",
+            "RealityRule",
+            "TransitionRule",
+            "ObservationRule",
+            "UpdateRule",
+            "RealityResult",
+            "Schedule",
             "run_scenario",
             "__version__",
         }

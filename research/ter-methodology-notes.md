@@ -19,17 +19,16 @@ The most common way to misuse TER is placing a fact in the wrong component. This
 | `G` vs `V` | `G` is the objective that provides the reference for valuation when valuation is used; `V` evaluates actions relative to it. Don't invent multiple objectives just because multiple attributes are valued. | A firm valuing both profit and reputation can represent both through one valuation relative to one `G` unless the specification genuinely requires distinct objectives. |
 | `M` vs `F̂` | `M` is what the agent believes about the world; `F̂` is what it perceives as available to attempt. Beliefs about whether an action can be attempted belong in `F̂`; beliefs about what may happen if attempted belong in `M`. | Believing a rival will cut prices (`M`) vs. not perceiving undercutting as an available action (`F̂`). A low probability of success belongs in `M` and does not by itself remove the action from `F̂`. |
 | `M` vs `V` | `M` holds beliefs about states, probabilities, or conditions; `V` holds how outcomes are valued. Never put preferences in `M` or beliefs in `V`. | Expected appreciation is `M`; a cost of capital netted into the action's value belongs in `V`, while a cutoff the selection rule uses to accept or stop belongs in `D`. |
-| `M` vs reality | `M` can be incomplete or wrong; reality determines actual consequences regardless of belief. Never substitute `M` for the conditions of reality when determining what `F_t` allows to be realized or when realizing `O`. | A depositor's belief about failure risk (`M`) never determines how much liquidity is actually available. |
+| `M` vs reality and `R` | `M` can be incomplete or wrong; reality determines actual consequences regardless of belief. `R`, which determines `O` from `C` and `F_t`, must never be built from `M`, and `M` must never substitute for the conditions of reality when determining what `F_t` allows to be realized or when realizing `O`. | A depositor's belief about failure risk (`M`) never determines how much liquidity is actually available; a seller's believed demand never substitutes for the market-clearing rule. |
 | `F_t` vs `F̂` | `F_t` is the objective state of reality relevant when the selected action is realized; `F̂` is the set of actions the agent perceives as available to attempt. `F_t` is not agent specific. | An agent may select an action that reality does not allow to be fully realized; failure, partial execution, or changed consequences are part of `O` (Model 5.2). |
 | `F̂` vs `D` | An unperceived option is missing from `F̂`; a perceived-but-not-fully-evaluated option is a `D` mechanism. | A search limit belongs in `D`, not in a narrowed `F̂`. |
 | `V` vs `D` | `V` scores actions; `D` is the selection process (maximize, satisfice, threshold). Don't fold a decision rule's cutoff into `V`, or valuation weighting into `D`. | A satisficing threshold lives in `D`; the value compared against it lives in `V`. |
-| `H` vs `V` | `H` is which future consequences count; `V` is how they're weighted. A short horizon isn't the same as heavy discounting. | A consequence inside `H` can still get near-zero weight through `V`. |
+| `H` vs `V` | `H` is which future consequences count; `V` is how they're weighted. A short horizon isn't the same as heavy discounting. When `H` and valuation parameters are observationally equivalent, use independent evidence or experimental design rather than infer both from the same observed choice. | A consequence inside `H` can still get near-zero weight through `V`. |
 | `G` / `H` vs `D` | `G` and `H` condition valuation when valuation is used; they are not universal direct inputs to `D`. A nonvaluative decision process may select from `F̂` based on `M` without actively using `G` or `H`. | A reflexive withdrawal rule may use `M = threat present` without consulting valuation; do not add direct `G` or `H` inputs merely to make the rule look goal directed. |
 | `C` vs `O` | `C` is what was selected; `O` is the realized outcome. Failure, partial execution, or changed consequences belong in `O`, not in a different `C`. | A partially executed action is still the action that was selected; the shortfall is part of `O`. |
-| `F_t` conditions | Prevailing conditions, external shocks, laws, institutions, resources, physical conditions, market conditions, and other objective constraints are aspects of `F_t`, not separate variables. What counts as an external shock depends on the model's own boundary; where a shock changes what reality allows to be realized, it is a change in `F_t`. | A modeled competitor's action is endogenous; an unexpected war outside the modeled system enters as a change in `F_t`. A price ceiling is an aspect of `F_t`. |
-| External shock vs external effect | An external shock originates outside the modeled system boundary; an external effect arises from an action inside the modeled system and is experienced by others. Where a shock changes objectively realized conditions or constraints, represent that change in `F_t`; external effects belong in realized outcomes. | A war outside the modeled system may be a shock changing `F_t`; pollution imposed on another modeled agent is an external effect in `O`. |
-| `M` vs `R` | `M` is the agent's (possibly wrong) belief; `R` is the reality function that determines `O` from `C` and `F_t`. `R` must never be built from `M`. | A seller's believed demand never substitutes for the market-clearing rule. |
-| `R` vs `O` | `R` is the mechanism — a modeling choice; `O` is its realized output at the relevant decision point or time: `O_{i,t}` at the agent level (Model 5.2), `O_t` where interactions are explicitly modeled (Model 5.3). Don't describe `R` as just a restatement of one `O`. | "Withdrawals capped at liquidity" is `R`; "60 units realized" is one `O`. |
+| `F_t` conditions | Prevailing conditions, external shocks, laws, institutions, resources, physical conditions, market conditions, and other objective constraints are aspects of `F_t`, not separate variables. `F_t` is objective but not necessarily exogenous: where it changes because of agent actions and interactions, the change arrives through realized outcomes (Model 5.5); external shocks may alter it independently. | A price ceiling is an aspect of `F_t`. |
+| External shock vs external effect | An external shock originates outside the modeled system boundary; an external effect arises from an action inside the modeled system and is experienced by others. What counts as an external shock depends on the model's own boundary. Where a shock changes objectively realized conditions or constraints, represent that change in `F_t`; external effects belong in realized outcomes. | A modeled competitor's action is endogenous; a war outside the modeled system may be a shock changing `F_t`; pollution imposed on another modeled agent is an external effect in `O`. |
+| `R` vs `O` | `R` is the mechanism — a modeling choice; `O` is its realized output at the relevant decision point or time: `O_{i,t}` at the agent level (Model 5.2), `O_t` where interactions are explicitly modeled (Model 5.3). Don't describe `R` as just a restatement of one `O`. When an agent-level outcome depends on explicitly modeled interaction, derive it from the same joint `R`; TER does not define `O_t` as an aggregation of the `O_{i,t}`. | "Withdrawals capped at liquidity" is `R`; "60 units realized" is one `O`. |
 | `F_t` (residual use) | The conditions and constraints in `F_t` must be defined explicitly, not used to catch unexplained outcome variation. | "Market conditions" as a vague catch-all is not a valid specification of `F_t`. |
 
 ## TER Variable Placement and Boundaries
@@ -47,40 +46,6 @@ The most common way to misuse TER is placing a fact in the wrong component. This
 | **`R`** Reality function | The mechanism determining realized consequences from selected actions and the objective feasible state of reality | It maps `C` (or the interacting actions `C_1,…,C_n`) and `F_t` into realized outcomes | It treats `M`, `F̂`, or `V` as objective reality, or acts as an unconstrained residual explanation |
 | **`O`** Realized outcome | The result produced when a selected action (`O_{i,t}`, Model 5.2) or explicitly modeled interacting actions (`O_t`, Model 5.3) encounter `F_t` | It records what actually happens, including success, failure, partial execution, and external effects | It is merely intended, expected, believed, or selected |
 
-### Hard boundary rules
-
-**`G` vs `V`**
-
-When valuation is used, `G` provides its reference and `V` evaluates actions relative to that objective. `G` is not a universal direct input to `D`.
-
-**`M` vs `V`**
-
-`M` is what the agent believes. `V` is how the agent values actions given its objective and relevant beliefs.
-
-**`M` vs `F̂`**
-
-`M` contains beliefs and understanding, including beliefs about what may happen if an action is attempted. `F̂` contains the actions perceived as available to attempt. Probability of success should not by itself remove an action from `F̂`.
-
-**`F̂` vs `D`**
-
-`F̂` defines which actions are available to the decision process. `D` determines what is examined, filtered, compared, and selected.
-
-**`H` vs `V`**
-
-When valuation is forward looking, `H` determines which future consequences are relevant and `V` determines how those consequences are valued. `H` is not a universal direct input to `D`. When `H` and valuation parameters are observationally equivalent, use independent evidence or experimental design rather than infer both from the same observed choice.
-
-**`D` vs `R`**
-
-`D` selects (Model 5.1). `R` realizes: `O_{i,t}` in an agent-level specification (Model 5.2), and `O_t` where interactions among explicitly modeled agents jointly determine the system outcome (Model 5.3). When an agent-level realized outcome depends on those interactions, derive it from the same joint `R`; TER does not define `O_t` as an aggregation of the `O_{i,t}`.
-
-**`C` vs `O`**
-
-Failure, partial execution, or changed consequences of a selected action belong in `O`, not in a different `C`.
-
-**`F_t` is objective, not necessarily exogenous.**
-
-`F_t` is not agent specific. Where it changes because of agent actions and interactions, the change arrives through realized outcomes (Model 5.5); external shocks may alter it independently.
-
 > When external search, attention, or information acquisition is itself an economically chosen activity, represent that activity as an action in `F̂`, place its costs and consequences in `R`/`O`, and reflect acquired information in subsequent `M`. Internal consideration or search within a decision procedure remains part of `D`.
 
 ### Common specification objects that are not TER primitives
@@ -89,7 +54,7 @@ Failure, partial execution, or changed consequences of a selected action belong 
 |---|---|
 | **Model state / stocks** | Wealth, inventory, capital, location, technology, balance sheets, physical stocks, and similar objects may be declared as model-specific state. They may be aspects of `F_t` when objectively realized and relevant to realization, be represented imperfectly in `M`, and evolve through model-specific laws of motion. |
 | **System state** | The economically relevant properties of the modeled system at a given time may be collected as a specification-level system state. This is not a TER primitive and is not interchangeable with `F_t`; only the objectively realized conditions and constraints relevant to realization belong in `F_t`. |
-| **Feedback / update rules** | Dynamic specifications should declare the mechanisms by which realized outcomes (`O_{i,t}` or `O_t`) may change `G, M, F̂, V, H, D` and `F` at `t+1`; external shocks may change `F` independently. Outcomes may affect `M` only through information available to the agent; do not update beliefs from an unobserved system outcome as if it were directly known. Other components may change through explicitly modeled mechanisms that do not require a belief update: for example, resource depletion may change `F`, while habituation or learned routines may change `V` or `D` if the specification defines that mechanism. Do not use an unobserved outcome as knowledge without representing the information pathway. These are specification-specific update mechanisms, not a universal `U` primitive and not part of within-period `D`. |
+| **Feedback / update rules** | Dynamic specifications should declare the mechanisms by which realized outcomes (`O_{i,t}` or `O_t`) may change `G, M, F̂, V, H, D` and `F` at `t+1`; external shocks may change `F` independently. Outcomes may affect `M` only through information available to the agent; do not update beliefs from an unobserved system outcome as if it were directly known. Other components may change through explicitly modeled mechanisms that do not require a belief update: for example, resource depletion may change `F`, while habituation or learned routines may change `V` or `D` if the specification defines that mechanism. These are specification-specific update mechanisms, not a universal `U` primitive and not part of within-period `D`. |
 
 > **Every economically relevant fact should have one primary TER location. If the same fact appears in multiple components, the specification must explain why that duplication is necessary rather than silently double counting it.**
 
@@ -98,16 +63,12 @@ Failure, partial execution, or changed consequences of a selected action belong 
 Practices that keep a TER specification testable instead of merely descriptive.
 
 - **Representation is not validation.** Being able to represent an observed outcome in TER is not evidence that a specification is correct — constrain assumptions with evidence you can check independently.
-- **Don't infer components from `C` alone, and don't fit after the fact.** Observed action `C` doesn't uniquely identify `G`, `M`, `F̂`, `V`, `H`, or `D` — treat rival explanations as competing specifications, not post hoc adjustments.
+- **Don't infer components from `C` alone, and don't fit after the fact.** Observed action `C` doesn't uniquely identify `G`, `M`, `F̂`, `V`, `H`, or `D` — treat rival explanations as competing specifications, not post hoc adjustments. Constrain `G`, `M`, `F_t`, `F̂`, `V`, `H`, and `D` with independent evidence — observed constraints, elicited beliefs, experiments, or structural estimation — not by reverse-engineering them from the result you want.
 - **Avoid double counting.** The same mechanism shouldn't be encoded across multiple components unless each has a genuinely distinct causal role.
 - **Preserve established economic mechanisms.** Map utility functions, beliefs, heuristics, and solution concepts into TER; don't rewrite their substance to fit.
 - **`D` may be deterministic or stochastic, but must be substantive.** Its flexibility isn't an explanation unless it's specified precisely enough to generate testable implications.
-- **`F_t` is objective, not belief.** Never infer what `F_t` allows to be realized from an agent's expectations, beliefs, or perceived probability of success. Those belong in `M`; perceived action availability belongs in `F̂`.
-- **`F̂` means available to attempt, not likely to succeed.** Beliefs about whether an action can be attempted belong in `F̂`; beliefs about what may happen if attempted belong in `M`. A low probability of success does not by itself remove an action from `F̂`.
-- **`G` and `H` condition valuation, not every decision process.** When valuation is used, `G` provides its reference and `H` determines which future consequences are relevant. A nonvaluative `D` may select directly from `F̂` based on `M` without actively consulting `G` or `H`.
 - **Specify `R` substantively, and never use `R` or `F_t` as a residual.** Both must be defined enough to generate testable implications, not absorb whatever's left unexplained.
 - **Define the agent/system boundary explicitly.** A coordinated group may be one agent or many depending on the question — but don't double-count a collective action as also an independent constituent action, and don't assume an institution's objective is automatically each member's `G`.
-- **Use independent evidence.** Constrain `G`, `M`, `F_t`, `F̂`, `V`, `H`, `D` from observed constraints, elicited beliefs, experiments, or structural estimation — not by reverse-engineering them from the result you want.
 - **Label what is observed, inferred, and assumed.** A specification should state which TER components are directly observed, which are inferred from evidence, and which are imposed as assumptions. Do not present an inferred or assumed component as if it were directly measured.
 - **Compare against alternatives.** A specification's implications should be checked against competing specifications, established non-TER models, and null explanations — not judged solely by whether it can be made to fit one observation.
 - **Distinguish framework failure from specification failure.** Most failed predictions challenge one specification, not TER itself — a framework-level challenge means a determinant can't be represented without distorting TER's definitions, two components collapse into one, or an axiom contradicts itself.

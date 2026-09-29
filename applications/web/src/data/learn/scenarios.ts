@@ -548,7 +548,7 @@ export const scenarios: Scenario[] = [
         name: "Realized outcome",
         definition: "Realized outcome associated with the selected action.",
         mapping:
-          "The reality rule takes all sellers' selected actions together, with each car's actual quality, and produces the system outcome O_t: how many high-quality and low-quality goods are sold, and the total. This is a multi-agent specification; no individual outcomes O_{i,t} are defined. Implementation: RealityFunction.QUALITY_MARKET.",
+          "The reality rule takes all sellers' selected actions together, with each car's actual quality, and produces the system outcome O_t: how many high-quality and low-quality goods are sold, and the total. This is a multi-agent specification; no individual outcomes O_{i,t} are defined. Implementation: RealityRule.QUALITY_MARKET.",
         testTreatment: "Result",
       },
     ],
@@ -694,7 +694,7 @@ export const scenarios: Scenario[] = [
         name: "Realized outcome",
         definition: "Realized outcome associated with the selected action.",
         mapping:
-          "The reality rule takes the selected action and the scenario's own private-value and external-effect data and reports O_{i,t}: the private value, the external effect, and this test's specified social value, defined here as private value plus external effect. This is a single-agent specification, so no system outcome O_t is defined. Implementation: RealityFunction.SOCIAL_VALUE.",
+          "The reality rule takes the selected action and the scenario's own private-value and external-effect data and reports O_{i,t}: the private value, the external effect, and this test's specified social value, defined here as private value plus external effect. This is a single-agent specification, so no system outcome O_t is defined. Implementation: RealityRule.SOCIAL_VALUE.",
         testTreatment: "Result",
       },
     ],

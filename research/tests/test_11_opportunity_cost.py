@@ -118,9 +118,7 @@ FREE_EVENING_SCENARIO = Scenario(
     name="Free Evening",
     description="A student with one free evening chooses between studying, working a shift, or relaxing.",
     periods=1,
-    initial_state={
-        "period": 0,
-    },
+    initial_state={},
     agents=[
         BASE_STUDENT,
     ],

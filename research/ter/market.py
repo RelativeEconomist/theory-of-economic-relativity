@@ -37,7 +37,7 @@ def evaluate_market(
     Each agent then selects an action through the standard TER
     decision process:
 
-        C_i = D_i(F_hat_i, G_i, M_i, V_i, H_i)
+        C_i = D_i(F_hat_i, M_i, V_i(. | G_i, M_i, H_i))
 
     The market aggregates the resulting actions.
     """

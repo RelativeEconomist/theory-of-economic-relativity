@@ -184,9 +184,7 @@ CONSUMER_SURPLUS_SCENARIO = Scenario(
     name="Consumer Surplus at a Fixed Market Price",
     description="Four buyers with different reservation values each independently decide whether to buy at a fixed market price.",
     periods=1,
-    initial_state={
-        "period": 0,
-    },
+    initial_state={},
     agents=[
         BUYER_1,
         BUYER_2,

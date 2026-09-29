@@ -13,7 +13,7 @@ outcome?
 
 TER mapping
 -----------
-    C_{i,t} = D_{i,t}(F_hat_{i,t}, G_{i,t}, M_{i,t}, V_{i,t}, H_{i,t})
+    C_{i,t} = D_{i,t}(F_hat_{i,t}, M_{i,t}, V_{i,t}(. | G_{i,t}, M_{i,t}, H_{i,t}))
 
 Agent      G Objective                  M                     F_hat                V (mapped_value)   D -> C
 buyer_a    acquire one unit at          trade is available   [buy_8,              prefers buy_8       maximize_value
@@ -25,12 +25,12 @@ seller_s   sell one unit at             buyers are            [sell_5, hold]    
 
 H is "current period" for all three; not repeated per row above.
 
-F_t is not agent specific. It is carried by the scenario's own `state`
-and `parameters`, never by any agent's F_hat, M, V, or D:
+F_t is not agent specific. It is carried by the scenario's own objective
+state and `parameters`, never by any agent's F_hat, M, V, or D:
 
-- state["permitted_actions"] indexes which action F_t permits each agent
-  individually (an implementation index of F_t, not F_t itself -- see
-  research.ter.outcome).
+- objective_state["permitted_actions"] indexes which action F_t permits
+  each agent individually (an implementation index of F_t, not F_t
+  itself -- see research.ter.outcome).
 - parameters["unit_supply"] = 1: only one unit exists and can actually be
   transferred. parameters["seller"] and parameters["sell_action"] name
   which agent and action actually transfers it.
@@ -40,7 +40,7 @@ of what that selected action C itself means, not a separate fact of F_t.
 R below decodes it directly from the action string; F_t is never asked
 "what does this buyer offer."
 
-R (reality_function="single_unit_market_outcome", registered locally
+R (reality="single_unit_market_outcome", registered locally
 below -- this test's own admissible specification of R, not a universal
 TER consequence rule):
 
@@ -55,11 +55,11 @@ research.ter.market.allocate_single_unit (a small, scenario-agnostic
 on a tie rather than resolving one, which does not arise here since
 8 != 10).
 
-O_t is the flat dict single_unit_market_outcome returns (quantity, buyer,
-seller, unmatched_buyers), reported directly as scenario state
-(ScenarioResult.final) rather than under "agent_results" -- so it is one
-system outcome, not an aggregation of any per-agent O_{i,t} (none is
-defined for any agent here).
+O_t is the RealityResult.system single_unit_market_outcome returns
+(quantity, buyer, seller, unmatched_buyers), read back from the run's
+trace (result.trace[0].reality.system). Its RealityResult.agents is
+empty -- so it is one system outcome, not an aggregation of any
+per-agent O_{i,t} (none is defined for any agent here).
 
 Scenario
 --------
@@ -70,7 +70,7 @@ references the others' actions.
 
 Tested TER mechanics
 ---------------------
-1. Each agent independently selects C_i = D_i(F_hat_i, G_i, M_i, V_i, H_i).
+1. Each agent independently selects C_i = D_i(F_hat_i, M_i, V_i(. | G_i, M_i, H_i)).
 2. Each selected action (buy_8, buy_10, sell_5) is individually permitted
    by F_t -- but individual permission is not joint feasibility: F_t
    supplies only one unit, so buy_8 and buy_10 cannot both be realized.
@@ -95,8 +95,9 @@ Assumptions
   does not require these to coincide; keeping them apart is what lets
   this test show that individual permission is not the same thing as
   joint feasibility.
-- Single period, no feedback rule, and a deterministic decision process
-  (maximize_value): no multi-period dynamics and no stochastic behavior.
+- Single period, no transition, observation, or update rule, and a
+  deterministic decision process (maximize_value): no multi-period
+  dynamics and no stochastic behavior.
 
 Hypothesis
 ----------
@@ -107,12 +108,12 @@ In this configured scenario:
    two individually permitted buy actions.
 4. Buyer B receives the unit and Seller S sells it; Buyer A is unmatched.
 5. No agent's own outcome record defines a system-level result -- only
-   O_t (ScenarioResult.final) does.
+   O_t (RealityResult.system) does.
 """
 
 import unittest
 
-from research.ter import AgentSpec, DecisionProcess, Scenario, ValuationRule, run_scenario
+from research.ter import AgentSpec, DecisionProcess, RealityResult, Scenario, ValuationRule, run_scenario
 from research.ter.market import allocate_single_unit
 from research.ter.outcome import is_actually_feasible
 from research.ter.rules import register_rule
@@ -136,7 +137,7 @@ HOLD = "hold"
 # ---------------------------------------------------------------------------
 
 @register_rule("single_unit_market_outcome")
-def single_unit_market_outcome(state, agents, actions, parameters):
+def single_unit_market_outcome(actions, objective_state, parameters):
     """
     One admissible TER Model 5.3 reality function for this test only.
 
@@ -147,8 +148,9 @@ def single_unit_market_outcome(state, agents, actions, parameters):
     unit can actually be transferred (parameters["unit_supply"]),
     allocates it to the higher decoded amount via allocate_single_unit.
 
-    Returns a flat dict: O_t, the single system outcome, never reported
-    under "agent_results" -- so no O_{i,t} is defined for any agent here.
+    Returns O_t, the single system outcome, as RealityResult.system and
+    reports nothing under RealityResult.agents -- so no O_{i,t} is
+    defined for any agent here.
 
     Required parameters:
 
@@ -157,9 +159,9 @@ def single_unit_market_outcome(state, agents, actions, parameters):
         unit_supply    how many units can actually be transferred (1)
     """
     permitted = {
-        agent.name: action
-        for agent, action in zip(agents, actions)
-        if is_actually_feasible(state, agent, action)
+        name: action
+        for name, action in actions.items()
+        if is_actually_feasible(objective_state, name, action)
     }
 
     seller_name = parameters["seller"]
@@ -175,16 +177,18 @@ def single_unit_market_outcome(state, agents, actions, parameters):
 
     winner = allocate_single_unit(competing_bids) if seller_ready else None
 
-    return {
-        "quantity": parameters["unit_supply"] if winner else 0,
-        "buyer": winner,
-        "seller": seller_name if winner else None,
-        "unmatched_buyers": [
-            name
-            for name in competing_bids
-            if name != winner
-        ],
-    }
+    return RealityResult(
+        system={
+            "quantity": parameters["unit_supply"] if winner else 0,
+            "buyer": winner,
+            "seller": seller_name if winner else None,
+            "unmatched_buyers": [
+                name
+                for name in competing_bids
+                if name != winner
+            ],
+        },
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -281,7 +285,6 @@ SCENARIO = Scenario(
     ),
     periods=1,
     initial_state={
-        "period": 0,
         "permitted_actions": PERMITTED_ACTIONS,
     },
     agents=[
@@ -294,7 +297,7 @@ SCENARIO = Scenario(
         "seller": SELLER_S.name,
         "sell_action": SELL_5,
     },
-    reality_function="single_unit_market_outcome",
+    reality="single_unit_market_outcome",
 )
 
 
@@ -335,35 +338,35 @@ class TestMultiAgentSystemOutcome(unittest.TestCase):
             )
 
     def test_individually_permitted_joint_profile_cannot_be_fully_realized(self):
-        result = run_scenario(SCENARIO)
+        system_outcome = run_scenario(SCENARIO).trace[0].reality.system
 
         # Both buy_8 and buy_10 are each individually permitted (previous
         # test), yet only one unit can actually be transferred.
         self.assertEqual(
-            result.final["quantity"],
+            system_outcome["quantity"],
             1,
         )
 
         self.assertLess(
-            result.final["quantity"],
+            system_outcome["quantity"],
             2,
         )
 
     def test_reality_resolves_scarcity_into_one_system_outcome(self):
-        result = run_scenario(SCENARIO)
+        system_outcome = run_scenario(SCENARIO).trace[0].reality.system
 
         self.assertEqual(
-            result.final["buyer"],
+            system_outcome["buyer"],
             BUYER_B.name,
         )
 
         self.assertEqual(
-            result.final["seller"],
+            system_outcome["seller"],
             SELLER_S.name,
         )
 
         self.assertEqual(
-            result.final["unmatched_buyers"],
+            system_outcome["unmatched_buyers"],
             [BUYER_A.name],
         )
 
@@ -382,13 +385,40 @@ class TestMultiAgentSystemOutcome(unittest.TestCase):
 
         self.assertIn(
             BUYER_A.name,
-            result.final["unmatched_buyers"],
+            result.trace[0].reality.system["unmatched_buyers"],
         )
 
         # No per-agent O_{i,t} is defined for any agent -- only the
-        # system-level O_t (result.final) is.
+        # system-level O_t (RealityResult.system) is.
+        self.assertEqual(
+            result.trace[0].reality.agents,
+            {},
+        )
+
         for agent_name in (BUYER_A.name, BUYER_B.name, SELLER_S.name):
             self.assertEqual(
                 result.agent(agent_name).outcome,
                 {},
             )
+
+    def test_joint_counterfactual_is_realized_by_the_same_r(self):
+        result = run_scenario(SCENARIO)
+
+        # Had Buyer B not bought, the same R, the same F_t, and the other
+        # two agents' recorded actions would have given the unit to
+        # Buyer A. This re-runs R only; it is not another realized
+        # outcome and no agent's decision is re-run.
+        counterfactual = result.counterfactual(
+            0,
+            {BUYER_B.name: DO_NOT_BUY},
+        )
+
+        self.assertEqual(
+            counterfactual.system["buyer"],
+            BUYER_A.name,
+        )
+
+        self.assertEqual(
+            result.trace[0].reality.system["buyer"],
+            BUYER_B.name,
+        )

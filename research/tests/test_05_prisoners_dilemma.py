@@ -40,16 +40,20 @@ F_t aspects used by R         actual_payoff_matrix: the scenario's own       fix
                               condition R reads (not a complete
                               representation of F_t); two-player scenario
                               only
-R   Reality Function          RealityFunction.PAYOFF_MATRIX_OUTCOME:         fixed
-                              realizes payoffs from both players' selected
-                              actions and actual_payoff_matrix, never from
-                              any player's V
-O_t System Outcome            the realized payoffs of both players, from R   observed
+R   Reality Function          RealityRule.PAYOFF_MATRIX: realizes payoffs    fixed
+                              from both players' selected actions and
+                              actual_payoff_matrix, never from any
+                              player's V
+O_{i,t} Agent Outcomes        each player's realized payoff, derived from    observed
+                              the one joint realization
 Feedback (Model 5.5)          none                                           --
 
 In the two-player scenario R takes both players' selected actions
-together, so Model 5.3 applies. This test defines no individual outcomes
-O_{i,t} and no relationship between them and O_t.
+together, so Model 5.3 applies. Each player's payoff depends on the
+other's action, so it is an agent-level outcome derived from that same
+joint R (Model 5.3, "Agent-level outcomes"), not a separate single-agent
+application of R. No separate system outcome O_t is defined, and no
+aggregation of the O_{i,t} into one.
 
 Economic mechanism
 ------------------
@@ -62,6 +66,13 @@ the other's action. The two players decide independently, each applying
 the same valuation and decision process; the pairing of their choices is
 read off afterward, and no equilibrium is computed.
 
+Equilibrium concept: pure-strategy one-shot Nash equilibrium, verified
+afterward against the stated payoff structure -- not embedded in R and
+not reached through dynamics. Belief consistency: in the two-player
+scenario each player expects DEFECT and the counterpart selects DEFECT,
+so each expectation matches the realized profile. Because DEFECT is
+strictly dominant, the equilibrium does not depend on that consistency.
+
 Assumptions
 -----------
 - expected_other_action is read directly by ValuationRule.PAYOFF_MATRIX
@@ -72,7 +83,7 @@ Assumptions
   counterpart is a fixed model input.
 - Each player correctly understands the payoff structure: the payoff
   matrix in V (PAYOFF_MATRIX, used for valuation) matches the actual
-  payoff structure used by R (ACTUAL_PAYOFF_MATRIX, used to realize O_t)
+  payoff structure used by R (ACTUAL_PAYOFF_MATRIX, used to realize O)
   exactly. This is a simplifying assumption of this test, not a TER
   requirement -- a player could misjudge the game's true payoffs, and R
   would still realize the actual ones.
@@ -86,7 +97,10 @@ In this configured scenario:
    though defection remains selected either way.
 4. Defection is strictly dominant for each player, so (DEFECT, DEFECT)
    is the resulting one-shot Nash equilibrium.
-5. The payoff ordering is the standard Prisoner's Dilemma ordering
+5. Unilaterally deviating to COOPERATE against the other player's
+   actual DEFECT would realize a lower payoff (a counterfactual re-run
+   of the same joint R, not another realized outcome).
+6. The payoff ordering is the standard Prisoner's Dilemma ordering
    (temptation > reward > punishment > sucker), so mutual cooperation
    would leave both players better off than mutual defection.
 """
@@ -96,7 +110,7 @@ import unittest
 from research.ter import (
     AgentSpec,
     DecisionProcess,
-    RealityFunction,
+    RealityRule,
     Scenario,
     ValuationRule,
     run_scenario,
@@ -128,8 +142,8 @@ PAYOFF_MATRIX = {
     },
 }
 
-# R: the actual payoff structure used to realize O_t
-# (RealityFunction.PAYOFF_MATRIX_OUTCOME). This test assumes each
+# R: the actual payoff structure used to realize each O_{i,t}
+# (RealityRule.PAYOFF_MATRIX). This test assumes each
 # player understands the game correctly, so this matches PAYOFF_MATRIX
 # exactly -- but it is declared independently and read only by the
 # reality side, never derived from any player's own valuation.
@@ -190,9 +204,7 @@ EXPECTS_COOPERATION_SCENARIO = Scenario(
     name="Player Expecting Cooperation",
     description="A single player values actions assuming the other player cooperates.",
     periods=1,
-    initial_state={
-        "period": 0,
-    },
+    initial_state={},
     agents=[
         BASE_PLAYER,
     ],
@@ -217,10 +229,11 @@ MUTUAL_DEFECTION_SCENARIO = EXPECTS_COOPERATION_SCENARIO.variant(
         PLAYER_EXPECTING_DEFECTION_1,
         PLAYER_EXPECTING_DEFECTION_2,
     ],
+    initial_state={},
     parameters={
         "actual_payoff_matrix": ACTUAL_PAYOFF_MATRIX,
     },
-    reality_function=RealityFunction.PAYOFF_MATRIX_OUTCOME,
+    reality=RealityRule.PAYOFF_MATRIX,
 )
 
 
@@ -291,17 +304,35 @@ class TestPrisonersDilemma(unittest.TestCase):
             (DEFECT, DEFECT),
         )
 
-        # Realized payoffs come from O (RealityFunction.
-        # PAYOFF_MATRIX_OUTCOME), not from re-deriving them off
-        # PAYOFF_MATRIX by hand.
-        realized_payoffs = result.final["payoffs"]
+        # Realized payoffs are each player's O_{i,t}, derived from the
+        # one joint realization (RealityRule.PAYOFF_MATRIX), not
+        # re-derived off PAYOFF_MATRIX by hand.
+        self.assertEqual(
+            (player_1.payoff, player_2.payoff),
+            (
+                ACTUAL_PAYOFF_MATRIX[DEFECT][DEFECT],
+                ACTUAL_PAYOFF_MATRIX[DEFECT][DEFECT],
+            ),
+        )
+
+    def test_unilateral_deviation_from_mutual_defection_does_not_pay(self):
+        result = run_scenario(MUTUAL_DEFECTION_SCENARIO)
+        player_1 = result.agent(PLAYER_EXPECTING_DEFECTION_1.name)
+
+        # Counterfactual, not another realized outcome: the same joint
+        # R with player_2's recorded DEFECT held fixed. player_1's
+        # outcome therefore depends on player_2's actual action, which
+        # no single-agent lookup could capture.
+        deviated = player_1.outcome_for(COOPERATE)
 
         self.assertEqual(
-            (
-                realized_payoffs[PLAYER_EXPECTING_DEFECTION_1.name],
-                realized_payoffs[PLAYER_EXPECTING_DEFECTION_2.name],
-            ),
-            (1, 1),
+            deviated.payoff,
+            ACTUAL_PAYOFF_MATRIX[COOPERATE][DEFECT],
+        )
+
+        self.assertLess(
+            deviated.payoff,
+            player_1.payoff,
         )
 
     def test_standard_payoff_ordering_is_preserved(self):

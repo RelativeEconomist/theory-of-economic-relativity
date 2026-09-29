@@ -32,6 +32,10 @@ class AgentState:
     decision_parameters is likewise not a new TER primitive. It is
     implementation configuration for D (e.g. a search depth), kept
     separate from model_of_reality for the same reason.
+
+    update is the agent's own rule for turning an Observation into
+    changed agent-side components (Model 5.5); None means observations
+    never change this agent. See research.ter.observation.
     """
 
     objective: Any
@@ -43,3 +47,4 @@ class AgentState:
     name: str
     valuation: dict[str, Any]
     decision_parameters: dict[str, Any]
+    update: Callable[..., dict[str, Any]] | None = None

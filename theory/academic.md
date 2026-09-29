@@ -24,13 +24,11 @@ The central hypothesis is:
 
 Economics seeks to explain how decisions, institutions, and interactions produce economic outcomes. Over time, the field has developed a rich body of theory describing incentives, markets, information, institutions, strategic interaction, and the allocation of scarce resources.
 
-Economic Relativity proposes a unifying framework centered on the agent. It begins with a simple premise:
-
-> Economic outcomes emerge from agent decisions interacting with reality.
+Economic Relativity proposes a unifying framework centered on the agent.
 
 Agents may differ substantially in their objectives, information, constraints, valuations, time horizons, and decision processes. Economic Relativity does not assume that they optimize or use a common decision rule.
 
-Instead, it proposes that economically relevant decisions can be represented through a common architecture. Agents interpret conditions through their models of reality, act from alternatives they perceive as feasible, and select actions through decision processes that may include optimization, satisficing, heuristics, habits, intuition, reflexive responses, strategic reasoning, stochastic selection, or other mechanisms. Where valuation is used, objectives provide the reference against which actions are evaluated.
+Instead, it proposes that economically relevant decisions can be represented through a common architecture. Agents interpret conditions through their models of reality, act from alternatives they perceive as feasible, and select actions through decision processes (Section 3). Where valuation is used, objectives provide the reference against which actions are evaluated.
 
 Those actions interact with actual conditions and with the actions of other agents to produce outcomes. The resulting outcomes may then alter information, constraints, opportunities, valuations, institutions, and subsequent decisions.
 
@@ -72,7 +70,7 @@ The core TER symbols, their canonical names and roles, and the models that use t
 
 | $F_t$ | Objective Feasible State of Reality | TER's representation of the objectively realized conditions and constraints relevant when selected action(s) at decision point $t$ are realized; not agent specific | 5.2, 5.3, 5.5 |
 
-| $\hat{F}_{i,t}$ | Perceived Feasible Set | Actions agent $i$ perceives as available to attempt at time $t$ | 5.1, 5.2, 5.5 |
+| $\hat{F}_{i,t}$ | Perceived Feasible Set | Actions agent $i$ perceives as available to attempt at $t$ | 5.1, 5.2, 5.5 |
 
 | $V_{i,t}$ | Valuation | Evaluates actions relative to the agent's objective, given its model of reality and time horizon | 5.1, 5.5 |
 
@@ -132,8 +130,6 @@ $$
 
 The perceived feasible set $\hat{F}_{i,t}$ contains the actions agent $i$ perceives as available to attempt, while $F_t$ represents the objective conditions relevant when the selected action is realized.
 
-Analytical objects such as $\mathbf{Z}_t$, $\Phi_t$, and $\mathcal{J}_t$ (Section 5.6) may be introduced within a particular specification when useful, but they are not TER primitives or required components of the framework.
-
 ### Agent
 
 A decision making entity that selects among actions it perceives as feasible.
@@ -146,7 +142,7 @@ Examples include individuals, households, businesses, nonprofits, governments, a
 
 A structure or system of agents organized through rules, relationships, or common functions that shapes individual and collective action.
 
-Institutions may both act as agents and alter the information, incentives, constraints, and perceived feasible sets of other agents. The laws, rules, and other institutional conditions that constrain what can occur are aspects of $F_t$.
+Institutions may both act as agents and alter the information, incentives, and perceived feasible sets of other agents. The laws, rules, and other institutional conditions that constrain what can occur are aspects of $F_t$, and institutional change may alter them.
 
 ### Objective
 
@@ -190,7 +186,7 @@ $F_t$ is not agent specific, may be perceived imperfectly, and may only be appro
 
 ### Perceived Feasible Set
 
-The set of actions an agent perceives as available to attempt for the decision at time $t$, whether or not each action is actively evaluated by the decision process. The actions in the set are its perceived feasible actions.
+The set of actions an agent perceives as available to attempt for the decision at $t$, whether or not each action is actively evaluated by the decision process. The actions in the set are its perceived feasible actions.
 
 The perceived feasible set may differ from what reality ultimately allows to be realized, for example when an agent perceives constraints imperfectly. Beliefs represented in $M_{i,t}$ may shape $\hat{F}_{i,t}$, but $M_{i,t}$ represents the agent's broader understanding of reality while $\hat{F}_{i,t}$ records perceived action availability.
 
@@ -242,17 +238,17 @@ An imbalance may persist, grow, diminish, or be resolved as agents, institutions
 
 ### Equilibrium
 
-A specification-level condition in which the modeled actions, beliefs, constraints, and interactions are mutually consistent under the equilibrium concept being applied. The treatment of deviations, feasibility, and belief consistency is determined by that equilibrium concept. An equilibrium does not imply that underlying actions or states are static, nor that the equilibrium is dynamically stable, optimal, permanent, or desirable.
+A condition in which the modeled agents’ actions and expectations are consistent with each other under the equilibrium concept being used. Different equilibrium concepts impose different requirements on beliefs, feasible alternatives, and deviations. Equilibrium does not by itself imply stability, optimality, permanence, or desirability.
 
 ### Reality
 
 The objective world itself, whose conditions ultimately determine the consequences of actions, regardless of an agent's beliefs or expectations.
 
-Reality is not a TER variable. $F_t$ is TER's representation of the objective feasible state of reality at time $t$: the objectively realized conditions and constraints of Reality that determine what can occur. TER does not assume that the evolution of reality is fundamentally deterministic or stochastic; such assumptions belong to the scientific and economic specification being studied.
+Reality is not a TER variable. $F_t$ is TER's representation of reality's objectively realized conditions and constraints relevant at realization (see Objective Feasible State of Reality). TER does not assume that the evolution of reality is fundamentally deterministic or stochastic; such assumptions belong to the scientific and economic specification being studied.
 
 ## 4. Axioms
 
-The Theory of Economic Relativity rests on the following axioms. Some axioms state structural or definitional commitments of the framework, while others impose substantive restrictions on valid TER specifications.
+The Theory of Economic Relativity rests on the following axioms.
 
 ### Axiom 1: Agents act on information and beliefs
 
@@ -280,7 +276,7 @@ Agent actions contribute to outcomes and may create external effects. Outcomes m
 
 ### Axiom 6: Actions can affect other agents
 
-One agent's actions can, through the outcomes they contribute to, change at later decision points or stages the information, constraints, incentives, or perceived feasible actions of other agents, and the objective feasible state of reality that subsequent actions encounter.
+Through the outcomes they contribute to, one agent's actions can change the information, incentives, or perceived feasible actions of other agents at later decision points or stages, and the objective feasible state of reality that subsequent actions encounter.
 
 ### Axiom 7: Reality constrains consequences
 
@@ -292,7 +288,7 @@ When continuation of an existing state becomes infeasible under reality's constr
 
 ### Axiom 9: Realized outcomes may shape subsequent conditions
 
-Realized outcomes may shape subsequent conditions when their economically relevant consequences alter those conditions. The conditions that may change include the objective feasible state of reality and the objectives, models of reality, perceived feasible sets, valuations, time horizons, and decision processes that shape later decisions. When an outcome does change conditions relevant to a later decision, those changes are reflected in the subsequent conditions.
+Realized outcomes may alter subsequent conditions through their economically relevant consequences. The conditions that may change include the objective feasible state of reality and the objectives, models of reality, perceived feasible sets, valuations, time horizons, and decision processes that shape later decisions.
 
 ### Axiom Map
 
@@ -376,7 +372,7 @@ Symbols are defined in Section 3. In this model:
 
 **Boundary.** $F_t$ represents the objective conditions and constraints relevant to realization and therefore affects realized outcomes (Model 5.2), but it is not an input to $D_{i,t}$: the agent acts from $\hat{F}_{i,t}$ and does not require knowledge of $F_t$. Objective conditions represented in $F_t$ affect an agent's action selection only insofar as they are perceived or represented through agent-side components such as $M_{i,t}$ or $\hat{F}_{i,t}$. $F_t$ and $\hat{F}_{i,t}$ may differ. Agents may overlook available actions, incorrectly believe an action is possible, or discover new alternatives as information and constraints change.
 
-**Valuation.** When the decision process uses valuation, $V_{i,t}(a \mid G_{i,t}, M_{i,t}, H_{i,t})$ represents the value assigned to action $a$ relative to the objective, given the agent's model of reality and time horizon. The time horizon determines which future consequences the agent considers relevant to the valuation.
+**Valuation.** When the decision process uses valuation, the time horizon determines which future consequences the agent considers relevant to that valuation.
 
 **Decision processes.** $D_{i,t}$ governs selection. It receives the agent's model of reality directly and may condition selection on that perceived state without invoking valuation. It may optimize over valuations, satisfice, apply a heuristic, follow habit, respond reflexively, select stochastically, or use another mechanism. Valuation is therefore a component of the architecture but need not be consulted for every selected action. $G_{i,t}$ and $H_{i,t}$ are not universal direct inputs to $D_{i,t}$; when valuation is used, they condition $V_{i,t}$.
 
@@ -422,7 +418,7 @@ Symbols are defined in Section 3. Here $R(\cdot)$ is applied to agent $i$'s sele
 
 **Failure and partial execution.** An action in $\hat{F}_{i,t}$ is perceived as available to attempt, not guaranteed to succeed. When the selected action encounters the objective conditions and constraints represented by $F_t$ through $R$, it may succeed, partially execute, fail, or produce a different consequence than the agent expected; that realized result becomes part of the outcome.
 
-**Time.** TER uses the same index $t$ for a selected action and the objective state relevant to its realization, but this does not imply that the agent knows $F_t$ when selecting the action. Later decision points are evaluated against the objective state relevant when their selected actions are realized, through the feedback described in Model 5.5.
+**Time.** TER uses the same index $t$ for a selected action and the objective state relevant to its realization, but this does not imply that the agent knows $F_t$ when selecting the action. Actions selected at later decision points are likewise realized against the objective state relevant when they are realized, which may reflect earlier outcomes through feedback (Model 5.5).
 
 **Reality and uncertainty.** $F_t$ represents the objectively realized state relevant when the selected action is realized, while $R$ maps the selected action and that realized state to the outcome. Uncertainty may resolve after selection but before realization; the realized condition then belongs to the relevant $F_t$, while the agent's prior expectations remain in $M$. TER does not assume that the evolution of reality is fundamentally deterministic or stochastic. A specification may model uncertainty in how later states arise without changing the distinction between the agent's beliefs in $M$ and the objective state represented by $F$.
 
@@ -446,7 +442,7 @@ Symbols are defined in Section 3. Here $n$ is the number of explicitly modeled a
 
 **Interaction timing.** A multi-agent specification may represent contemporaneous, sequential, staged, asynchronous, or repeated interaction. The index $t$ refers to the relevant decision point or time in the specification. Where actions occur in an ordered sequence, later moves use later decision points so that each agent acts from the information and perceived feasible actions available then. Earlier actions may affect later selection through updated agent-side conditions such as $M$ or $\hat{F}$ rather than through direct access by $D$ to $F$.
 
-**One $F_t$.** Within the relevant decision point or stage, the conditions and constraints represented by the same $F_t$ may differ in their relevance to particular actions according to those actions' circumstances.
+**One $F_t$.** Within the relevant decision point or stage, the actions included in the modeled interaction encounter the same $F_t$, although its conditions and constraints may matter differently to each action, depending on that action's circumstances.
 
 System outcomes may include external effects (Section 3). Interactions may also create opportunities that agents could not achieve independently, including cooperation, exchange, specialization, and institutions.
 
@@ -480,7 +476,7 @@ This constraint does not specify what state follows or the mechanism through whi
 
 The Dynamic Feedback Model describes how realized outcomes can alter subsequent conditions, including the elements shaping later decisions and the objective feasible state of reality.
 
-Realized outcomes become part of the conditions shaping subsequent decisions. The feedback represented here is path dependent: later decisions reflect the consequences of prior outcomes, while the objective feasible state of reality at each time, which external shocks may change, also affects what is realized as the system evolves.
+Realized outcomes become part of the conditions shaping subsequent decisions. The feedback represented here is path dependent: later decisions reflect the consequences of prior outcomes, while the objective feasible state of reality relevant at each realization, which external shocks may change, also affects what is realized as the system evolves.
 
 In the relationships below, arrows indicate possible influence, not that every outcome necessarily changes every subsequent component. They are written from the system outcome $O_t$; in a single-agent specification, feedback may originate from $O_{i,t}$ instead. Realized outcomes may affect an agent's model of reality only through the information available to that agent. TER does not assume that agents observe the full system outcome or observe outcomes without error.
 
@@ -526,7 +522,7 @@ Symbols are defined in Section 3, and $t+1$ denotes the next relevant decision p
 
 **Sources of change in $F$.** Changes to $F_t$ resulting from agent actions and interactions are captured through realized outcomes, while external shocks, which originate outside the modeled action and outcome pathway, may also alter it independently.
 
-Experience may bring $\hat{F}_i$ closer to what reality allows to be realized, reveal previously unknown actions, change how alternatives are valued, or change how an agent makes decisions. When $C_{i,t}$ is a commitment, contract, policy, or contingent strategy, it is the object selected at that decision point; later realized actions remain separate selected actions at later decision points. Enforceable commitments may alter later objective conditions and constraints represented in $F$, while nonbinding, self-enforcing, or perceived commitments may instead shape $M$, $\hat{F}$, $V$, or $D$, depending on the specification.
+Experience may bring $\hat{F}_i$ closer to what reality allows to be realized, reveal previously unknown actions, change how alternatives are valued, or change how an agent makes decisions. Where $C_{i,t}$ is a commitment, contract, policy, or contingent strategy (see Selected Action), an enforceable commitment may alter later objective conditions and constraints represented in $F$, while a nonbinding, self-enforcing, or perceived commitment may instead shape $M$, $\hat{F}$, $V$, or $D$, depending on the specification.
 
 ### 5.6 Feedback Analysis and Stability
 
@@ -602,8 +598,6 @@ These analytical methods are conditional on the structure of the model being stu
 
 Many economic systems may be stochastic, nonlinear, discontinuous, strategic, path dependent, or otherwise unsuitable for local Jacobian analysis in a particular specification. In those cases, feedback and stability may be studied through simulations, agent based models, econometric estimation, finite changes, regime specific analysis, sequence space methods, or other appropriate analytical and empirical methods.
 
-A realized outcome may have little effect on subsequent decisions or may propagate through many agents and institutions. Changes may be amplified or damped, disappear quickly or persist, and contribute to convergence, divergence, oscillation, thresholds, or changing patterns of behavior. Researchers should use methods appropriate to the particular economic relationships represented in the specification.
-
 Importantly, amplification alone does not imply instability or imbalance. Strong feedback may accompany productive growth, technological adoption, coordination, speculation, adaptation, or destabilization. Its economic significance depends on the underlying agents, conditions, interactions, constraints, and whether the resulting path remains feasible under reality's constraints.
 
 ## 6. Consolidated Principles
@@ -612,11 +606,9 @@ This section interprets the TER architecture through established economics. Defi
 
 ### 6.1 Agent Objective
 
-Objectives provide the reference against which agents value potential actions when valuation is used. A decision process need not actively consult an objective or valuation for every selected action.
+Objectives provide the reference for valuation (Section 3), which a decision process need not consult for every selected action.
 
 Many established economic concepts describe different forms of this process. Utility and preferences describe how consumers value alternatives. Profit maximization describes firms evaluating actions relative to profit. Incentives change the relative value of potential actions, while expected value provides one way agents may evaluate actions under uncertainty.
-
-In Model 5.1, the objective $G_{i,t}$ is the reference against which the valuation $V_{i,t}$ evaluates actions.
 
 The same architecture can represent consumers pursuing utility, firms pursuing profit, governments pursuing stability, or other agents pursuing different objectives without requiring them to use the same decision process.
 
@@ -632,15 +624,11 @@ Choosing among competing alternatives creates opportunity costs. Because agents 
 
 Interactions with other agents can also change what is feasible, through the outcomes they produce. Cooperation, exchange, specialization, and institutions may expand or restrict the actions available to an agent. Institutions can further shape what is feasible through laws, rules, property rights, contracts, and other structures that form part of $F_t$.
 
-Differences in constraints and interactions among agents give rise to opportunity costs, comparative advantage, trade, and changing feasibility.
-
 ### 6.3 Agent Model of Reality
 
-Agents make decisions according to their model of reality, which may differ from reality itself.
+Agents make decisions according to their model of reality, $M_{i,t}$ (Section 3), which may differ from reality itself (Axiom 7). Information economics, expectations, behavioral economics, bounded rationality, and learning describe different aspects of how agents form, use, and update this model.
 
-The agent's model of reality, $M_{i,t}$ (Section 3), draws on information, beliefs, assumptions, expectations, and interpretations. Information economics, expectations, behavioral economics, bounded rationality, and learning describe different aspects of how agents form, use, and update this model.
-
-$M_{i,t}$ shapes the agent's understanding of actions and consequences. It may inform valuation through $V_{i,t}$ and may also directly condition selection through $D_{i,t}$. Neither the agent's model of reality nor its perceived feasible set must perfectly correspond to reality.
+$M_{i,t}$ may inform valuation through $V_{i,t}$ and may also directly condition selection through $D_{i,t}$ (Model 5.1). Neither the agent's model of reality nor its perceived feasible set must perfectly correspond to reality.
 
 This distinction allows Economic Relativity to represent both highly informed and imperfect decision making. An agent may have incomplete information, incorrect beliefs, biased expectations, limited ability to evaluate alternatives, or an inaccurate understanding of what actions are available.
 
@@ -652,19 +640,17 @@ Learning does not require convergence toward perfect knowledge. Agents may updat
 
 ### 6.4 Action Selection
 
-Different agents, or the same agent under different conditions, may use different decision processes (Model 5.1). A decision process may condition directly on the agent's model of reality, may use valuation, or may use both for distinct roles. Optimization, satisficing, heuristics, habits, and other established mechanisms may operate as decision processes, so the selected action need not be objectively optimal or result from exhaustive comparison among alternatives.
+Different agents, or the same agent under different conditions, may use different decision processes (Section 3, Model 5.1). A decision process may condition directly on the agent's model of reality, may use valuation, or may use both for distinct roles, and the selected action need not be objectively optimal (Axiom 4).
 
-Marginal analysis remains an important special case of valuation. Agents may evaluate expected marginal benefits and marginal costs when assigning value to alternatives. Optimization, satisficing, heuristics, habits, reflexive responses, and other mechanisms may then govern how $D_{i,t}$ selects an action.
+Marginal analysis remains an important special case of valuation. Agents may evaluate expected marginal benefits and marginal costs when assigning value to alternatives; $D_{i,t}$ may then optimize over those values or select through another mechanism.
 
 Because action selection may use valuation or condition directly on the agent's model of reality, the considerations driving the selected action may differ from the consequences ultimately realized.
 
 ### 6.5 Outcomes and System Effects
 
-Economic outcomes emerge from the actions and interactions of agents encountering the objective feasible state of reality. As agents affect one another, individual decisions can contribute to market and system level outcomes that no single agent determines independently.
+Economic outcomes emerge from the actions and interactions of agents encountering the objective feasible state of reality (Model 5.3). As agents affect one another, individual decisions can contribute to market and system level outcomes that no single agent determines independently.
 
 Supply and demand describe aggregate patterns generated by buyers and sellers making individual decisions. Their interactions produce prices and quantities, while those prices become information and conditions that influence subsequent decisions.
-
-In the Multi Agent Model (Model 5.3), the outcome of interacting selected actions encountering $F_t$ is the system outcome $O_t$, which may include external effects on other agents.
 
 Externalities are external effects (Section 3). Individually selected actions may therefore produce outcomes that conflict with the objectives of other agents or the broader system. When such outcomes are inefficient relative to a specified welfare criterion, economics may describe them as market failures.
 
@@ -674,7 +660,7 @@ System outcomes also feed back into future agent decisions (Model 5.5). Prices, 
 
 Within TER specifications, markets and macroeconomic outcomes need not be treated as independent starting points. They may emerge from interacting agent decisions and the conditions under which those decisions occur, while the resulting system outcomes may become part of the conditions shaping future decisions.
 
-Institutions participate in this feedback process. They may emerge from agent interactions and collective action, while also shaping the information, incentives, constraints, and perceived feasible sets that influence subsequent agent decisions and outcomes, and forming part of the objective feasible state of reality. Agents may also act to create, preserve, modify, or remove institutions, and through the outcomes of those actions further change the conditions faced by themselves and others.
+Institutions participate in this feedback process. They may emerge from agent interactions and collective action. They also shape the information, incentives, and perceived feasible sets that influence later decisions and outcomes, and form part of the objective feasible state of reality. Agents may act to create, preserve, modify, or remove institutions, and the outcomes of those actions may further change the conditions faced by themselves and others.
 
 ### 6.6 Persistence and Change Over Time
 
@@ -682,7 +668,7 @@ Economic systems evolve as agents respond to changing outcomes, information, con
 
 Changes in these conditions may alter actions, beliefs, constraints, or interactions so that the equilibrium consistency condition being applied no longer holds (Section 3). The actions and conditions that sustain an equilibrium may themselves alter the relationships on which that equilibrium depends, allowing stability to generate endogenous change or instability over time.
 
-Under the State Persistence Constraint (Constraint 5.4), an imbalance neither establishes that continuation is infeasible nor predicts when state change will occur, and TER does not prescribe what follows when continuation becomes infeasible. External shocks (Section 3) can also change outcomes and conditions, including $F_t$. Feedback (Model 5.5) may dampen or amplify change, and amplification alone does not imply instability or imbalance (Section 5.6).
+An imbalance does not by itself establish that continuation is infeasible or predict when change will occur (Section 3, Constraint 5.4). External shocks (Section 3) and feedback (Model 5.5, Section 5.6) can also drive change.
 
 Productivity, technology, capital, knowledge, cooperation, and institutional change can transform what agents and systems are capable of achieving. Growth can therefore involve changes in $F_t$, while learning can reveal actions that reality already allowed to be realized but the agent had not perceived.
 
@@ -738,7 +724,7 @@ This allows TER to represent mistaken beliefs, uncertainty, asymmetric informati
 
 TER explicitly distinguishes the objective feasible state of reality, $F_t$, from the perceived feasible set, $\hat{F}_{i,t}$ (Section 3). Neither is reduced to the other, and the agent does not require knowledge of $F_t$.
 
-$\hat{F}_{i,t}$ contains actions the agent perceives as available to attempt. An action may be absent from $\hat{F}_{i,t}$ even though the objective conditions represented by $F_t$ would allow it to be realized if attempted. Conversely, an action may be included in $\hat{F}_{i,t}$ but fail, partially execute, or produce a different outcome when the selected action encounters $F_t$ through $R$.
+An action may be absent from $\hat{F}_{i,t}$ even though the objective conditions represented by $F_t$ would allow it to be realized if attempted. Conversely, an action may be included in $\hat{F}_{i,t}$ but fail, partially execute, or produce a different outcome when the selected action encounters $F_t$ through $R$.
 
 Beliefs represented in $M_{i,t}$ may shape which actions enter $\hat{F}_{i,t}$, but beliefs about states, consequences, and probabilities remain conceptually distinct from perceived action availability. Low probability of success does not by itself make an action unavailable to attempt.
 
@@ -746,7 +732,7 @@ This distinction allows discovery, misinformation, technological change, institu
 
 ### 7.5 Decisions, Consequences, and Future Decisions Form a Common Dynamic Structure
 
-TER connects decisions to realized outcomes and subsequent decisions by linking Models 5.1, 5.2, and 5.5: a selected action encounters $F_t$ to produce an outcome, and the outcome may alter one or more subsequent conditions, including an agent's objective, model of reality, perceived feasible set, valuation, time horizon, or decision process, and the objective feasible state of reality.
+TER connects decisions to realized outcomes and subsequent decisions by linking Models 5.1, 5.2, and 5.5: a selected action encounters $F_t$ to produce an outcome, and the outcome may alter later agent-side conditions and the objective feasible state of reality (Model 5.5).
 
 TER therefore treats economic activity as an evolving feedback process rather than a sequence of isolated decisions.
 
@@ -754,9 +740,7 @@ The strength and structure of this feedback may vary (Section 5.6), and TER does
 
 ### 7.6 Agent Interaction Connects Microeconomic Decisions to System Outcomes
 
-TER extends the same architecture to interacting agents.
-
-Through the outcomes they produce, actions taken by one agent may alter the information, incentives, constraints, opportunities, or outcomes experienced by other agents.
+TER extends the same architecture to interacting agents, whose actions can affect one another through the outcomes they produce (Axioms 5 and 6).
 
 In the Multi Agent Model (Model 5.3), interacting selected actions encounter the same $F_t$ to produce the system outcome $O_t$, which may in turn alter later conditions (Model 5.5).
 
@@ -866,8 +850,6 @@ The strongest general hypothesis proposed by TER is:
 
 > Many economic phenomena traditionally described through separate models and theories can be understood as different configurations and dynamics of a common agent centered economic architecture.
 
-This architecture connects objectives, perceived reality, feasible actions, decision processes, interactions, realized outcomes, and feedback over time without requiring agents to share a common decision algorithm.
-
 If this claim is correct, TER provides a shared framework for connecting economic decision making, information, constraints, interaction, outcomes, and dynamic change without requiring specialized economic theories to be discarded.
 
 The validity, scope, usefulness, and distinctiveness of this claim remain open to theoretical, empirical, and comparative testing.
@@ -918,7 +900,7 @@ The theory allows for:
 
 * Growth
 
-The framework is intentionally broad. Its purpose is to organize established economic mechanisms around agent decision making, interaction, outcomes, and change while remaining compatible with multiple established economic approaches.
+The framework is intentionally broad and remains compatible with multiple established economic approaches (Section 7).
 
 ## 9. Summary
 
@@ -932,8 +914,4 @@ Selected actions encounter the objective feasible state of reality and interact 
 
 Through these interactions, individual decisions contribute to markets, institutions, and broader economic outcomes. Complex system behavior may emerge that no individual agent intended or controls.
 
-Reality ultimately constrains what actions and conditions can persist. When continuation of an existing state becomes infeasible under reality's constraints, that state cannot persist unchanged. What follows depends on the particular agents, institutions, conditions, constraints, shocks, and interactions involved.
-
-In short:
-
-> Economic behavior emerges from agents selecting actions through heterogeneous decision processes within a common underlying architecture. Where valuation is used, agents evaluate actions relative to objectives and relevant time horizons. Their actions encounter reality, interact with other agents, produce outcomes, and reshape the conditions shaping future decisions. Economic systems therefore evolve through the continuing interaction of agent decisions, feedback, and reality.
+Reality ultimately constrains what actions and conditions can persist (Axiom 8, Constraint 5.4). What follows depends on the particular agents, institutions, conditions, constraints, shocks, and interactions involved.

@@ -69,9 +69,7 @@ SINGLETON_SCENARIO = Scenario(
     name="Singleton Feasible Set",
     description="An agent whose perceived feasible set contains only one action.",
     periods=1,
-    initial_state={
-        "period": 0,
-    },
+    initial_state={},
     agents=[
         BASE_AGENT,
     ],

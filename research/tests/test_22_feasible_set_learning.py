@@ -17,7 +17,7 @@ An agent has two actions. BETTER_ACTION is listed as permitted from period
     F̂ at period 0               = [ORDINARY_ACTION]
 
 Period 0's decision is therefore restricted to ORDINARY_ACTION. The
-realized outcome records that experience; feedback then adds
+realized outcome records that experience; the agent observes it and adds
 BETTER_ACTION to F̂ for period 1, where DecisionProcess.MAXIMIZE selects
 it for its higher declared value.
 
@@ -27,7 +27,7 @@ Component                     Instantiation in this test                     Sta
 G   Objective                 obtain the highest payoff from its choice      fixed
                               of action
 M   Model of Reality          specified but empty                            fixed
-F̂   Perceived Feasible Set    [ORDINARY_ACTION] at period 0; adds            varied (by feedback)
+F̂   Perceived Feasible Set    [ORDINARY_ACTION] at period 0; adds            varied (by update)
                               BETTER_ACTION for period 1
 V   Valuation                 ValuationRule.MAPPED                           fixed
 H   Time Horizon              "ongoing decision"                             fixed
@@ -35,16 +35,19 @@ D   Decision Process          DecisionProcess.MAXIMIZE                       fix
 C   Selected Action           ORDINARY_ACTION (period 0), BETTER_ACTION      observed
                               (period 1)
 F_t aspects                   permission data declared in                    fixed
-                              state["permitted_actions"]: ORDINARY_ACTION
+                              objective_state["permitted_actions"]:
+                              ORDINARY_ACTION
                               and BETTER_ACTION are listed as permitted;
-                              R and feedback do not read or change it
+                              no rule changes it
 R   Reality Function          record_experienced_action (local): reports    fixed
                               the action the agent selected as the action
                               it experienced
-O_{i,t} Realized Outcome      experienced_action_by_agent, from R            observed
-Feedback (Model 5.5)          learn_from_experience (local): adds            fixed
-                              BETTER_ACTION to F̂ once the realized outcome
-                              records that ORDINARY_ACTION was experienced
+O_{i,t} Realized Outcome      experienced_action, from R                     observed
+Observation                   ObservationRule.OWN_OUTCOME: the agent         fixed
+                              observes its own O_{i,t} exactly
+Update (Model 5.5)            learn_from_experience (local): adds            fixed
+                              BETTER_ACTION to F̂ once the agent observes
+                              that it experienced ORDINARY_ACTION
 
 The scenario's mismatch is between F̂ (what the agent perceives) and the
 permission data (BETTER_ACTION listed as permitted but not perceived). No
@@ -54,8 +57,9 @@ Economic mechanism
 ------------------
 Period 0: F̂ = [ORDINARY_ACTION], so the decision process selects
 ORDINARY_ACTION (the only option). R reports the realized outcome,
-recording that ORDINARY_ACTION was experienced. Feedback reads that
-outcome and adds BETTER_ACTION to F̂ before period 1 begins.
+recording that ORDINARY_ACTION was experienced. The agent observes that
+outcome, and its update rule adds BETTER_ACTION to F̂ before period 1
+begins.
 
 Period 1: F̂ = [ORDINARY_ACTION, BETTER_ACTION], so MAXIMIZE now selects
 BETTER_ACTION (value 9 > 4).
@@ -63,21 +67,20 @@ BETTER_ACTION (value 9 > 4).
 Assumptions
 -----------
 - Scope: this is a single-agent specification, so Model 5.2 applies and
-  the realized outcome is O_{i,t}. It is keyed by agent name only because
-  that is how the reality function reports it. No contemporaneous
+  the realized outcome is O_{i,t} (RealityResult.agents). No contemporaneous
   multi-agent interaction is modeled, and no system outcome exists here.
 - ORDINARY_ACTION and BETTER_ACTION's declared values are test-specific
   economic assumptions, not TER primitives.
-- record_experienced_action (R) and learn_from_experience (Model 5.5
-  feedback) are local rules for this test only. Each implements an
+- record_experienced_action (R) and learn_from_experience (the Model 5.5
+  update) are local rules for this test only. Each implements an
   existing TER component as a test-specific specification, not a TER
   primitive or a universal outcome or learning rule. R reports exactly the
   selected action, with no other consequence logic. (They are registered
   with register_rule, an implementation detail.)
-- Feedback changes only what the agent perceives (F̂), and only because
-  it reads the realized outcome. Selected action -> realized outcome ->
-  later change in F̂; nothing reads the selected action directly to change
-  F̂. Model 5.5 (Section 5.5) allows experience to bring F̂ closer to what
+- The update changes only what the agent perceives (F̂), and only
+  because the agent observed the realized outcome. Selected action ->
+  realized outcome -> observation -> later change in F̂; nothing reads
+  the selected action directly to change F̂. Model 5.5 (Section 5.5) allows experience to bring F̂ closer to what
   F_t permits, and this rule implements one such trigger (having just
   experienced ORDINARY_ACTION); it does not claim experience always
   improves perception.
@@ -86,10 +89,9 @@ Assumptions
   changes.
 - The test does not model why the agent initially failed to perceive
   BETTER_ACTION, or a general process of learning.
-- Implementation note: history[t]["agents"] holds live AgentState objects
-  shared across periods, so this test reads BASE_AGENT's declared lists and
-  history[t]["selected_action_by_agent"] (a fresh dict per period) instead
-  of live AgentState fields.
+- The run's trace records each decision point's actions and the agent's
+  resulting state immutably, so F̂ before and after each update can be
+  read directly from it.
 
 Hypothesis
 ----------
@@ -97,7 +99,7 @@ In this configured scenario:
 1. BETTER_ACTION appears in the permission data but not in the initial
    Perceived Feasible Set (a scenario-premise check).
 2. The first decision is restricted to ORDINARY_ACTION.
-3. The realized outcome of that decision causes feedback to add
+3. The observed outcome of that decision causes the update to add
    BETTER_ACTION to the Perceived Feasible Set for the next decision.
 4. The next decision selects BETTER_ACTION, now perceived and more highly
    valued.
@@ -107,7 +109,15 @@ In this configured scenario:
 
 import unittest
 
-from research.ter import AgentSpec, DecisionProcess, Scenario, ValuationRule, run_scenario
+from research.ter import (
+    AgentSpec,
+    DecisionProcess,
+    ObservationRule,
+    RealityResult,
+    Scenario,
+    ValuationRule,
+    run_scenario,
+)
 from research.ter.rules import register_rule
 
 
@@ -128,53 +138,49 @@ BETTER_ACTION_VALUE = 9
 
 
 @register_rule("record_experienced_action")
-def record_experienced_action(state, agents, actions, parameters):
+def record_experienced_action(actions, objective_state, parameters):
     """
-    Local reality function for this test only. Implements R (Model 5.2,
+    Local reality rule for this test only. Implements R (Model 5.2,
     single-agent specification) as a test-specific specification, not a
     TER primitive or universal outcome rule.
 
-    Reports O_{i,t} as simply the action the agent actually selected --
+    Realizes O_{i,t} as simply the action the agent actually selected --
     this test's economics need nothing more elaborate than "the agent
-    experienced whatever it selected." Reports experienced_action_by_
-    agent, keyed by agent name, so learn_from_experience can read a
-    realized outcome, never the agent's own valuation or decision process.
+    experienced whatever it selected."
     """
-    return {
-        "experienced_action_by_agent": {
-            agent.name: action
-            for agent, action in zip(agents, actions)
+    return RealityResult(
+        agents={
+            name: {"experienced_action": action}
+            for name, action in actions.items()
         },
-    }
+    )
 
 
 @register_rule("learn_from_experience")
-def learn_from_experience(state, outcome, parameters):
+def learn_from_experience(agent, observation):
     """
-    Local feedback rule for this test only. Implements Model 5.5 feedback
-    as a test-specific specification, not a TER primitive or universal
-    learning rule.
+    Local update rule for this test only. Implements the agent-side half
+    of Model 5.5 as a test-specific specification, not a TER primitive
+    or universal learning rule.
 
-    Once the realized outcome (from record_experienced_action) records that
-    an agent experienced ORDINARY_ACTION, BETTER_ACTION -- listed as
-    permitted in the permission data -- is added to that agent's perceived
-    feasible set. state["permitted_actions"] is never touched.
+    Once the agent observes (ObservationRule.OWN_OUTCOME) that it
+    experienced ORDINARY_ACTION, BETTER_ACTION is added to its perceived
+    feasible set. It reads only its own observation and its own F̂ --
+    never the permission data, which it cannot reach.
 
-    Required outcome field:
+    Required observation field:
 
-        experienced_action_by_agent   set every period by
-                                       record_experienced_action, the
-                                       reality function this scenario
-                                       runs immediately before feedback.
+        experienced_action   the agent's own O_{i,t}
     """
-    experienced_action_by_agent = outcome["experienced_action_by_agent"]
+    if observation["experienced_action"] != ORDINARY_ACTION:
+        return {}
 
-    for agent in state["agents"]:
-        if experienced_action_by_agent.get(agent.name) == ORDINARY_ACTION:
-            if BETTER_ACTION not in agent.perceived_feasible_set:
-                agent.perceived_feasible_set.append(BETTER_ACTION)
+    if BETTER_ACTION in agent.perceived_feasible_set:
+        return {}
 
-    return state
+    return {
+        "perceived_feasible_set": agent.perceived_feasible_set + [BETTER_ACTION],
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -197,6 +203,7 @@ BASE_AGENT = AgentSpec(
     valuation_rule=ValuationRule.MAPPED,
     decision_process=DecisionProcess.MAXIMIZE,
     horizon="ongoing decision",
+    update_rule="learn_from_experience",
 )
 
 
@@ -214,7 +221,6 @@ LEARNING_SCENARIO = Scenario(
     ),
     periods=2,
     initial_state={
-        "period": 0,
         # Scenario permission data: both actions are permitted by the relevant
         # reality constraint from the start (an implementation representation,
         # not F_t itself).
@@ -228,8 +234,8 @@ LEARNING_SCENARIO = Scenario(
     agents=[
         BASE_AGENT,
     ],
-    reality_function="record_experienced_action",
-    feedback_rule="learn_from_experience",
+    reality="record_experienced_action",
+    observation=ObservationRule.OWN_OUTCOME,
 )
 
 
@@ -257,7 +263,7 @@ class TestFeasibleSetLearning(unittest.TestCase):
     def test_first_decision_is_restricted_to_the_perceived_feasible_set(self):
         result = run_scenario(LEARNING_SCENARIO)
 
-        first_period_selection = result.history[1]["selected_action_by_agent"]
+        first_period_selection = result.trace[0].actions
 
         self.assertEqual(
             first_period_selection[BASE_AGENT.name],
@@ -278,23 +284,35 @@ class TestFeasibleSetLearning(unittest.TestCase):
     def test_feedback_admits_better_action_after_the_first_selection(self):
         result = run_scenario(LEARNING_SCENARIO)
 
-        second_period_selection = result.history[2]["selected_action_by_agent"]
+        second_period_selection = result.trace[1].actions
 
         # select_action enforces C in F_hat (see
         # test_agent_decision_contract.py). BETTER_ACTION being the
         # recorded selection for period 1 is therefore itself proof that
-        # feedback had already added it to F_hat by the time that
+        # the update had already added it to F_hat by the time that
         # decision ran.
         self.assertEqual(
             second_period_selection[BASE_AGENT.name],
             BETTER_ACTION,
         )
 
+        # The trace shows the same thing directly: F_hat as the agent
+        # held it before each decision.
+        self.assertEqual(
+            result.trace.agents_before(0)[BASE_AGENT.name].perceived_feasible_set,
+            [ORDINARY_ACTION],
+        )
+
+        self.assertEqual(
+            result.trace.agents_before(1)[BASE_AGENT.name].perceived_feasible_set,
+            [ORDINARY_ACTION, BETTER_ACTION],
+        )
+
     def test_subsequent_decision_selects_the_newly_perceived_higher_valued_action(self):
         result = run_scenario(LEARNING_SCENARIO)
 
-        first_period_selection = result.history[1]["selected_action_by_agent"][BASE_AGENT.name]
-        second_period_selection = result.history[2]["selected_action_by_agent"][BASE_AGENT.name]
+        first_period_selection = result.trace[0].actions[BASE_AGENT.name]
+        second_period_selection = result.trace[1].actions[BASE_AGENT.name]
 
         self.assertEqual(
             first_period_selection,

@@ -186,9 +186,7 @@ PRODUCER_SURPLUS_SCENARIO = Scenario(
     name="Producer Surplus at a Fixed Market Price",
     description="Four sellers with different reservation costs each independently decide whether to sell at a fixed market price.",
     periods=1,
-    initial_state={
-        "period": 0,
-    },
+    initial_state={},
     agents=[
         SELLER_1,
         SELLER_2,

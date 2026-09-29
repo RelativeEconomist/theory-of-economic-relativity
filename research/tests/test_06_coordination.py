@@ -44,16 +44,19 @@ F_t aspects used by R         actual_payoff_matrix: the scenario's own       fix
                               condition R reads (not a complete
                               representation of F_t); two-firm scenarios
                               only
-R   Reality Function          RealityFunction.PAYOFF_MATRIX_OUTCOME:         fixed
+R   Reality Function          RealityRule.PAYOFF_MATRIX:                     fixed
                               realizes payoffs from both firms' selected
                               actions and actual_payoff_matrix, never from
                               any firm's V
-O_t System Outcome            the realized payoffs of both firms, from R     observed
+O_{i,t} Agent Outcomes        each firm's realized payoff, derived from      observed
+                              the one joint realization
 Feedback (Model 5.5)          none                                           --
 
 In the two-firm scenarios R takes both firms' selected actions together,
-so Model 5.3 applies. This test defines no individual outcomes O_{i,t}
-and no relationship between them and O_t.
+so Model 5.3 applies. Each firm's payoff depends on the other's action,
+so it is an agent-level outcome derived from that same joint R (Model
+5.3, "Agent-level outcomes"). No separate system outcome O_t is defined,
+and no aggregation of the O_{i,t} into one.
 
 Economic mechanism
 ------------------
@@ -69,6 +72,16 @@ applying the same valuation and decision process; the pairing of their
 choices is read off afterward, and no equilibrium is computed. When
 their expectations disagree, neither firm's choice matches the other's,
 and both realize the miscoordination payoff.
+
+Equilibrium concept: pure-strategy one-shot Nash equilibrium, verified
+afterward against the stated payoff structure -- not embedded in R and
+not reached through dynamics. Belief consistency: in each coordinated
+scenario both firms expect the standard the counterpart actually
+selects, so each expectation matches the realized profile. That
+consistency is what makes each firm's best response to its expectation
+also a best response to the counterpart's actual action.
+In the miscoordination scenario expectations do not match the realized
+profile, and the test does not call that profile an equilibrium.
 
 Assumptions
 -----------
@@ -102,7 +115,7 @@ import unittest
 from research.ter import (
     AgentSpec,
     DecisionProcess,
-    RealityFunction,
+    RealityRule,
     Scenario,
     ValuationRule,
     run_scenario,
@@ -135,7 +148,7 @@ PAYOFF_MATRIX = {
 }
 
 # R: the actual payoff structure used to realize O_t
-# (RealityFunction.PAYOFF_MATRIX_OUTCOME). This test assumes each firm
+# (RealityRule.PAYOFF_MATRIX). This test assumes each firm
 # understands the game correctly, so this matches PAYOFF_MATRIX exactly
 # -- but it is declared independently and read only by the reality
 # side, never derived from any firm's own valuation.
@@ -225,9 +238,7 @@ EXPECTS_A_SCENARIO = Scenario(
     name="Agent Expecting Standard A",
     description="A single agent values actions assuming the counterpart chooses standard A.",
     periods=1,
-    initial_state={
-        "period": 0,
-    },
+    initial_state={},
     agents=[
         BASE_AGENT,
     ],
@@ -255,7 +266,7 @@ BOTH_EXPECT_A_SCENARIO = EXPECTS_A_SCENARIO.variant(
     parameters={
         "actual_payoff_matrix": ACTUAL_PAYOFF_MATRIX,
     },
-    reality_function=RealityFunction.PAYOFF_MATRIX_OUTCOME,
+    reality=RealityRule.PAYOFF_MATRIX,
 )
 
 BOTH_EXPECT_B_SCENARIO = EXPECTS_A_SCENARIO.variant(
@@ -268,7 +279,7 @@ BOTH_EXPECT_B_SCENARIO = EXPECTS_A_SCENARIO.variant(
     parameters={
         "actual_payoff_matrix": ACTUAL_PAYOFF_MATRIX,
     },
-    reality_function=RealityFunction.PAYOFF_MATRIX_OUTCOME,
+    reality=RealityRule.PAYOFF_MATRIX,
 )
 
 MISCOORDINATION_SCENARIO = EXPECTS_A_SCENARIO.variant(
@@ -281,8 +292,18 @@ MISCOORDINATION_SCENARIO = EXPECTS_A_SCENARIO.variant(
     parameters={
         "actual_payoff_matrix": ACTUAL_PAYOFF_MATRIX,
     },
-    reality_function=RealityFunction.PAYOFF_MATRIX_OUTCOME,
+    reality=RealityRule.PAYOFF_MATRIX,
 )
+
+def payoffs_of(result):
+    """
+    Each firm's realized payoff O_{i,t}, derived from the one joint R
+    at the scenario's single decision point.
+    """
+    return {
+        name: outcome["payoff"]
+        for name, outcome in result.trace[-1].reality.agents.items()
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -348,11 +369,11 @@ class TestCoordination(unittest.TestCase):
             (STANDARD_B, STANDARD_B),
         )
 
-        # Realized payoffs come from O (RealityFunction.
-        # PAYOFF_MATRIX_OUTCOME), not from re-deriving them off
+        # Realized payoffs come from O (RealityRule.PAYOFF_MATRIX), not
+        # from re-deriving them off
         # PAYOFF_MATRIX by hand.
-        payoffs_a = result_a.final["payoffs"]
-        payoffs_b = result_b.final["payoffs"]
+        payoffs_a = payoffs_of(result_a)
+        payoffs_b = payoffs_of(result_b)
 
         self.assertEqual(
             (
@@ -371,8 +392,8 @@ class TestCoordination(unittest.TestCase):
         )
 
     def test_one_equilibrium_can_dominate_another(self):
-        payoffs_a = run_scenario(BOTH_EXPECT_A_SCENARIO).final["payoffs"]
-        payoffs_b = run_scenario(BOTH_EXPECT_B_SCENARIO).final["payoffs"]
+        payoffs_a = payoffs_of(run_scenario(BOTH_EXPECT_A_SCENARIO))
+        payoffs_b = payoffs_of(run_scenario(BOTH_EXPECT_B_SCENARIO))
 
         self.assertGreater(
             payoffs_a[AGENT_1_EXPECTING_A.name],
@@ -397,8 +418,8 @@ class TestCoordination(unittest.TestCase):
 
         # Realized payoffs come from O, not from re-deriving them off
         # PAYOFF_MATRIX by hand.
-        miscoordinated = result.final["payoffs"]
-        coordinated = run_scenario(BOTH_EXPECT_A_SCENARIO).final["payoffs"]
+        miscoordinated = payoffs_of(result)
+        coordinated = payoffs_of(run_scenario(BOTH_EXPECT_A_SCENARIO))
 
         self.assertEqual(
             (

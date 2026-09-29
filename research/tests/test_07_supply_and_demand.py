@@ -59,6 +59,12 @@ process, and no agent discovers or generates the clearing price itself
 -- the test identifies, after the fact, which externally supplied
 candidate price(s) leave quantity demanded equal to quantity supplied.
 
+Equilibrium concept: discrete market clearing (quantity demanded equals
+quantity supplied at a candidate price), verified afterward over the
+price grid -- not embedded in R and not reached through dynamics. Belief
+consistency: every agent's M holds the candidate price being evaluated,
+so beliefs about price match that price by construction.
+
 Assumptions
 -----------
 - The market helper is used instead of Scenario/run_scenario because

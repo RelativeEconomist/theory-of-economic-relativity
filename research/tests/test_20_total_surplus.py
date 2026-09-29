@@ -176,9 +176,7 @@ TOTAL_SURPLUS_SCENARIO = Scenario(
     name="Total Surplus from a Bilateral Trade at a Fixed Market Price",
     description="One buyer and one seller each independently decide whether to trade at a fixed market price.",
     periods=1,
-    initial_state={
-        "period": 0,
-    },
+    initial_state={},
     agents=[
         BUYER,
         SELLER,

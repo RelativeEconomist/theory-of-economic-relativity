@@ -103,9 +103,7 @@ SCENARIO = Scenario(
     name="Coffee Buyer",
     description="A single agent chooses among three coffees.",
     periods=1,
-    initial_state={
-        "period": 0,
-    },
+    initial_state={},
     agents=[
         BASE_AGENT,
     ],

@@ -115,9 +115,7 @@ MAXIMIZING_SCENARIO = Scenario(
     name="Coffee Buyer (Maximizing)",
     description="A single agent chooses among three coffees by maximizing value.",
     periods=1,
-    initial_state={
-        "period": 0,
-    },
+    initial_state={},
     agents=[
         BASE_AGENT,
     ],
