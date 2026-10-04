@@ -48,7 +48,7 @@ V   Valuation                 priced_productivity_value (local): a           var
                               producer's own productivity for an action,     through productivity)
                               valued at the common price read from M
 H   Time Horizon              current production period                      fixed
-D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+D   Decision Process          maximize_value                       fixed
 C   Selected Action           PRODUCE_GOOD_B (Producer A), PRODUCE_GOOD_A    observed
                               (Producer B)
 F_t, R, outcomes              F_t and outcome realization are outside this test's scope.
@@ -99,8 +99,7 @@ Assumptions
   not. This test relies on that only for its configured numbers.
 - priced_productivity_value is a local valuation rule for this test only.
   It implements V (Model 5.1) as a test-specific specification, not a TER
-  primitive or a universal pricing rule. (It is registered with
-  register_rule, an implementation detail.)
+  primitive or a universal pricing rule. It is passed directly as a local callable.
 - Some assertions below check scenario premises (the productivity ordering
   and the price band) directly from the configured constants. They guard
   the fixture and are not evidence for the hypothesis.
@@ -130,8 +129,8 @@ In this configured scenario:
 
 import unittest
 
-from research.ter import AgentSpec, DecisionProcess, Scenario, run_scenario
-from research.ter.rules import register_rule
+from research.ter import AgentSpec, Scenario, run_scenario
+from research.ter.rules import maximize_value
 
 
 # ---------------------------------------------------------------------------
@@ -173,7 +172,6 @@ PRICE_IN_GOOD_B_BY_ACTION = {
 # Valuation rule
 # ---------------------------------------------------------------------------
 
-@register_rule("priced_productivity_value")
 def priced_productivity_value(action, agent):
     """
     Local valuation rule for this test only. Implements V (Model 5.1) as a
@@ -223,8 +221,8 @@ BASE_PRODUCER = AgentSpec(
         PRODUCE_GOOD_A,
         PRODUCE_GOOD_B,
     ],
-    valuation_rule="priced_productivity_value",
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=priced_productivity_value,
+    decision_process=maximize_value,
     horizon="current production period",
 )
 
@@ -261,9 +259,7 @@ SPECIALIZATION_SCENARIO = Scenario(
         "price, choosing which good to produce."
     ),
     periods=1,
-    initial_state={
-        "period": 0,
-    },
+    initial_state={},
     agents=[
         PRODUCER_A,
         PRODUCER_B,

@@ -1,5 +1,6 @@
+from collections.abc import Mapping
 from copy import deepcopy
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from typing import Any, Callable
 
 
@@ -22,6 +23,11 @@ class AgentSpec:
     configuration is never mistaken for the agent's beliefs about
     reality.
 
+    update_rule defines how this agent turns an Observation into changed
+    agent-side components (M, F_hat, G, V data, H, decision_parameters)
+    between decision points -- the agent-side half of Model 5.5.
+    valuation_rule, decision_process, and update_rule are callables.
+
     F_t, the objective feasible state of reality, is not declared here.
     It is not agent specific: it belongs to the Scenario (see
     Scenario.initial_state and Scenario.parameters).
@@ -31,11 +37,12 @@ class AgentSpec:
     objective: Any
     model_of_reality: dict[str, Any]
     perceived_feasible_set: list[Any]
-    valuation_rule: str
-    decision_process: str
+    valuation_rule: Callable[..., Any]
+    decision_process: Callable[..., Any]
     horizon: Any = None
     valuation: dict[str, Any] = field(default_factory=dict)
     decision_parameters: dict[str, Any] = field(default_factory=dict)
+    update_rule: Callable[..., Any] | None = None
 
     def variant(
         self,
@@ -126,34 +133,30 @@ class Scenario:
         default_factory=dict
     )
 
-    # reality_function implements R: O_t = R(C_1,t, ..., C_n,t, F_t). It
-    # determines the realized outcome from the selected actions and the
-    # objective feasible state of reality; it is not the outcome itself.
-    # F_t is carried by the scenario's `state` (initial_state, which
-    # evolves) and `parameters` (fixed conditions). The actions F_t
-    # permits for each agent are indexed in state["permitted_actions"]
-    # (agent name -> permitted actions); see research.ter.outcome.
-    reality_function: str | None = None
-    feedback_rule: str | None = None
-
-    # AgentState attribute names to capture into an independent
-    # AgentSnapshot for every agent, every period (see
-    # research/ter/snapshot.py). ScenarioResult.history[t]["agents"]
-    # holds live, mutable AgentState objects shared across every period
-    # -- necessary so feedback can affect later decisions, but unsafe to
-    # read as historical state once a later period has mutated them.
-    # snapshot_fields is the opt-in way to capture specific fields (e.g.
-    # "model_of_reality", "perceived_feasible_set") independently of that
-    # live state, under
-    # history[t]["agent_snapshots"][agent_name]. Empty by default: no
-    # snapshots are taken unless requested.
-    snapshot_fields: list[str] = field(
-        default_factory=list
-    )
-
-    metadata: dict[str, Any] = field(
-        default_factory=dict
-    )
+    # The rules that govern execution (research.ter.runner.run_scenario).
+    # Each rule is passed directly as a callable:
+    #
+    #   reality      R:  (actions, objective_state, parameters)
+    #                    -> RealityResult          realizes O, nothing else
+    #   transition       (objective_state, reality, parameters)
+    #                    -> objective_state         F_t -> F_t+1
+    #   observation      (agents, actions, reality, objective_state,
+    #                     parameters) -> {name: data}
+    #                                               what each agent learns
+    #   schedule     Schedule; which agents act at each decision point.
+    #                Defaults to Schedule.simultaneous().
+    #
+    # initial_state is F_0 and nothing else: no agents, no bookkeeping.
+    # F_t is carried by the objective state (initial_state, advanced only
+    # by the transition) and parameters (fixed conditions). The actions
+    # F_t permits for each agent may be indexed in
+    # objective_state["permitted_actions"] (agent name -> permitted
+    # actions); see research.ter.outcome. Agents change only through
+    # their own update_rule, applied to the Observation they receive.
+    reality: Callable[..., Any] | None = None
+    transition: Callable[..., Any] | None = None
+    observation: Callable[..., Any] | None = None
+    schedule: Any = None
 
     def variant(
         self,
@@ -186,6 +189,9 @@ class Scenario:
             scenario.agents = deepcopy(agents)
 
         for key, value in overrides.items():
+            if key not in SCENARIO_FIELDS:
+                raise TypeError(f"Scenario has no field {key!r}.")
+
             setattr(scenario, key, value)
 
         return scenario
@@ -197,85 +203,52 @@ class AgentResult:
     Friendly, named access to one agent's final state and outcome data.
 
     `selected_action` is always available, for every Scenario, whether or
-    not it defines a reality_function: it is the action the agent's own
-    decision process selected during scenario execution, not something
-    any reality_function needs to report.
+    not it defines a reality rule: it is the action the agent's own
+    decision process selected at its last decision point, not something
+    any reality rule needs to report (None if the agent never acted).
 
-    Common state attributes are available directly, e.g. `firm.objective`,
-    `firm.perceived_feasible_set`, `firm.model_of_reality`. The full AgentState remains available as
-    `.state` for advanced use; normal tests should not need it.
+    State and outcome provenance stays explicit: use `.state` for the
+    final AgentState and `.outcome` for the last realized O_i,t mapping.
 
-    Attribute lookup precedence:
-
-        1. per-agent outcome fields (e.g. `.social_value`) -- the data the
-           scenario's reality_function reported under "agent_results"
-           for this agent's name.
-        2. AgentState's own fields (`.objective`,
-           `.perceived_feasible_set`, `.model_of_reality`, `.horizon`,
-           `.name`, etc).
-        3. AgentState.model_of_reality fields -- an agent's own declared
-           economic facts and beliefs, e.g.
-           `agent.model_of_reality["failure_probability"]` becomes
-           `result.agent(name).failure_probability`. This is a
-           read-through only: model_of_reality data is never copied or
-           moved, and looking it up this way changes nothing about how
-           it was computed or stored.
-        4. AttributeError if none of the above has the key.
-
-    `outcome_for(action)` looks up this agent's outcome for an
-    alternative action, from data the reality_function already computed
-    during scenario execution (reported under "alternative_outcomes").
-    It is a lookup only: AgentResult never executes a rule itself.
+    `outcome_for(action)` gives this agent's outcome for an alternative
+    action by re-running R once, deterministically, at the agent's last
+    decision point with only this agent's action replaced (see
+    ScenarioResult.counterfactual) -- other agents' actions and F_t stay
+    exactly as recorded, and nothing downstream (transition,
+    observation, later decisions) is re-run.
     """
 
     state: Any
-    outcome: dict[str, Any]
+    outcome: Mapping[str, Any]
     selected_action: Any = None
-    alternatives: dict[Any, dict[str, Any]] = field(default_factory=dict)
-
-    def __getattr__(self, key: str) -> Any:
-        if key in self.outcome:
-            return self.outcome[key]
-
-        if hasattr(self.state, key):
-            return getattr(self.state, key)
-
-        if key in self.state.model_of_reality:
-            return self.state.model_of_reality[key]
-
-        raise AttributeError(
-            f"AgentResult for {self.state.name!r} has no {key!r}. "
-            f"Available outcome fields: {sorted(self.outcome)}"
-        )
+    rerun_reality: Callable[[Any], Mapping[str, Any]] | None = None
 
     def value_of(self, action: Any) -> float:
         """
         The agent's own final valuation (V) of an action, using the same
         value function the agent's decision process used to select among
         F_hat. This calls the agent's value function directly; it is not
-        reality_function data and does not require one.
+        reality data and does not require a reality rule.
         """
         return self.state.value(action, self.state)
 
     def outcome_for(self, action: Any) -> "AgentResult":
         """
-        Look up this agent's precomputed outcome for an alternative
-        action. The reality_function must have reported it under
-        "alternative_outcomes" during scenario execution; this does not
-        compute anything new.
+        This agent's counterfactual outcome for an alternative action: a
+        deterministic re-run of R (see the class docstring). It is not
+        another realized outcome.
         """
-        if action not in self.alternatives:
+        if self.rerun_reality is None:
             raise ValueError(
-                f"No precomputed outcome for action {action!r} on agent "
-                f"{self.state.name!r}. Available: "
-                f"{sorted(self.alternatives, key=str)}"
+                f"Agent {self.state.name!r} never acted, so there is no "
+                "decision point at which to re-run R."
             )
 
         return AgentResult(
             state=self.state,
-            outcome=self.alternatives[action],
+            outcome=self.rerun_reality(action),
             selected_action=self.selected_action,
-            alternatives=self.alternatives,
+            rerun_reality=self.rerun_reality,
         )
 
 
@@ -283,40 +256,113 @@ class AgentResult:
 class ScenarioResult:
     """
     Result returned after executing a Scenario.
+
+    trace is the immutable record of every decision point
+    (research.ter.trace.Trace), and history is the sequence of objective
+    states [F_0, F_1, ..., F_T] -- so initial and final are F_0 and F_T.
+    Realized outcomes live on trace steps, not in history.
+
+    agent_states holds each agent's final, executable AgentState;
+    realize is the run's own R binding, used only to re-run R for
+    counterfactuals.
     """
 
     scenario: Scenario
-    history: list[Any]
+    trace: Any
+    agent_states: dict[str, Any]
+    realize: Callable[..., Any] = field(repr=False)
 
     @property
     def initial(self):
-        return self.history[0]
+        return self.trace.initial
 
     @property
     def final(self):
-        return self.history[-1]
+        return self.trace.final
+
+    @property
+    def history(self):
+        return self.trace.history
+
+    def counterfactual(self, step: int, actions: dict[str, Any]):
+        """
+        Re-run R at decision point `step` with some actors' actions
+        replaced, and return the RealityResult that would have been
+        realized.
+
+        Everything else is held exactly as recorded: F_t (the objective
+        state those actions met), the other actors' actions, and the
+        scenario parameters. Only R runs -- no transition, observation,
+        or later decision -- so this answers "what would reality have
+        made of this action here", not "how would the run have unfolded".
+
+        Before substituting anything, R is re-run on the recorded
+        actions and must reproduce the recorded RealityResult exactly. A
+        mismatch means R is not a deterministic function of (actions,
+        F_t, parameters), and a counterfactual comparison against it
+        would be meaningless, so this raises instead.
+
+        Only agents that acted at `step` can be given a different
+        action: an inactive agent contributed no action to R there.
+        """
+        recorded = self.trace[step]
+
+        inactive = sorted(set(actions) - set(recorded.actors))
+
+        if inactive:
+            raise ValueError(
+                f"Agent(s) {inactive} did not act at step {step}; only "
+                f"{list(recorded.actors)} did."
+            )
+
+        objective_state = self.trace.objective_state_before(step)
+
+        if self.realize(recorded.actions, objective_state) != recorded.reality:
+            raise RuntimeError(
+                f"Re-running R on the recorded actions at step {step} did "
+                "not reproduce the recorded RealityResult: R is not "
+                "deterministic in (actions, objective_state, parameters), "
+                "so a counterfactual against it is not meaningful."
+            )
+
+        substituted = {
+            **recorded.actions,
+            **actions,
+        }
+
+        return self.realize(substituted, objective_state)
 
     def agent(self, name: str) -> "AgentResult":
         """
         Look up one agent's final state and outcome data by name, instead
         of by position in the agents list.
+
+        selected_action and outcome come from the last decision point at
+        which this agent acted (None and {} if it never did).
         """
-        for state in self.final["agents"]:
-            if state.name == name:
-                return AgentResult(
-                    state=state,
-                    outcome=self.final.get("agent_results", {}).get(name, {}),
-                    selected_action=self.final.get(
-                        "selected_action_by_agent", {}
-                    ).get(name),
-                    alternatives=self.final.get(
-                        "alternative_outcomes", {}
-                    ).get(name, {}),
-                )
+        if name not in self.agent_states:
+            raise ValueError(
+                f"No agent named {name!r} in this scenario's result."
+            )
 
-        raise ValueError(
-            f"No agent named {name!r} in this scenario's result."
+        step = self.trace.last_action_step(name)
+
+        if step is None:
+            return AgentResult(
+                state=self.agent_states[name],
+                outcome={},
+            )
+
+        def rerun_reality(action):
+            return self.counterfactual(step.step, {name: action}).agent(name)
+
+        return AgentResult(
+            state=self.agent_states[name],
+            outcome=step.reality.agent(name),
+            selected_action=step.actions[name],
+            rerun_reality=rerun_reality,
         )
-
-
-RuleFunction = Callable[..., Any]
+SCENARIO_FIELDS = frozenset(
+    scenario_field.name
+    for scenario_field in fields(Scenario)
+)

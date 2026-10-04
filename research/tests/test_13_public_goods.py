@@ -36,32 +36,34 @@ M   Model of Reality          expected_other_action: the business's belief   var
                               about which action the counterpart will        single-business
                               choose                                         scenarios)
 F̂   Perceived Feasible Set    CONTRIBUTE, FREE_RIDE                          fixed
-V   Valuation                 ValuationRule.PAYOFF_MATRIX: the business's    fixed
+V   Valuation                 payoff_matrix_value: the business's    fixed
                               own perceived payoff_matrix, looked up
                               against M
 H   Time Horizon              single contribution decision                   fixed
-D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+D   Decision Process          maximize_value                       fixed
 C   Selected Action           "contribute" or "free_ride", one per business  observed
 F_t aspects used by R         actual_payoff_matrix: the scenario's own       fixed
                               payoff structure, a scenario-specified
                               condition R reads (not a complete
                               representation of F_t); two-business
                               scenario only
-R   Reality Function          RealityFunction.PAYOFF_MATRIX_OUTCOME:         fixed
+R   Reality Function          payoff_matrix_reality:                     fixed
                               realizes payoffs from both businesses'
                               selected actions and actual_payoff_matrix,
                               never from any business's V
-O_t System Outcome            the realized payoffs of both businesses,       observed
-                              from R
+O_{i,t} Agent Outcomes        each business's realized payoff, derived       observed
+                              from the one joint realization
 Feedback (Model 5.5)          none                                           --
 
 In the two-business scenario R takes both businesses' selected actions
-together, so Model 5.3 applies. This test defines no individual outcomes
-O_{i,t} and no relationship between them and O_t.
+together, so Model 5.3 applies. Each business's payoff depends on the
+other's action, so it is an agent-level outcome derived from that same
+joint R (Model 5.3, "Agent-level outcomes"). No separate system outcome
+O_t is defined, and no aggregation of the O_{i,t} into one.
 
 Economic mechanism
 ------------------
-ValuationRule.PAYOFF_MATRIX values FREE_RIDE above CONTRIBUTE against
+payoff_matrix_value values FREE_RIDE above CONTRIBUTE against
 either belief about the counterpart (5 > 3 if the other contributes;
 1 > 0 if the other free rides), so FREE_RIDE is strictly preferred
 against either counterpart action for each business under this payoff
@@ -75,9 +77,17 @@ produce a higher combined payoff (3 + 3 = 6) than mutual free riding
 (1 + 1 = 2), but is not selected under this payoff structure. The
 combined payoff is a sum computed by this test, not an output of R.
 
+Equilibrium concept: pure-strategy one-shot Nash equilibrium, verified
+afterward against the stated payoff structure -- not embedded in R and
+not reached through dynamics. Belief consistency: in the two-business
+scenario each business expects FREE_RIDE and the counterpart selects
+FREE_RIDE, so each expectation matches the realized profile. Because
+FREE_RIDE is strictly dominant, the equilibrium does not depend on that
+consistency.
+
 Assumptions
 -----------
-- expected_other_action is read directly by ValuationRule.PAYOFF_MATRIX at
+- expected_other_action is read directly by payoff_matrix_value at
   decision time; it is a real input to valuation, not documentation the
   test author resolved by hand before building the agent.
 - This test does not model endogenous belief formation or real-time
@@ -92,7 +102,7 @@ Assumptions
   requirement -- declared independently, not aliased.
 - Because FREE_RIDE strictly dominates CONTRIBUTE for each business
   under this payoff structure, no scenario driven by
-  DecisionProcess.MAXIMIZE selects mutual contribution. The
+  maximize_value selects mutual contribution. The
   mutual-contribution comparison therefore reads the payoff directly off
   the actual payoff structure (ACTUAL_PAYOFF_MATRIX) as an explicitly
   labeled counterfactual -- the payoff both businesses would receive had
@@ -115,14 +125,8 @@ In this configured scenario:
 
 import unittest
 
-from research.ter import (
-    AgentSpec,
-    DecisionProcess,
-    RealityFunction,
-    Scenario,
-    ValuationRule,
-    run_scenario,
-)
+from research.ter import AgentSpec, Scenario, run_scenario
+from research.ter.rules import maximize_value, payoff_matrix_reality, payoff_matrix_value
 
 
 # ---------------------------------------------------------------------------
@@ -143,7 +147,7 @@ FREE_RIDE_WHILE_OTHER_CONTRIBUTES_PAYOFF = 5
 MUTUAL_FREE_RIDING_PAYOFF = 1
 
 # V: what each business believes the payoff structure is, used only for
-# valuation (ValuationRule.PAYOFF_MATRIX).
+# valuation (payoff_matrix_value).
 PAYOFF_MATRIX = {
     CONTRIBUTE: {
         CONTRIBUTE: MUTUAL_CONTRIBUTION_PAYOFF,
@@ -156,7 +160,7 @@ PAYOFF_MATRIX = {
 }
 
 # R: the actual payoff structure used to realize O_t
-# (RealityFunction.PAYOFF_MATRIX_OUTCOME). This test assumes each
+# (payoff_matrix_reality). This test assumes each
 # business understands the game correctly, so this matches
 # PAYOFF_MATRIX exactly -- but it is declared independently and read
 # only by the reality side, never derived from any business's own
@@ -190,8 +194,8 @@ BASE_AGENT = AgentSpec(
         CONTRIBUTE,
         FREE_RIDE,
     ],
-    valuation_rule=ValuationRule.PAYOFF_MATRIX,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=payoff_matrix_value,
+    decision_process=maximize_value,
     horizon="single contribution decision",
 )
 
@@ -218,9 +222,7 @@ EXPECTS_CONTRIBUTION_SCENARIO = Scenario(
     name="Agent Expecting Contribution",
     description="A single agent values actions assuming the other agent contributes.",
     periods=1,
-    initial_state={
-        "period": 0,
-    },
+    initial_state={},
     agents=[
         BASE_AGENT,
     ],
@@ -248,8 +250,18 @@ MUTUAL_FREE_RIDING_SCENARIO = EXPECTS_CONTRIBUTION_SCENARIO.variant(
     parameters={
         "actual_payoff_matrix": ACTUAL_PAYOFF_MATRIX,
     },
-    reality_function=RealityFunction.PAYOFF_MATRIX_OUTCOME,
+    reality=payoff_matrix_reality,
 )
+
+def payoffs_of(result):
+    """
+    Each business's realized payoff O_{i,t}, derived from the one joint R
+    at the scenario's single decision point.
+    """
+    return {
+        name: outcome["payoff"]
+        for name, outcome in result.trace[-1].reality.agents.items()
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -305,10 +317,10 @@ class TestPublicGoods(unittest.TestCase):
             (FREE_RIDE, FREE_RIDE),
         )
 
-        # Realized payoffs come from O (RealityFunction.
-        # PAYOFF_MATRIX_OUTCOME), not from re-deriving them off
+        # Realized payoffs come from O (payoff_matrix_reality), not
+        # from re-deriving them off
         # PAYOFF_MATRIX by hand.
-        realized_payoffs = result.final["payoffs"]
+        realized_payoffs = payoffs_of(result)
 
         self.assertEqual(
             (
@@ -320,17 +332,34 @@ class TestPublicGoods(unittest.TestCase):
 
     def test_mutual_contribution_would_produce_higher_combined_payoff(self):
         # FREE_RIDE strictly dominates CONTRIBUTE under this payoff
-        # structure (see Assumptions), so no MAXIMIZE-driven scenario
+        # structure (see Assumptions), so no maximize_value-driven scenario
         # ever actually selects mutual contribution. This counterfactual
-        # payoff is read directly off the actual payoff structure (R),
-        # never the perceived/valuation PAYOFF_MATRIX.
+        # payoff is a re-run of the same joint R with both actions
+        # replaced -- the actual payoff structure, never the
+        # perceived/valuation PAYOFF_MATRIX -- and is not another
+        # realized outcome.
+        result = run_scenario(MUTUAL_FREE_RIDING_SCENARIO)
+
+        counterfactual = result.counterfactual(
+            0,
+            {
+                AGENT_1.name: CONTRIBUTE,
+                AGENT_2.name: CONTRIBUTE,
+            },
+        )
         counterfactual_mutual_contribution_payoff = (
-            ACTUAL_PAYOFF_MATRIX[CONTRIBUTE][CONTRIBUTE] * 2
+            counterfactual.agent(AGENT_1.name)["payoff"]
+            + counterfactual.agent(AGENT_2.name)["payoff"]
+        )
+
+        self.assertEqual(
+            counterfactual_mutual_contribution_payoff,
+            ACTUAL_PAYOFF_MATRIX[CONTRIBUTE][CONTRIBUTE] * 2,
         )
 
         # Mutual free riding, by contrast, is a real, realized outcome:
         # read from O, not from PAYOFF_MATRIX.
-        realized_payoffs = run_scenario(MUTUAL_FREE_RIDING_SCENARIO).final["payoffs"]
+        realized_payoffs = payoffs_of(result)
         realized_mutual_free_riding_payoff = (
             realized_payoffs[AGENT_1.name] + realized_payoffs[AGENT_2.name]
         )

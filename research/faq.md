@@ -1,6 +1,6 @@
 # Frequently Asked Questions and Challenges
 
-This document addresses recurring conceptual and methodological questions about TER — the kind that come up repeatedly when researchers first specify or challenge a model. It is explanatory only. Where anything here ever conflicts with the canonical specification, [`theory/academic.md`](../theory/academic.md) wins.
+This document addresses recurring conceptual and methodological questions researchers raise when they first specify or challenge a TER model. It is explanatory only. Where anything here ever conflicts with the canonical specification, [`theory/academic.md`](../theory/academic.md) wins.
 
 ## Is TER a theory or a framework?
 
@@ -8,7 +8,7 @@ Both.
 
 The theory is the set of definitions, axioms, and models that describe how agents, decisions, reality, outcomes, and feedback relate.
 
-The framework is how those ideas are applied in practice through TER’s methodology, software, and test suite.
+The framework is the general economic architecture those definitions, axioms, and models establish. TER’s methodology, software, and test suite are how that architecture is specified, implemented, tested, and applied in practice.
 
 TER is still open to testing, criticism, and revision. Calling it a theory does not mean it is settled, and calling it a framework does not reduce it to software or documentation.
 
@@ -18,13 +18,13 @@ No — representational breadth is not the same as explanatory success. TER's ab
 
 Observed action `C` alone does not identify `G`, `M`, `F̂`, `V`, `H`, or `D` — different underlying mechanisms can produce the same observed action. A defensible specification should constrain its assumptions before, or independently of, the outcome being explained wherever possible, and competing specifications should then be compared using observations, subsequent behavior, experiments, counterfactuals, or other testable implications.
 
-Representational capacity is a starting point for building a specification, not evidence that the specification is correct. See [§7.10](../theory/academic.md#710-ter-is-an-open-and-testable-framework) and [`ter-methodology-notes.md`](ter-methodology-notes.md).
+See [§7.10](../theory/academic.md#710-ter-is-an-open-and-testable-framework) and [`ter-methodology-notes.md`](ter-methodology-notes.md).
 
 ## Can a researcher just change the objective `G` to explain an observed action?
 
 No. Changing `G` after observing an action may produce a representation that fits, but it does not establish that the objective was actually responsible for the action.
 
-`G` — like `M`, `F̂`, `V`, `H`, and `D` — is part of a specification, not a free parameter to be adjusted until the observed action fits. Observed behavior alone does not uniquely identify any of these latent components, so TER treats a rival explanation as a *competing specification*, to be constrained by independent evidence, rather than a rewrite of the same specification's `G`.
+`G` — like `M`, `F̂`, `V`, `H`, and `D` — is part of a specification, not a free parameter to be adjusted until the observed action fits. As the previous answer notes, TER treats a rival explanation as a *competing specification*, to be constrained by independent evidence, rather than a rewrite of the same specification's `G`.
 
 See [`ter-methodology-notes.md`](ter-methodology-notes.md), particularly the guidance against inferring components from `C` alone and against post hoc fitting.
 
@@ -46,13 +46,13 @@ TER itself is not an omniscient prediction system: it does not assume an observe
 
 No. TER does not require optimization, exhaustive comparison, or objectively rational behavior.
 
-`D` may represent satisficing, heuristics, habits, intuition, reflexive responses, strategic reasoning, or other decision processes — Axiom 4 explicitly states that evaluation "does not require exhaustive comparison or perfect optimization," and Axiom 5 that the selected action "need not be objectively optimal or result from exhaustive comparison among alternatives."
+`D` may represent satisficing, heuristics, habits, intuition, reflexive responses, strategic reasoning, or other decision processes — Axiom 3 explicitly states that evaluation "need not be conscious, exhaustive, or perfectly optimizing," and Axiom 4 that the selected action "need not be objectively optimal or result from exhaustive comparison among alternatives."
 
-A poor decision remains a poor decision if the evidence supports that interpretation — TER only requires that the selected action results from the agent's specified decision process acting on its objective, model of reality, perceived feasible set, valuation, and time horizon, not that the result be good. See [Axiom 4](../theory/academic.md#axiom-4-agents-evaluate-actions-relative-to-their-objectives), [Axiom 5](../theory/academic.md#axiom-5-agents-select-actions-through-a-decision-process), and [§5.1](../theory/academic.md#51-agent-decision-model).
+A poor decision remains a poor decision if the evidence supports that interpretation — TER only requires that the selected action results from the agent's specified decision process acting on its perceived feasible set and model of reality, using valuation relative to its objective and time horizon where valuation applies, not that the result be good. See [Axiom 3](../theory/academic.md#axiom-3-valuation-is-relative-to-objectives), [Axiom 4](../theory/academic.md#axiom-4-agents-select-actions-through-a-decision-process), and [§5.1](../theory/academic.md#51-agent-decision-model).
 
 ## Why distinguish `F_t` from `F̂`?
 
-`F_t` is the objective feasible state of reality: what reality actually permits. `F̂` is what the agent perceives as available. TER keeps these separate on purpose.
+`F_t` is the objective feasible state of reality: the objective state of reality relevant when the selected action is realized. `F̂` is what the agent perceives as available to attempt. TER keeps these separate on purpose.
 
 The distinction lets TER represent overlooked opportunities, mistaken beliefs about what is possible, hidden constraints, misinformation, discovery, and learning — all without treating perceived possibility as if it were actual feasibility. An agent can select an action that later turns out infeasible; the selection itself doesn't change, only the realized outcome does.
 
@@ -62,7 +62,7 @@ See the [Objective Feasible State of Reality](../theory/academic.md#objective-fe
 
 No. Optimization is one possible `D`, not a universal TER assumption — the same is true of deterministic choice.
 
-The canonical theory explicitly states that TER does not require deterministic choice, and that a particular specification may define `D` as deterministic or stochastic. See [§5.1](../theory/academic.md#51-agent-decision-model).
+A particular specification may define `D` as deterministic or stochastic. See [§5.1](../theory/academic.md#51-agent-decision-model).
 
 ## Does TER replace existing economic theories?
 
@@ -72,7 +72,7 @@ Its contribution is the common architecture used to organize and connect them: m
 
 ## What is actually novel?
 
-TER does not claim to have invented the established economic mechanisms it uses, such as scarcity, bounded rationality, asymmetric information, strategic interaction, institutions, or externalities.
+As the previous answer notes, TER does not claim to have invented the established economic mechanisms it uses.
 
 Its contribution is the way those mechanisms are organized and separated within a common agent centered architecture. That includes distinctions TER treats as structurally important, such as actual versus perceived feasibility, decision versus realization, and the separation of objectives, beliefs, valuation, time horizon, decision process, and realized outcomes.
 
@@ -93,5 +93,3 @@ See [`research/README.md`](README.md#ai-usage) for the fuller statement.
 - [`theory/academic.md`](../theory/academic.md) — canonical TER definitions, axioms, formal architecture, claims, and limitations.
 - [`ter-methodology-notes.md`](ter-methodology-notes.md) — how to place concepts and build a defensible specification.
 - [`foundations-and-references.md`](foundations-and-references.md) — the established economics TER builds on, and primary references.
-
-If wording in this FAQ ever conflicts with `theory/academic.md`, `theory/academic.md` wins.

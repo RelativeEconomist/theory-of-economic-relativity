@@ -26,10 +26,10 @@ G   Objective                 maximize transaction value                     fix
 M   Model of Reality          the quoted market price, assumed correctly     fixed
                               observed
 F̂   Perceived Feasible Set    BUY, DO_NOT_BUY                                fixed
-V   Valuation                 ValuationRule.PRICE_TAKING: reservation value  varied (by buyer)
+V   Valuation                 price_taking_value: reservation value  varied (by buyer)
                               relative to price
 H   Time Horizon              current purchase decision                      fixed
-D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+D   Decision Process          maximize_value                       fixed
 C   Selected Action           BUY or DO_NOT_BUY, one per buyer               observed
 F_t, R, outcomes              F_t and outcome realization are outside this test's scope.
 
@@ -81,7 +81,8 @@ In this configured market:
 
 import unittest
 
-from research.ter import AgentSpec, DecisionProcess, Scenario, ValuationRule, run_scenario
+from research.ter import AgentSpec, Scenario, run_scenario
+from research.ter.rules import maximize_value, price_taking_value
 
 
 # ---------------------------------------------------------------------------
@@ -130,8 +131,8 @@ BASE_BUYER = AgentSpec(
         BUY,
         DO_NOT_BUY,
     ],
-    valuation_rule=ValuationRule.PRICE_TAKING,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=price_taking_value,
+    decision_process=maximize_value,
     horizon="current purchase decision",
 )
 
@@ -184,9 +185,7 @@ CONSUMER_SURPLUS_SCENARIO = Scenario(
     name="Consumer Surplus at a Fixed Market Price",
     description="Four buyers with different reservation values each independently decide whether to buy at a fixed market price.",
     periods=1,
-    initial_state={
-        "period": 0,
-    },
+    initial_state={},
     agents=[
         BUYER_1,
         BUYER_2,

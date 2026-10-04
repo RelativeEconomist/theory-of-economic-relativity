@@ -17,7 +17,7 @@ These are properties of the decision mechanism itself, not economic
 claims, so they live here rather than in an economic replication test.
 
 TestMaximizeTieBreakContract below covers a narrower implementation
-guarantee: DecisionProcess.MAXIMIZE's optional tie_break_preference (a D
+guarantee: maximize_value's optional tie_break_preference (a D
 configuration entry, not a TER primitive) only resolves ties among actions
 already sharing the highest value, never overrides a unique higher-valued
 action, and must itself be in the perceived feasible set.
@@ -29,7 +29,8 @@ F_t and outcome realization.
 
 import unittest
 
-from research.ter import AgentSpec, DecisionProcess, Scenario, ValuationRule, run_scenario
+from research.ter import AgentSpec, Scenario, run_scenario
+from research.ter.rules import mapped_value, maximize_value
 
 
 # ---------------------------------------------------------------------------
@@ -55,8 +56,8 @@ BASE_AGENT = AgentSpec(
     perceived_feasible_set=[
         COFFEE_A,
     ],
-    valuation_rule=ValuationRule.MAPPED,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=mapped_value,
+    decision_process=maximize_value,
     horizon="current decision",
 )
 
@@ -69,9 +70,7 @@ SINGLETON_SCENARIO = Scenario(
     name="Singleton Feasible Set",
     description="An agent whose perceived feasible set contains only one action.",
     periods=1,
-    initial_state={
-        "period": 0,
-    },
+    initial_state={},
     agents=[
         BASE_AGENT,
     ],
@@ -98,7 +97,7 @@ class TestAgentDecisionContract(unittest.TestCase):
 
         self.assertIn(
             agent.selected_action,
-            agent.perceived_feasible_set,
+            agent.state.perceived_feasible_set,
         )
 
     def test_empty_perceived_feasible_set_cannot_select_action(self):
@@ -110,7 +109,7 @@ class TestAgentDecisionContract(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# MAXIMIZE tie-break contract
+# maximize_value tie-break contract
 # ---------------------------------------------------------------------------
 
 ACTION_A = "action_a"
@@ -133,8 +132,8 @@ TIE_BREAK_BASE_AGENT = AgentSpec(
         ACTION_B,
         ACTION_C,
     ],
-    valuation_rule=ValuationRule.MAPPED,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=mapped_value,
+    decision_process=maximize_value,
     horizon="current decision",
 )
 
@@ -182,7 +181,7 @@ PREFERENCE_OUTSIDE_FHAT_SCENARIO = SINGLETON_SCENARIO.variant(
 
 
 class TestMaximizeTieBreakContract(unittest.TestCase):
-    TEST_NAME = "Framework: MAXIMIZE Tie-Break Contract"
+    TEST_NAME = "Framework: maximize_value Tie-Break Contract"
 
     def test_tied_maxima_with_valid_preference_selects_preferred_action(self):
         agent = run_scenario(TIED_WITH_PREFERENCE_SCENARIO).agent(TIE_BREAK_BASE_AGENT.name)

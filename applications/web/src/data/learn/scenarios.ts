@@ -118,7 +118,7 @@ export const scenarios: Scenario[] = [
         name: "Valuation",
         definition: "Valuation of actions relative to the agent's objective.",
         mapping:
-          "Each coffee is assigned a fixed value: Coffee A = 4, Coffee B = 7, Coffee C = 10. These values are held constant for the test. Implementation: ValuationRule.MAPPED.",
+          "Each coffee is assigned a fixed value: Coffee A = 4, Coffee B = 7, Coffee C = 10. These values are held constant for the test.",
         testTreatment: "Fixed per action",
       },
       {
@@ -136,7 +136,7 @@ export const scenarios: Scenario[] = [
         definition:
           "Decision process used to evaluate and select among perceived feasible actions.",
         mapping:
-          "The agent compares all perceived feasible coffees and selects the one with the highest assigned value. Implementation: DecisionProcess.MAXIMIZE.",
+          "The agent compares all perceived feasible coffees and selects the one with the highest assigned value.",
         testTreatment: "Fixed",
       },
       {
@@ -169,12 +169,12 @@ export const scenarios: Scenario[] = [
       { label: "Perceived feasible set", value: "Coffee A, Coffee B, Coffee C" },
       {
         label: "Valuation method",
-        value: "Fixed values assigned to each coffee (ValuationRule.MAPPED)",
+        value: "Fixed values assigned to each coffee",
       },
       {
         label: "Decision process",
         value:
-          "Compare all perceived feasible options and choose the highest-valued one (DecisionProcess.MAXIMIZE)",
+          "Compare all perceived feasible options and choose the highest-valued one",
       },
       { label: "Time horizon", value: "Current decision" },
     ],
@@ -239,7 +239,7 @@ export const scenarios: Scenario[] = [
         name: "Valuation",
         definition: "Valuation of actions relative to the agent's objective.",
         mapping:
-          "Each coffee has a fixed value, read directly from the same declared value map used in Test 01: Nearby Coffee = 6, Office Coffee = 7, Best Coffee = 10. Implementation: ValuationRule.MAPPED.",
+          "Each coffee has a fixed value, read directly from the same declared value map used in Test 01: Nearby Coffee = 6, Office Coffee = 7, Best Coffee = 10.",
         testTreatment: "Fixed per action",
       },
       {
@@ -257,7 +257,7 @@ export const scenarios: Scenario[] = [
         definition:
           "Decision process used to evaluate and select among perceived feasible actions.",
         mapping:
-          "The agent either checks every perceived feasible coffee before deciding (exhaustive search), or stops after checking only the first few, in its search order (limited search). Implementation: DecisionProcess.MAXIMIZE for exhaustive search; DecisionProcess.LIMITED_SEARCH for limited search.",
+          "The agent either checks every perceived feasible coffee before deciding (exhaustive search), or stops after checking only the first few, in its search order (limited search).",
         testTreatment: "Varied across cases",
       },
       {
@@ -280,7 +280,7 @@ export const scenarios: Scenario[] = [
       },
     ],
     assumptions: [
-      "search_limit is a test-specific decision-rule parameter, not a TER primitive; it controls how many perceived feasible actions DecisionProcess.LIMITED_SEARCH considers.",
+      "search_limit is a test-specific decision-rule parameter, not a TER primitive; it controls how many perceived feasible actions the limited search considers.",
       "Search order is a decision-process parameter (search_order), not a reordering of the perceived feasible set, which is identical, in the same order, in every case.",
     ],
     hypotheses: [
@@ -298,7 +298,7 @@ export const scenarios: Scenario[] = [
       },
       {
         label: "Valuation method",
-        value: "Fixed values assigned to each coffee (ValuationRule.MAPPED)",
+        value: "Fixed values assigned to each coffee",
       },
       { label: "Time horizon", value: "Current purchase" },
     ],
@@ -370,7 +370,7 @@ export const scenarios: Scenario[] = [
         name: "Valuation",
         definition: "Valuation of actions relative to the agent's objective.",
         mapping:
-          "Buyers value buying according to the difference between their reservation value and the quoted price. Sellers value selling according to the difference between the quoted price and their cost. Because reservation values and costs differ across agents, the same price can lead different agents to make different choices. Implementation: ValuationRule.PRICE_TAKING.",
+          "Buyers value buying according to the difference between their reservation value and the quoted price. Sellers value selling according to the difference between the quoted price and their cost. Because reservation values and costs differ across agents, the same price can lead different agents to make different choices.",
         testTreatment: "Varies across agents and prices",
       },
       {
@@ -387,7 +387,7 @@ export const scenarios: Scenario[] = [
         name: "Decision process",
         definition: "Decision process used to evaluate and select among perceived feasible actions.",
         mapping:
-          "Each buyer compares buying with not buying, and each seller compares selling with not selling. The action with the higher value is selected. If the two actions have equal value, the test is configured so the agent transacts. Implementation: DecisionProcess.MAXIMIZE.",
+          "Each buyer compares buying with not buying, and each seller compares selling with not selling. The action with the higher value is selected. If the two actions have equal value, the test is configured so the agent transacts.",
         testTreatment: "Fixed",
       },
       {
@@ -513,7 +513,7 @@ export const scenarios: Scenario[] = [
         name: "Valuation",
         definition: "Valuation of actions relative to the agent's objective.",
         mapping:
-          "A seller evaluates selling as the offered price minus its reservation value, which represents the opportunity cost of giving up the good. Implementation: ValuationRule.NET.",
+          "A seller evaluates selling as the offered price minus its reservation value, which represents the opportunity cost of giving up the good.",
         testTreatment: "Varies with the price offered and each seller's reservation value",
       },
       {
@@ -531,7 +531,7 @@ export const scenarios: Scenario[] = [
         definition:
           "Decision process used to evaluate and select among perceived feasible actions.",
         mapping:
-          "Each seller compares selling with holding and selects the higher-valued option. Implementation: DecisionProcess.MAXIMIZE.",
+          "Each seller compares selling with holding and selects the higher-valued option.",
         testTreatment: "Fixed",
       },
       {
@@ -548,7 +548,7 @@ export const scenarios: Scenario[] = [
         name: "Realized outcome",
         definition: "Realized outcome associated with the selected action.",
         mapping:
-          "The reality rule takes all sellers' selected actions together, with each car's actual quality, and produces the system outcome O_t: how many high-quality and low-quality goods are sold, and the total. This is a multi-agent specification; no individual outcomes O_{i,t} are defined. Implementation: RealityFunction.QUALITY_MARKET.",
+          "The reality rule takes all sellers' selected actions together, with each car's actual quality, and produces the system outcome O_t: how many high-quality and low-quality goods are sold, and the total. This is a multi-agent specification; no individual outcomes O_{i,t} are defined.",
         testTreatment: "Result",
       },
     ],
@@ -556,7 +556,7 @@ export const scenarios: Scenario[] = [
       "Buyers are not represented as individual TER agents in this test. The market price each seller faces is set directly as a fixed valuation input, not computed by a separate buyer agent or rule.",
       "Under pooled pricing, every seller's valuation is initialized with the same population-level price (based on the believed share of high-quality goods) — the same price regardless of the seller's own quality.",
       "Under verified pricing, each seller's valuation is instead initialized with its own true price, so a seller's quality determines the price it faces.",
-      "Both prices are fixed scenario data, set directly in each seller's initial valuation (V) via ValuationRule.NET — not TER feedback, since neither price depends on a realized outcome.",
+      "Both prices are fixed scenario data, set directly in each seller's initial valuation (V) through the declared valuation rule — not TER feedback, since neither price depends on a realized outcome.",
       "Divergence between F̂ and what reality permits is not modeled in this test.",
     ],
     hypotheses: [
@@ -658,7 +658,7 @@ export const scenarios: Scenario[] = [
         name: "Valuation",
         definition: "Valuation of actions relative to the agent's objective.",
         mapping:
-          "The only TER input that changes between the two cases. Private-incentive valuation counts only the firm's own gain; internalized valuation adds the external effect on top of that same gain. Both read the same underlying private-value and external-effect facts — only how they're combined differs. Implementation: ValuationRule.PRIVATE for the private-incentive case, ValuationRule.INTERNALIZED for the internalized case.",
+          "The only TER input that changes between the two cases. Private-incentive valuation counts only the firm's own gain; internalized valuation adds the external effect on top of that same gain. Both read the same underlying private-value and external-effect facts — only how they're combined differs.",
         testTreatment: "Varied across cases",
       },
       {
@@ -676,7 +676,7 @@ export const scenarios: Scenario[] = [
         definition:
           "Decision process used to evaluate and select among perceived feasible actions.",
         mapping:
-          "The firm compares all perceived feasible actions and selects the one with the highest value. Implementation: DecisionProcess.MAXIMIZE.",
+          "The firm compares all perceived feasible actions and selects the one with the highest value.",
         testTreatment: "Fixed",
       },
       {
@@ -694,7 +694,7 @@ export const scenarios: Scenario[] = [
         name: "Realized outcome",
         definition: "Realized outcome associated with the selected action.",
         mapping:
-          "The reality rule takes the selected action and the scenario's own private-value and external-effect data and reports O_{i,t}: the private value, the external effect, and this test's specified social value, defined here as private value plus external effect. This is a single-agent specification, so no system outcome O_t is defined. Implementation: RealityFunction.SOCIAL_VALUE.",
+          "The reality rule takes the selected action and the scenario's own private-value and external-effect data and reports O_{i,t}: the private value, the external effect, and this test's specified social value, defined here as private value plus external effect. This is a single-agent specification, so no system outcome O_t is defined.",
         testTreatment: "Result",
       },
     ],
@@ -800,7 +800,7 @@ export const scenarios: Scenario[] = [
         name: "Valuation",
         definition: "Valuation of actions relative to the agent's objective.",
         mapping:
-          "Each action has a fixed value, read from the same declared value map for every producer: hold = 0, produce 60 = 6, produce 100 = 10. Implementation: ValuationRule.MAPPED.",
+          "Each action has a fixed value, read from the same declared value map for every producer: hold = 0, produce 60 = 6, produce 100 = 10.",
         testTreatment: "Fixed per action",
       },
       {
@@ -818,7 +818,7 @@ export const scenarios: Scenario[] = [
         definition:
           "Decision process used to evaluate and select among perceived feasible actions.",
         mapping:
-          "Each producer compares its perceived feasible actions and selects the highest-valued one. This comparison only ever considers F̂ — it never checks F_t. Implementation: DecisionProcess.MAXIMIZE.",
+          "Each producer compares its perceived feasible actions and selects the highest-valued one. This comparison only ever considers F̂ — it never checks F_t.",
         testTreatment: "Fixed",
       },
       {

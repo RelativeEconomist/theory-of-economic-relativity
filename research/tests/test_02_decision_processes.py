@@ -24,19 +24,21 @@ Component                     Instantiation in this test                     Sta
 G   Objective                 choose coffee                                  fixed
 M   Model of Reality          specified but empty                            fixed
 F̂   Perceived Feasible Set    coffee_a, coffee_b, coffee_c                   fixed
-V   Valuation                 ValuationRule.MAPPED: a hand-assigned value    fixed
+V   Valuation                 mapped_value: a hand-assigned value    fixed
                               for each coffee
 H   Time Horizon              current decision                               fixed
-D   Decision Process          DecisionProcess.MAXIMIZE vs.                   varied
-                              DecisionProcess.SATISFICE (threshold 7)
-C   Selected Action           coffee_c (MAXIMIZE), coffee_b (SATISFICE)      observed
+D   Decision Process          maximize_value vs.                   varied
+                              satisfice (threshold 7)
+C   Selected Action           coffee_c (maximize_value),                     observed
+                              coffee_b (satisfice)
 F_t, R, outcomes              F_t and outcome realization are outside this test's scope.
 
 Economic mechanism
 ------------------
-MAXIMIZE selects the highest-valued action in the perceived feasible set.
+maximize_value selects the highest-valued action in the perceived feasible
+set.
 
-SATISFICE evaluates actions in order and selects the first action meeting
+satisfice evaluates actions in order and selects the first action meeting
 the threshold.
 
 Assumptions
@@ -58,7 +60,8 @@ In this configured scenario:
 
 import unittest
 
-from research.ter import AgentSpec, DecisionProcess, Scenario, ValuationRule, run_scenario
+from research.ter import AgentSpec, Scenario, run_scenario
+from research.ter.rules import mapped_value, maximize_value, satisfice
 
 
 # ---------------------------------------------------------------------------
@@ -101,8 +104,8 @@ BASE_AGENT = AgentSpec(
         COFFEE_B,
         COFFEE_C,
     ],
-    valuation_rule=ValuationRule.MAPPED,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=mapped_value,
+    decision_process=maximize_value,
     horizon="current decision",
 )
 
@@ -115,9 +118,7 @@ MAXIMIZING_SCENARIO = Scenario(
     name="Coffee Buyer (Maximizing)",
     description="A single agent chooses among three coffees by maximizing value.",
     periods=1,
-    initial_state={
-        "period": 0,
-    },
+    initial_state={},
     agents=[
         BASE_AGENT,
     ],
@@ -128,7 +129,7 @@ SATISFICING_SCENARIO = MAXIMIZING_SCENARIO.variant(
     description="The same agent instead accepts the first coffee meeting a threshold.",
     agents=[
         BASE_AGENT.variant(
-            decision_process=DecisionProcess.SATISFICE,
+            decision_process=satisfice,
             decision_parameters={
                 "satisficing_threshold": SATISFICING_THRESHOLD,
             },
