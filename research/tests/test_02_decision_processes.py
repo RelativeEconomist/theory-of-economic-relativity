@@ -29,14 +29,16 @@ V   Valuation                 mapped_value: a hand-assigned value    fixed
 H   Time Horizon              current decision                               fixed
 D   Decision Process          maximize_value vs.                   varied
                               satisfice (threshold 7)
-C   Selected Action           coffee_c (MAXIMIZE), coffee_b (SATISFICE)      observed
+C   Selected Action           coffee_c (maximize_value),                     observed
+                              coffee_b (satisfice)
 F_t, R, outcomes              F_t and outcome realization are outside this test's scope.
 
 Economic mechanism
 ------------------
-MAXIMIZE selects the highest-valued action in the perceived feasible set.
+maximize_value selects the highest-valued action in the perceived feasible
+set.
 
-SATISFICE evaluates actions in order and selects the first action meeting
+satisfice evaluates actions in order and selects the first action meeting
 the threshold.
 
 Assumptions

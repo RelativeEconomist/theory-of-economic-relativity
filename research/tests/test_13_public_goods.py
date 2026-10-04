@@ -332,7 +332,7 @@ class TestPublicGoods(unittest.TestCase):
 
     def test_mutual_contribution_would_produce_higher_combined_payoff(self):
         # FREE_RIDE strictly dominates CONTRIBUTE under this payoff
-        # structure (see Assumptions), so no MAXIMIZE-driven scenario
+        # structure (see Assumptions), so no maximize_value-driven scenario
         # ever actually selects mutual contribution. This counterfactual
         # payoff is a re-run of the same joint R with both actions
         # replaced -- the actual payoff structure, never the

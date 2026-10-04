@@ -224,7 +224,7 @@ SELLERS = HIGH_QUALITY_SELLERS + LOW_QUALITY_SELLERS
 # Actual quality: a fact about reality, independent of any seller's own
 # model_of_reality. This test assumes sellers know their own quality
 # perfectly (each seller's known_quality above matches this exactly),
-# but QUALITY_MARKET and the verified price below read only this
+# but quality_market_reality and the verified price below read only this
 # scenario-level mapping, never agent.model_of_reality.
 ACTUAL_QUALITY_BY_SELLER = {
     seller.name: HIGH

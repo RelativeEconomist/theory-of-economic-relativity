@@ -109,7 +109,7 @@ class TestAgentDecisionContract(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# MAXIMIZE tie-break contract
+# maximize_value tie-break contract
 # ---------------------------------------------------------------------------
 
 ACTION_A = "action_a"
@@ -181,7 +181,7 @@ PREFERENCE_OUTSIDE_FHAT_SCENARIO = SINGLETON_SCENARIO.variant(
 
 
 class TestMaximizeTieBreakContract(unittest.TestCase):
-    TEST_NAME = "Framework: MAXIMIZE Tie-Break Contract"
+    TEST_NAME = "Framework: maximize_value Tie-Break Contract"
 
     def test_tied_maxima_with_valid_preference_selects_preferred_action(self):
         agent = run_scenario(TIED_WITH_PREFERENCE_SCENARIO).agent(TIE_BREAK_BASE_AGENT.name)

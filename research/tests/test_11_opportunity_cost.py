@@ -54,8 +54,8 @@ Assumptions
 Hypothesis
 ----------
 In this configuration:
-1. The decision process (MAXIMIZE) selects the highest-valued action in F̂
-   (STUDY).
+1. The decision process (maximize_value) selects the highest-valued action
+   in F̂ (STUDY).
 2. The best unchosen action in F̂ is WORK_SHIFT, not RELAX.
 3. The opportunity cost of studying, measured as the value of the
    highest-valued unchosen action in F̂, is WORK_SHIFT_VALUE.

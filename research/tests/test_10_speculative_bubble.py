@@ -69,7 +69,7 @@ investor is indifferent (expected appreciation == required return,
 buy value 0 == hold value 0); this test's explicit tie convention
 resolves that to HOLD, via decision_parameters, not by the [BUY, HOLD]
 order in F̂. Aggregate buying moves price upward through
-DEMAND_MOVES_PRICE. Every investor observes the realized price, and its
+demand_price_reality. Every investor observes the realized price, and its
 update rule recomputes expected_appreciation from that period's own
 realized growth, which can again exceed some
 investors' required returns -- reinforcing buying, and price growth,

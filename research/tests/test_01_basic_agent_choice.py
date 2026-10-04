@@ -30,7 +30,8 @@ F_t, R, outcomes              F_t and outcome realization are outside this test'
 
 Economic mechanism
 ------------------
-MAXIMIZE selects the highest-valued action in the perceived feasible set.
+maximize_value selects the highest-valued action in the perceived feasible
+set.
 
 Assumptions
 -----------

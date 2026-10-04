@@ -30,7 +30,7 @@ M   Model of Reality              failure_probability, risk_signal,             
                                   reference_liquidity                            by observation)
 F̂   Perceived Feasible Set        STAY, WITHDRAW                                 fixed
 V   Valuation                     deposit_value, deposit_benefit,                fixed
-                                  withdrawal_cost (BANK_DEPOSITOR)
+                                  withdrawal_cost (bank_depositor_value)
 H   Time Horizon                  "immediate liquidity decision"                 fixed
 D   Decision Process              maximize_value                       fixed
 C   Selected Action               STAY, or WITHDRAW (a withdrawal request)       observed

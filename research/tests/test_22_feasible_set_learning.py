@@ -61,8 +61,8 @@ recording that ORDINARY_ACTION was experienced. The agent observes that
 outcome, and its update rule adds BETTER_ACTION to F̂ before period 1
 begins.
 
-Period 1: F̂ = [ORDINARY_ACTION, BETTER_ACTION], so MAXIMIZE now selects
-BETTER_ACTION (value 9 > 4).
+Period 1: F̂ = [ORDINARY_ACTION, BETTER_ACTION], so maximize_value now
+selects BETTER_ACTION (value 9 > 4).
 
 Assumptions
 -----------

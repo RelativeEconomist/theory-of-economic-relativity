@@ -32,10 +32,11 @@ M   Model of Reality          perceived_external_effects: the firm's own     fix
                               belief about each action's consequence on
                               others; not read by R
 F̂   Perceived Feasible Set    PRODUCE, DO_NOT_PRODUCE                        fixed
-V   Valuation                 private_values (always); under INTERNALIZED,   varied (valuation_rule:
-                              also folds in the perceived external effect    PRIVATE vs. INTERNALIZED)
-                              from M, so V depends on M without the two
-                              becoming the same thing
+V   Valuation                 private_values (always); under                 varied (valuation_rule:
+                              internalized_value, also folds in the          private_value vs.
+                              perceived external effect from M, so V         internalized_value)
+                              depends on M without the two becoming the
+                              same thing
 H   Time Horizon              current production decision                    fixed
 D   Decision Process          maximize_value                       fixed
 C   Selected Action           PRODUCE or DO_NOT_PRODUCE                      observed

@@ -47,8 +47,8 @@ Verified behavior
 Out of scope
 ------------
 capacity_constrained_realization is one admissible specification of R,
-scoped to this test and registered here rather than in the generic
-rules.py registry. It is not a universal TER consequence rule.
+scoped to this test and defined here rather than in the shared
+research.ter.rules module. It is not a universal TER consequence rule.
 """
 
 import unittest

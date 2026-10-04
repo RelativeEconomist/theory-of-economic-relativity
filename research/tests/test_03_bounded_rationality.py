@@ -21,10 +21,10 @@ order. Under limited search, the buyer may stop before reaching it.
 
 Scenarios (only D's configuration differs):
 
-    MAXIMIZE (no limit)                          -> best_coffee
-    LIMITED_SEARCH limit=2, default order        -> office_coffee
-    LIMITED_SEARCH limit=3, default order        -> best_coffee
-    LIMITED_SEARCH limit=2,
+    maximize_value (no limit)                    -> best_coffee
+    limited_search limit=2, default order        -> office_coffee
+    limited_search limit=3, default order        -> best_coffee
+    limited_search limit=2,
       search_order=[nearby, best, office]        -> best_coffee
 
 TER instantiation
@@ -37,7 +37,7 @@ F̂   Perceived Feasible Set    nearby_coffee, office_coffee, best_coffee      f
 V   Valuation                 mapped_value: a hand-assigned value    fixed
                               for each coffee
 H   Time Horizon              current purchase                               fixed
-D   Decision Process          MAXIMIZE, or LIMITED_SEARCH with               varied
+D   Decision Process          maximize_value, or limited_search with         varied
                               decision_parameters search_limit and
                               search_order
 C   Selected Action           see Scenario                                   observed
@@ -45,10 +45,10 @@ F_t, R, outcomes              F_t and outcome realization are outside this test'
 
 Economic mechanism
 ------------------
-MAXIMIZE considers every action in the perceived feasible set and selects
-the highest-valued one.
+maximize_value considers every action in the perceived feasible set and
+selects the highest-valued one.
 
-LIMITED_SEARCH considers only the first search_limit actions of a search
+limited_search considers only the first search_limit actions of a search
 sequence -- decision_parameters["search_order"] if given, otherwise F̂'s
 own order -- and selects the highest-valued action among those
 considered. It can therefore stop short of the highest-valued action.
@@ -155,7 +155,7 @@ EXHAUSTIVE_SCENARIO = BASE_SCENARIO.variant(
     agents=[
         BASE_AGENT.variant(
             decision_process=maximize_value,
-            # MAXIMIZE does not use limited-search configuration.
+            # maximize_value does not use limited-search configuration.
             decision_parameters={},
         ),
     ],
