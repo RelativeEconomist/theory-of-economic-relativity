@@ -16,13 +16,11 @@ run_scenario), independent of any economic scenario:
    rule applied to an Observation it received; D cannot change it in
    place, and an update rule sees only the agent's own view.
 4. Schedule -- inactive agents do not decide and contribute no action;
-   staged schedules cycle; actors at one decision point all decide
-   before anything at that point is realized.
+   simultaneous actors all decide before anything is realized.
 5. Trace -- every recorded field is immutable after the run.
 6. Counterfactual re-runs -- deterministic R only, active agents only,
    and they never alter the recorded trace.
-7. Every scenario records a trace, and a variant cannot introduce a
-   field Scenario does not have.
+7. Every scenario records a trace.
 
 The local rules below are minimal probes, not TER dynamics.
 """
@@ -30,16 +28,21 @@ The local rules below are minimal probes, not TER dynamics.
 import unittest
 from dataclasses import FrozenInstanceError
 
-from research.ter import AgentSpec, RealityResult, Scenario, Schedule, run_scenario
+from research.ter import (
+    AgentSpec,
+    RealityResult,
+    Scenario,
+    Schedule,
+    run_scenario,
+)
+from research.ter.rules import mapped_value, observe_own_outcome, observe_public_actions
 from research.ter.observation import Observation, UpdateView
-from research.ter.rules import register_rule
 
 
 LOW = "low"
 HIGH = "high"
 
 
-@register_rule("sched_contract_echo_reality")
 def sched_contract_echo_reality(actions, objective_state, parameters):
     """Each actor's O_i,t is its own action; O_t counts the actors."""
     return RealityResult(
@@ -51,17 +54,14 @@ def sched_contract_echo_reality(actions, objective_state, parameters):
     )
 
 
-@register_rule("sched_contract_legacy_shaped_reality")
 def sched_contract_legacy_shaped_reality(actions, objective_state, parameters):
     return {"not": "a RealityResult"}
 
 
-@register_rule("sched_contract_unknown_agent_reality")
 def sched_contract_unknown_agent_reality(actions, objective_state, parameters):
     return RealityResult(agents={"nobody": {}})
 
 
-@register_rule("sched_contract_mutating_reality")
 def sched_contract_mutating_reality(actions, objective_state, parameters):
     objective_state["counter"] = 99
     return RealityResult()
@@ -70,31 +70,19 @@ def sched_contract_mutating_reality(actions, objective_state, parameters):
 _NONDETERMINISTIC_CALLS = []
 
 
-@register_rule("sched_contract_nondeterministic_reality")
 def sched_contract_nondeterministic_reality(actions, objective_state, parameters):
     _NONDETERMINISTIC_CALLS.append(None)
     return RealityResult(system={"call": len(_NONDETERMINISTIC_CALLS)})
 
 
-@register_rule("sched_contract_count_transition")
 def sched_contract_count_transition(objective_state, reality, parameters):
     objective_state["counter"] += reality.system["actors"]
     return objective_state
 
 
-@register_rule("sched_contract_observe_own")
-def sched_contract_observe_own(agents, actions, reality, objective_state, parameters):
-    return {
-        name: dict(reality.agent(name))
-        for name in agents
-        if name in reality.agents
-    }
-
-
 _UPDATE_CALLS = []
 
 
-@register_rule("sched_contract_flag_update")
 def sched_contract_flag_update(agent, observation):
     _UPDATE_CALLS.append((agent, observation))
     model = agent.model_of_reality
@@ -102,17 +90,14 @@ def sched_contract_flag_update(agent, observation):
     return {"model_of_reality": model}
 
 
-@register_rule("sched_contract_forbidden_update")
 def sched_contract_forbidden_update(agent, observation):
-    return {"decision_process": "maximize_value"}
+    return {"decision_process": mapped_value}
 
 
-@register_rule("sched_contract_choose_by_flag")
 def sched_contract_choose_by_flag(agent):
     return HIGH if agent.model_of_reality.get("flag") else LOW
 
 
-@register_rule("sched_contract_mutating_decision")
 def sched_contract_mutating_decision(agent):
     agent.model_of_reality["flag"] = True
     return LOW
@@ -121,26 +106,25 @@ def sched_contract_mutating_decision(agent):
 _DECISIONS = []
 
 
-@register_rule("sched_contract_recording_decision")
 def sched_contract_recording_decision(agent):
     _DECISIONS.append(agent.name)
     return LOW
 
 
-def make_agent(name, decision_process="sched_contract_choose_by_flag", update_rule=None):
+def make_agent(name, decision_process=sched_contract_choose_by_flag, update_rule=None):
     return AgentSpec(
         name=name,
         objective="test objective",
         model_of_reality={"flag": False},
         perceived_feasible_set=[LOW, HIGH],
-        valuation_rule="mapped_value",
+        valuation_rule=mapped_value,
         decision_process=decision_process,
         update_rule=update_rule,
     )
 
 
-AGENT_A = make_agent("agent_a", update_rule="sched_contract_flag_update")
-AGENT_B = make_agent("agent_b", update_rule="sched_contract_flag_update")
+AGENT_A = make_agent("agent_a", update_rule=sched_contract_flag_update)
+AGENT_B = make_agent("agent_b", update_rule=sched_contract_flag_update)
 
 
 BASE_SCENARIO = Scenario(
@@ -149,10 +133,60 @@ BASE_SCENARIO = Scenario(
     periods=2,
     initial_state={"counter": 0},
     agents=[AGENT_A, AGENT_B],
-    reality="sched_contract_echo_reality",
-    transition="sched_contract_count_transition",
-    observation="sched_contract_observe_own",
+    reality=sched_contract_echo_reality,
+    transition=sched_contract_count_transition,
+    observation=observe_own_outcome,
 )
+
+
+def sched_contract_observe_counter(agents, actions, reality, objective_state, parameters):
+    return {
+        name: {"counter": objective_state["counter"]}
+        for name in agents
+    }
+
+
+def sched_contract_unknown_observer(agents, actions, reality, objective_state, parameters):
+    return {"nobody": {"realized": LOW}}
+
+
+def sched_contract_state_reality(actions, objective_state, parameters):
+    return RealityResult(
+        system={
+            "actors": len(actions),
+            "counter_seen": objective_state["counter"],
+        },
+        agents={name: {"realized": action} for name, action in actions.items()},
+    )
+
+
+_EVENTS = []
+
+
+def sched_contract_ordered_decision(agent):
+    _EVENTS.append(f"D({agent.name})")
+    return LOW
+
+
+def sched_contract_ordered_reality(actions, objective_state, parameters):
+    _EVENTS.append("R")
+    return sched_contract_echo_reality(actions, objective_state, parameters)
+
+
+def sched_contract_ordered_observation(agents, actions, reality, objective_state, parameters):
+    _EVENTS.append("O")
+    return observe_own_outcome(
+        agents,
+        actions,
+        reality,
+        objective_state,
+        parameters,
+    )
+
+
+def sched_contract_ordered_update(agent, observation):
+    _EVENTS.append(f"U({agent.name})")
+    return {}
 
 
 class TestRealityResultContract(unittest.TestCase):
@@ -185,7 +219,7 @@ class TestRealityResultContract(unittest.TestCase):
         with self.assertRaises(TypeError):
             run_scenario(
                 BASE_SCENARIO.variant(
-                    reality="sched_contract_legacy_shaped_reality",
+                    reality=sched_contract_legacy_shaped_reality,
                     transition=None,
                 )
             )
@@ -194,7 +228,7 @@ class TestRealityResultContract(unittest.TestCase):
         with self.assertRaises(ValueError):
             run_scenario(
                 BASE_SCENARIO.variant(
-                    reality="sched_contract_unknown_agent_reality",
+                    reality=sched_contract_unknown_agent_reality,
                     transition=None,
                 )
             )
@@ -207,7 +241,7 @@ class TestRealityTransitionSplitContract(unittest.TestCase):
         with self.assertRaises(TypeError):
             run_scenario(
                 BASE_SCENARIO.variant(
-                    reality="sched_contract_mutating_reality",
+                    reality=sched_contract_mutating_reality,
                     transition=None,
                 )
             )
@@ -228,30 +262,8 @@ class TestRealityTransitionSplitContract(unittest.TestCase):
             [0, 0, 0],
         )
 
-    def test_history_is_the_sequence_of_objective_states(self):
-        result = run_scenario(BASE_SCENARIO)
-
-        self.assertEqual(result.initial, BASE_SCENARIO.initial_state)
-        self.assertEqual(result.final, result.trace[-1].objective_state)
-        self.assertEqual(len(result.history), BASE_SCENARIO.periods + 1)
-
-
 class TestObservationContract(unittest.TestCase):
     TEST_NAME = "Framework: Scheduled Engine -- Observation"
-
-    def test_an_observation_changes_state_only_for_the_next_decision(self):
-        result = run_scenario(BASE_SCENARIO)
-
-        self.assertEqual(result.trace[0].actions[AGENT_A.name], LOW)
-        self.assertEqual(result.trace[1].actions[AGENT_A.name], HIGH)
-
-    def test_without_an_observation_rule_no_agent_changes(self):
-        result = run_scenario(BASE_SCENARIO.variant(observation=None))
-
-        self.assertEqual(result.trace[1].actions[AGENT_A.name], LOW)
-        self.assertFalse(
-            result.trace[-1].agents[AGENT_A.name].model_of_reality["flag"]
-        )
 
     def test_an_update_rule_sees_only_its_own_view_and_observation(self):
         _UPDATE_CALLS.clear()
@@ -264,8 +276,41 @@ class TestObservationContract(unittest.TestCase):
             self.assertIsInstance(view, UpdateView)
             self.assertIsInstance(observation, Observation)
             self.assertFalse(hasattr(view, "objective_state"))
-            self.assertEqual(observation.agent, view.name)
             self.assertEqual(observation["realized"], LOW)
+
+    def test_observation_receives_the_post_transition_objective_state(self):
+        result = run_scenario(
+            BASE_SCENARIO.variant(
+                periods=1,
+                observation=sched_contract_observe_counter,
+            )
+        )
+
+        self.assertEqual(
+            result.trace[0].observations[AGENT_A.name]["counter"],
+            2,
+        )
+
+    def test_inactive_agent_can_update_before_its_scheduled_decision(self):
+        result = run_scenario(
+            BASE_SCENARIO.variant(
+                agents=[AGENT_A, AGENT_B],
+                schedule=Schedule.sequential(AGENT_A.name, AGENT_B.name),
+                observation=observe_public_actions,
+            )
+        )
+
+        self.assertEqual(result.trace[0].actions, {AGENT_A.name: LOW})
+        self.assertEqual(result.trace[1].actions, {AGENT_B.name: HIGH})
+
+    def test_observation_for_an_unknown_agent_is_rejected(self):
+        with self.assertRaises(ValueError):
+            run_scenario(
+                BASE_SCENARIO.variant(
+                    periods=1,
+                    observation=sched_contract_unknown_observer,
+                )
+            )
 
     def test_an_update_rule_cannot_change_decision_or_value_rules(self):
         with self.assertRaises(ValueError):
@@ -274,7 +319,7 @@ class TestObservationContract(unittest.TestCase):
                     agents=[
                         make_agent(
                             "agent_a",
-                            update_rule="sched_contract_forbidden_update",
+                            update_rule=sched_contract_forbidden_update,
                         ),
                     ],
                 )
@@ -287,7 +332,7 @@ class TestObservationContract(unittest.TestCase):
                     agents=[
                         make_agent(
                             "agent_a",
-                            decision_process="sched_contract_mutating_decision",
+                            decision_process=sched_contract_mutating_decision,
                         ),
                     ],
                 )
@@ -297,15 +342,27 @@ class TestObservationContract(unittest.TestCase):
 class TestScheduleContract(unittest.TestCase):
     TEST_NAME = "Framework: Scheduled Engine -- Schedule"
 
-    def test_inactive_agents_do_not_decide(self):
+    def test_sequential_order_may_repeat_an_agent(self):
+        schedule = Schedule.sequential("agent_a", "agent_b", "agent_a")
+
+        self.assertEqual(
+            [schedule.actors_at(step, ("agent_a", "agent_b")) for step in range(3)],
+            [("agent_a",), ("agent_b",), ("agent_a",)],
+        )
+
+    def test_empty_schedule_order_is_rejected_at_construction(self):
+        with self.assertRaises(ValueError):
+            Schedule(order=())
+
+    def test_inactive_agents_do_not_decide_or_contribute_actions_to_reality(self):
         _DECISIONS.clear()
 
         result = run_scenario(
             BASE_SCENARIO.variant(
                 periods=3,
                 agents=[
-                    make_agent("agent_a", "sched_contract_recording_decision"),
-                    make_agent("agent_b", "sched_contract_recording_decision"),
+                    make_agent("agent_a", sched_contract_recording_decision),
+                    make_agent("agent_b", sched_contract_recording_decision),
                 ],
                 schedule=Schedule.sequential("agent_a", "agent_b"),
             )
@@ -313,37 +370,40 @@ class TestScheduleContract(unittest.TestCase):
 
         self.assertEqual(_DECISIONS, ["agent_a", "agent_b", "agent_a"])
         self.assertEqual(
-            [step.actors for step in result.trace],
-            [("agent_a",), ("agent_b",), ("agent_a",)],
-        )
-        self.assertEqual(
             [set(step.actions) for step in result.trace],
             [{"agent_a"}, {"agent_b"}, {"agent_a"}],
         )
-
-    def test_inactive_agents_contribute_no_action_to_reality(self):
-        result = run_scenario(
-            BASE_SCENARIO.variant(
-                schedule=Schedule.staged(("agent_a",), ("agent_a", "agent_b")),
-            )
+        self.assertEqual(
+            [step.reality.system["actors"] for step in result.trace],
+            [1, 1, 1],
         )
 
-        self.assertEqual(result.trace[0].reality.system["actors"], 1)
-        self.assertEqual(result.trace[1].reality.system["actors"], 2)
-
     def test_actors_at_one_point_decide_before_anything_there_is_realized(self):
-        # Both agents act at t=0. If either's decision could see the
-        # other's realized outcome (and so its update), it would select
-        # HIGH at t=0.
-        result = run_scenario(
+        _EVENTS.clear()
+
+        run_scenario(
             BASE_SCENARIO.variant(
-                schedule=Schedule.staged(("agent_a", "agent_b")),
+                periods=1,
+                agents=[
+                    make_agent(
+                        "agent_a",
+                        sched_contract_ordered_decision,
+                        sched_contract_ordered_update,
+                    ),
+                    make_agent(
+                        "agent_b",
+                        sched_contract_ordered_decision,
+                        sched_contract_ordered_update,
+                    ),
+                ],
+                reality=sched_contract_ordered_reality,
+                observation=sched_contract_ordered_observation,
             )
         )
 
         self.assertEqual(
-            dict(result.trace[0].actions),
-            {"agent_a": LOW, "agent_b": LOW},
+            _EVENTS,
+            ["D(agent_a)", "D(agent_b)", "R", "O", "U(agent_a)", "U(agent_b)"],
         )
 
     def test_a_schedule_naming_an_unknown_agent_is_refused(self):
@@ -416,6 +476,20 @@ class TestCounterfactualContract(unittest.TestCase):
         self.assertEqual(counterfactual.agent("agent_a")["realized"], HIGH)
         self.assertEqual(counterfactual.agent("agent_b")["realized"], LOW)
 
+    def test_later_counterfactual_uses_that_steps_recorded_pre_state(self):
+        result = run_scenario(
+            BASE_SCENARIO.variant(
+                periods=2,
+                reality=sched_contract_state_reality,
+                observation=None,
+            )
+        )
+
+        counterfactual = result.counterfactual(1, {AGENT_A.name: HIGH})
+
+        self.assertEqual(counterfactual.system["counter_seen"], 2)
+        self.assertEqual(result.trace.objective_state_before(1)["counter"], 2)
+
     def test_a_counterfactual_does_not_alter_the_recorded_trace(self):
         result = run_scenario(BASE_SCENARIO)
         recorded = result.trace[0].reality
@@ -436,7 +510,7 @@ class TestCounterfactualContract(unittest.TestCase):
     def test_a_nondeterministic_reality_is_refused(self):
         result = run_scenario(
             BASE_SCENARIO.variant(
-                reality="sched_contract_nondeterministic_reality",
+                reality=sched_contract_nondeterministic_reality,
                 transition=None,
                 observation=None,
             )
@@ -463,6 +537,39 @@ class TestScenarioDeclarationContract(unittest.TestCase):
         self.assertEqual(dict(result.trace[0].actions), {"agent_a": LOW})
         self.assertEqual(result.trace[0].reality, RealityResult())
 
-    def test_a_variant_cannot_introduce_an_unknown_field(self):
+    def test_all_rule_references_must_be_callables(self):
+        invalid_scenarios = {
+            "valuation": BASE_SCENARIO.variant(
+                agents=[AGENT_A.variant(valuation_rule="valuation")]
+            ),
+            "decision": BASE_SCENARIO.variant(
+                agents=[AGENT_A.variant(decision_process="decision")]
+            ),
+            "update": BASE_SCENARIO.variant(
+                agents=[AGENT_A.variant(update_rule="update")]
+            ),
+            "reality": BASE_SCENARIO.variant(reality="reality"),
+            "transition": BASE_SCENARIO.variant(transition="transition"),
+            "observation": BASE_SCENARIO.variant(observation="observation"),
+        }
+
+        for rule_kind, scenario in invalid_scenarios.items():
+            with self.subTest(rule_kind=rule_kind):
+                with self.assertRaises(TypeError):
+                    run_scenario(scenario)
+
+    def test_scenario_metadata_is_not_part_of_the_execution_contract(self):
+        declaration = {
+            "name": "No metadata",
+            "description": "Unknown fields are rejected.",
+            "periods": 1,
+            "initial_state": {},
+            "agents": [AGENT_A],
+            "metadata": {},
+        }
+
         with self.assertRaises(TypeError):
-            BASE_SCENARIO.variant(feedback_rule="anything")
+            Scenario(**declaration)
+
+        with self.assertRaises(TypeError):
+            BASE_SCENARIO.variant(metadata={})

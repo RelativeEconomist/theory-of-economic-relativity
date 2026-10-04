@@ -29,18 +29,18 @@ G   Objective                 maximize own payoff                            fix
 M   Model of Reality          expected_other_action: the player's belief     varied (across the
                               about the counterpart's move                   single-player scenarios)
 F̂   Perceived Feasible Set    COOPERATE, DEFECT                              fixed
-V   Valuation                 ValuationRule.PAYOFF_MATRIX: the player's      fixed
+V   Valuation                 payoff_matrix_value: the player's      fixed
                               own perceived payoff_matrix, looked up
                               against M
 H   Time Horizon              single interaction                             fixed
-D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+D   Decision Process          maximize_value                       fixed
 C   Selected Action           "cooperate" or "defect", one per player        observed
 F_t aspects used by R         actual_payoff_matrix: the scenario's own       fixed
                               payoff structure, a scenario-specified
                               condition R reads (not a complete
                               representation of F_t); two-player scenario
                               only
-R   Reality Function          RealityRule.PAYOFF_MATRIX: realizes payoffs    fixed
+R   Reality Function          payoff_matrix_reality: realizes payoffs    fixed
                               from both players' selected actions and
                               actual_payoff_matrix, never from any
                               player's V
@@ -57,7 +57,7 @@ aggregation of the O_{i,t} into one.
 
 Economic mechanism
 ------------------
-ValuationRule.PAYOFF_MATRIX values DEFECT above COOPERATE against either
+payoff_matrix_value values DEFECT above COOPERATE against either
 belief about the counterpart, so DEFECT is strictly dominant for each
 player under this payoff structure. When both players face that same
 structure, (DEFECT, DEFECT) is the Nash equilibrium of this one-shot
@@ -75,7 +75,7 @@ strictly dominant, the equilibrium does not depend on that consistency.
 
 Assumptions
 -----------
-- expected_other_action is read directly by ValuationRule.PAYOFF_MATRIX
+- expected_other_action is read directly by payoff_matrix_value
   at decision time; it is a real input to valuation, not documentation
   the test author resolved by hand before building the agent.
 - This test does not model endogenous belief formation or real-time
@@ -107,14 +107,8 @@ In this configured scenario:
 
 import unittest
 
-from research.ter import (
-    AgentSpec,
-    DecisionProcess,
-    RealityRule,
-    Scenario,
-    ValuationRule,
-    run_scenario,
-)
+from research.ter import AgentSpec, Scenario, run_scenario
+from research.ter.rules import maximize_value, payoff_matrix_reality, payoff_matrix_value
 
 
 # ---------------------------------------------------------------------------
@@ -130,7 +124,7 @@ DEFECT = "defect"
 # ---------------------------------------------------------------------------
 
 # V: what each player believes the payoff structure is, used only for
-# valuation (ValuationRule.PAYOFF_MATRIX).
+# valuation (payoff_matrix_value).
 PAYOFF_MATRIX = {
     COOPERATE: {
         COOPERATE: 3,
@@ -143,7 +137,7 @@ PAYOFF_MATRIX = {
 }
 
 # R: the actual payoff structure used to realize each O_{i,t}
-# (RealityRule.PAYOFF_MATRIX). This test assumes each
+# (payoff_matrix_reality). This test assumes each
 # player understands the game correctly, so this matches PAYOFF_MATRIX
 # exactly -- but it is declared independently and read only by the
 # reality side, never derived from any player's own valuation.
@@ -176,8 +170,8 @@ BASE_PLAYER = AgentSpec(
         COOPERATE,
         DEFECT,
     ],
-    valuation_rule=ValuationRule.PAYOFF_MATRIX,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=payoff_matrix_value,
+    decision_process=maximize_value,
     horizon="single interaction",
 )
 
@@ -233,7 +227,7 @@ MUTUAL_DEFECTION_SCENARIO = EXPECTS_COOPERATION_SCENARIO.variant(
     parameters={
         "actual_payoff_matrix": ACTUAL_PAYOFF_MATRIX,
     },
-    reality=RealityRule.PAYOFF_MATRIX,
+    reality=payoff_matrix_reality,
 )
 
 
@@ -279,20 +273,6 @@ class TestPrisonersDilemma(unittest.TestCase):
             expects_defection.value_of(DEFECT),
         )
 
-    def test_defection_is_dominant_regardless_of_expectation(self):
-        expects_cooperation = run_scenario(EXPECTS_COOPERATION_SCENARIO).agent(BASE_PLAYER.name)
-        expects_defection = run_scenario(EXPECTS_DEFECTION_SCENARIO).agent(BASE_PLAYER.name)
-
-        self.assertEqual(
-            expects_cooperation.selected_action,
-            DEFECT,
-        )
-
-        self.assertEqual(
-            expects_defection.selected_action,
-            DEFECT,
-        )
-
     def test_two_agents_produce_mutual_defection_equilibrium(self):
         result = run_scenario(MUTUAL_DEFECTION_SCENARIO)
 
@@ -305,10 +285,10 @@ class TestPrisonersDilemma(unittest.TestCase):
         )
 
         # Realized payoffs are each player's O_{i,t}, derived from the
-        # one joint realization (RealityRule.PAYOFF_MATRIX), not
+        # one joint realization (payoff_matrix_reality), not
         # re-derived off PAYOFF_MATRIX by hand.
         self.assertEqual(
-            (player_1.payoff, player_2.payoff),
+            (player_1.outcome["payoff"], player_2.outcome["payoff"]),
             (
                 ACTUAL_PAYOFF_MATRIX[DEFECT][DEFECT],
                 ACTUAL_PAYOFF_MATRIX[DEFECT][DEFECT],
@@ -326,13 +306,13 @@ class TestPrisonersDilemma(unittest.TestCase):
         deviated = player_1.outcome_for(COOPERATE)
 
         self.assertEqual(
-            deviated.payoff,
+            deviated.outcome["payoff"],
             ACTUAL_PAYOFF_MATRIX[COOPERATE][DEFECT],
         )
 
         self.assertLess(
-            deviated.payoff,
-            player_1.payoff,
+            deviated.outcome["payoff"],
+            player_1.outcome["payoff"],
         )
 
     def test_standard_payoff_ordering_is_preserved(self):

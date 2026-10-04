@@ -68,7 +68,7 @@ V   Valuation                 monopoly_price_profit_value (local): profit    fix
                               firm's perceived demand (M) implies at that
                               price, and a constant unit cost
 H   Time Horizon              current pricing decision                       fixed
-D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+D   Decision Process          maximize_value                       fixed
 C   Selected Action           MONOPOLY_PRICE_MID                             observed
 F_t, R, outcomes              F_t and outcome realization are outside this test's scope.
 
@@ -149,8 +149,8 @@ In this configured scenario:
 
 import unittest
 
-from research.ter import AgentSpec, DecisionProcess, Scenario, run_scenario
-from research.ter.rules import register_rule
+from research.ter import AgentSpec, Scenario, run_scenario
+from research.ter.rules import maximize_value
 
 
 # ---------------------------------------------------------------------------
@@ -195,7 +195,6 @@ def quantity_demanded(price, intercept=DEMAND_INTERCEPT, slope=DEMAND_SLOPE):
     return intercept - slope * price
 
 
-@register_rule("monopoly_price_profit_value")
 def monopoly_price_profit_value(action, agent):
     """
     Local Model 5.1 valuation rule for this test only.
@@ -259,8 +258,8 @@ MONOPOLIST = AgentSpec(
         MONOPOLY_PRICE_MID,
         MONOPOLY_PRICE_HIGH,
     ],
-    valuation_rule="monopoly_price_profit_value",
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=monopoly_price_profit_value,
+    decision_process=maximize_value,
     horizon="current pricing decision",
 )
 

@@ -1,49 +1,7 @@
-from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 from research.ter.agent import AgentState
 from research.ter.reality import RealityResult
-
-
-RULES: dict[str, Callable[..., Any]] = {}
-
-
-def register_rule(name: str):
-    """
-    Register a reusable TER rule by name.
-
-    Scenarios reference rules declaratively, for example:
-
-        decision_process="maximize_value"
-        decision_process="satisfice"
-        reality="payoff_matrix_reality"
-    """
-
-    def decorator(function: Callable[..., Any]):
-        if name in RULES:
-            raise ValueError(f"Rule already registered: {name}")
-
-        RULES[name] = function
-        return function
-
-    return decorator
-
-
-def get_rule(name: str | Callable[..., Any]) -> Callable[..., Any]:
-    """
-    Resolve a TER rule.
-
-    A registered name (or public enum member) is looked up in the
-    registry, which remains optional shorthand; a callable is used as
-    the rule directly.
-    """
-    if callable(name) and not isinstance(name, str):
-        return name
-
-    try:
-        return RULES[name]
-    except KeyError as exc:
-        raise ValueError(f"Unknown TER rule: {name}") from exc
 
 
 # ---------------------------------------------------------------------------
@@ -52,9 +10,8 @@ def get_rule(name: str | Callable[..., Any]) -> Callable[..., Any]:
 #
 # Every rule fits exactly one of these six shapes. A rule declares which
 # one it implements only by its argument names and return type; there is
-# no base class to inherit from. Rules may be registered by name (and
-# listed in the public enums below) or passed to AgentSpec/Scenario as
-# plain callables.
+# no base class, registry, or symbolic reference to resolve. AgentSpec and
+# Scenario receive the rule callables directly.
 #
 #     Decision rule:     (agent)                                -> action
 #     Value rule:        (action, agent)                        -> float
@@ -97,7 +54,6 @@ def get_rule(name: str | Callable[..., Any]) -> Callable[..., Any]:
 # ---------------------------------------------------------------------------
 
 
-@register_rule("maximize_value")
 def maximize_value(agent: AgentState):
     """
     Select the perceived feasible action with the highest assigned value.
@@ -146,7 +102,6 @@ def maximize_value(agent: AgentState):
     return tied[0]
 
 
-@register_rule("satisfice")
 def satisfice(agent: AgentState):
     """
     Select the first perceived feasible action whose value reaches the
@@ -165,7 +120,6 @@ def satisfice(agent: AgentState):
     return agent.perceived_feasible_set[-1]
 
 
-@register_rule("limited_search")
 def limited_search(agent: AgentState):
     """
     Evaluate only the first N actions of a search sequence and select the
@@ -218,7 +172,6 @@ def limited_search(agent: AgentState):
     )
 
 
-@register_rule("first_feasible")
 def first_feasible(agent: AgentState):
     """
     Select the first perceived feasible action.
@@ -233,7 +186,6 @@ def first_feasible(agent: AgentState):
 # ---------------------------------------------------------------------------
 
 
-@register_rule("mapped_value")
 def mapped_value(action: Any, agent: AgentState) -> float:
     """
     Read an action's value from a declarative value map.
@@ -248,7 +200,6 @@ def mapped_value(action: Any, agent: AgentState) -> float:
     return agent.valuation["values"][action]
 
 
-@register_rule("net_value")
 def net_value(action: Any, agent: AgentState) -> float:
     """
     Read an action's benefit and cost from declarative maps.
@@ -268,7 +219,6 @@ def net_value(action: Any, agent: AgentState) -> float:
     return benefit - cost
 
 
-@register_rule("expected_return")
 def expected_return(action: Any, agent: AgentState) -> float:
     """
     Value an investment action using expected appreciation.
@@ -305,7 +255,6 @@ def expected_return(action: Any, agent: AgentState) -> float:
     )
 
 
-@register_rule("bank_depositor_value")
 def bank_depositor_value(action: Any, agent: AgentState) -> float:
     """
     Depositor valuation under perceived bank failure risk.
@@ -348,7 +297,6 @@ def bank_depositor_value(action: Any, agent: AgentState) -> float:
 # ---------------------------------------------------------------------------
 
 
-@register_rule("private_value")
 def private_value(action: Any, agent: AgentState) -> float:
     """
     Value an action using only its underlying private value, ignoring any
@@ -363,7 +311,6 @@ def private_value(action: Any, agent: AgentState) -> float:
     return agent.valuation["private_values"][action]
 
 
-@register_rule("internalized_value")
 def internalized_value(action: Any, agent: AgentState) -> float:
     """
     Value an action as private value plus the agent's own *perceived*
@@ -374,7 +321,7 @@ def internalized_value(action: Any, agent: AgentState) -> float:
     perceived_external_effects is the agent's belief about the
     consequence its action has on others (M) -- not necessarily the
     actual effect that feeds the realized outcome (see
-    social_value_outcome). V depends on M here without the two becoming
+    social_value_reality). V depends on M here without the two becoming
     the same thing.
 
     Required valuation field:
@@ -396,7 +343,6 @@ def internalized_value(action: Any, agent: AgentState) -> float:
 # ---------------------------------------------------------------------------
 
 
-@register_rule("payoff_matrix_value")
 def payoff_matrix_value(action: Any, agent: AgentState) -> float:
     """
     Value an action by looking up a payoff matrix against the agent's
@@ -427,7 +373,6 @@ def payoff_matrix_value(action: Any, agent: AgentState) -> float:
 # ---------------------------------------------------------------------------
 
 
-@register_rule("price_taking_value")
 def price_taking_value(action: Any, agent: AgentState) -> float:
     """
     Value an action using net_value's benefit-minus-cost logic, except
@@ -476,7 +421,6 @@ def price_taking_value(action: Any, agent: AgentState) -> float:
 # ---------------------------------------------------------------------------
 
 
-@register_rule("social_value_reality")
 def social_value_reality(actions, objective_state, parameters):
     """
     Realize each actor's
@@ -511,7 +455,6 @@ def social_value_reality(actions, objective_state, parameters):
     return RealityResult(agents=agents)
 
 
-@register_rule("payoff_matrix_reality")
 def payoff_matrix_reality(actions, objective_state, parameters):
     """
     Realize both players' payoffs from the scenario's actual payoff matrix and both
@@ -544,7 +487,6 @@ def payoff_matrix_reality(actions, objective_state, parameters):
     )
 
 
-@register_rule("withdrawal_liquidity_reality")
 def withdrawal_liquidity_reality(actions, objective_state, parameters):
     """
     Realize aggregate withdrawals against the bank's actual liquidity in F_t.
@@ -576,7 +518,6 @@ def withdrawal_liquidity_reality(actions, objective_state, parameters):
     )
 
 
-@register_rule("quality_market_reality")
 def quality_market_reality(actions, objective_state, parameters):
     """
     Aggregate seller sell/hold decisions by actual quality.
@@ -615,7 +556,6 @@ def quality_market_reality(actions, objective_state, parameters):
     )
 
 
-@register_rule("demand_price_reality")
 def demand_price_reality(actions, objective_state, parameters):
     """
     A simple model-specific price response to aggregate buying against the price in F_t. Not a
@@ -647,7 +587,6 @@ def demand_price_reality(actions, objective_state, parameters):
     )
 
 
-@register_rule("realized_price_transition")
 def realized_price_transition(objective_state, reality, parameters):
     """
     O_t -> F_t+1: the market price at the next decision point is the
@@ -659,7 +598,6 @@ def realized_price_transition(objective_state, reality, parameters):
     return objective_state
 
 
-@register_rule("remaining_liquidity_transition")
 def remaining_liquidity_transition(objective_state, reality, parameters):
     """
     O_t -> F_t+1: the bank's liquidity at the next decision point is
@@ -669,7 +607,6 @@ def remaining_liquidity_transition(objective_state, reality, parameters):
     return objective_state
 
 
-@register_rule("observe_own_outcome")
 def observe_own_outcome(agents, actions, reality, objective_state, parameters):
     """
     Each agent observes its own realized outcome O_i,t, exactly, and
@@ -682,7 +619,6 @@ def observe_own_outcome(agents, actions, reality, objective_state, parameters):
     }
 
 
-@register_rule("observe_public_actions")
 def observe_public_actions(agents, actions, reality, objective_state, parameters):
     """
     Every agent observes every action selected at this decision point,
@@ -699,7 +635,6 @@ def observe_public_actions(agents, actions, reality, objective_state, parameters
     }
 
 
-@register_rule("observe_liquidity")
 def observe_liquidity(agents, actions, reality, objective_state, parameters):
     """
     Every agent observes the bank's liquidity as it stands after this
@@ -715,7 +650,6 @@ def observe_liquidity(agents, actions, reality, objective_state, parameters):
     }
 
 
-@register_rule("observe_price")
 def observe_price(agents, actions, reality, objective_state, parameters):
     """
     Every agent observes the market price as it stands after this
@@ -735,7 +669,6 @@ def observe_price(agents, actions, reality, objective_state, parameters):
     }
 
 
-@register_rule("price_growth_expectation_update")
 def price_growth_expectation_update(agent, observation):
     """
     Applied by one agent to what it observed: its expected appreciation becomes its own
@@ -767,7 +700,6 @@ def price_growth_expectation_update(agent, observation):
     return {"model_of_reality": model}
 
 
-@register_rule("liquidity_risk_update")
 def liquidity_risk_update(agent, observation):
     """
     Applied by one depositor to what it observed: its perceived failure probability
@@ -801,63 +733,3 @@ def liquidity_risk_update(agent, observation):
     )
 
     return {"model_of_reality": model}
-
-
-# ---------------------------------------------------------------------------
-# Public rule enums
-# ---------------------------------------------------------------------------
-#
-# Curated, discoverable names for every rule registered above and shared
-# across scenarios. Each member's value is the exact registered rule
-# string, so DecisionProcess.MAXIMIZE and "maximize_value" resolve
-# through get_rule identically -- this is a naming convenience, not a
-# second registration mechanism.
-#
-# Rules that are registered locally by a single test (e.g.
-# capacity_constrained_realization in test_feasibility_contract.py) are
-# intentionally left out. They remain valid, usable rule names via their
-# plain string, the advanced escape hatch for a rule scoped to one
-# scenario.
-
-
-class DecisionProcess(str, Enum):
-    MAXIMIZE = "maximize_value"
-    SATISFICE = "satisfice"
-    LIMITED_SEARCH = "limited_search"
-    FIRST_FEASIBLE = "first_feasible"
-
-
-class ValuationRule(str, Enum):
-    MAPPED = "mapped_value"
-    NET = "net_value"
-    EXPECTED_RETURN = "expected_return"
-    BANK_DEPOSITOR = "bank_depositor_value"
-    PRIVATE = "private_value"
-    INTERNALIZED = "internalized_value"
-    PAYOFF_MATRIX = "payoff_matrix_value"
-    PRICE_TAKING = "price_taking_value"
-
-
-class RealityRule(str, Enum):
-    SOCIAL_VALUE = "social_value_reality"
-    PAYOFF_MATRIX = "payoff_matrix_reality"
-    WITHDRAWALS = "withdrawal_liquidity_reality"
-    QUALITY_MARKET = "quality_market_reality"
-    DEMAND_MOVES_PRICE = "demand_price_reality"
-
-
-class TransitionRule(str, Enum):
-    REMAINING_LIQUIDITY = "remaining_liquidity_transition"
-    REALIZED_PRICE = "realized_price_transition"
-
-
-class ObservationRule(str, Enum):
-    OWN_OUTCOME = "observe_own_outcome"
-    PUBLIC_ACTIONS = "observe_public_actions"
-    LIQUIDITY = "observe_liquidity"
-    PRICE = "observe_price"
-
-
-class UpdateRule(str, Enum):
-    LIQUIDITY_RISK = "liquidity_risk_update"
-    PRICE_GROWTH_EXPECTATIONS = "price_growth_expectation_update"

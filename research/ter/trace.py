@@ -46,8 +46,8 @@ class TraceStep:
     happened:
 
         step            t
-        actors          the agents the schedule had act at t
-        actions         C_i,t for each actor, keyed by agent name
+        actions         C_i,t for each actor, keyed by agent name; its
+                        ordered keys are the actors at t
         reality         the RealityResult R realized from those actions
                         and F_t
         observations    what each agent received about it, keyed by
@@ -62,12 +62,15 @@ class TraceStep:
     """
 
     step: int
-    actors: tuple[str, ...]
     actions: Mapping[str, Any]
     reality: RealityResult
     observations: Mapping[str, Observation]
     objective_state: Mapping[str, Any]
     agents: Mapping[str, AgentRecord]
+
+    @property
+    def actors(self) -> tuple[str, ...]:
+        return tuple(self.actions)
 
     def acted(self, name: str) -> bool:
         return name in self.actions
@@ -92,6 +95,24 @@ class Trace:
 
     def __iter__(self):
         return iter(self.steps)
+
+    @property
+    def initial(self) -> Mapping[str, Any]:
+        return self.initial_objective_state
+
+    @property
+    def final(self) -> Mapping[str, Any]:
+        if not self.steps:
+            return self.initial_objective_state
+
+        return self.steps[-1].objective_state
+
+    @property
+    def history(self) -> tuple[Mapping[str, Any], ...]:
+        return (self.initial_objective_state,) + tuple(
+            step.objective_state
+            for step in self.steps
+        )
 
     def objective_state_before(self, step: int) -> Mapping[str, Any]:
         """

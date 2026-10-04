@@ -28,23 +28,19 @@ Run a single test file, as a module (not by file path, which fails with `ModuleN
 
 ## The Research API
 
-Everything a researcher normally needs comes from one import:
+The core research objects come from `research.ter`; shared rule functions
+come directly from `research.ter.rules`:
 
 ```python
 from research.ter import (
     AgentSpec,
     AgentGroup,
     Scenario,
-    DecisionProcess,
-    ValuationRule,
-    RealityRule,
-    TransitionRule,
-    ObservationRule,
-    UpdateRule,
     RealityResult,
     Schedule,
     run_scenario,
 )
+from research.ter.rules import mapped_value, maximize_value
 ```
 
 You define agents and a scenario declaratively, run it, and read named results back. You should not need to open any file under `research/ter/` to do this — see "Framework Internals" at the end of this guide if you ever do.
@@ -72,7 +68,7 @@ A test's docstring should name only the components that matter for *that* test, 
 - **`AgentSpec`** — one agent's G, M, F̂, V, H, D, declared as data: `objective`, `model_of_reality`, `perceived_feasible_set`, `valuation`, `valuation_rule`, `decision_process`, `decision_parameters`, `horizon` — plus `update_rule`, how the agent turns what it observes into changed beliefs or perceptions (Model 5.5).
 - **`AgentGroup`** — a convenience for declaring several structurally identical agents at once: `AgentGroup(base=BASE_AGENT, count=3, name_prefix="seller", model_of_reality={...})` produces `seller_1`, `seller_2`, `seller_3` as ordinary `AgentSpec`s. It's sugar for a loop over `AgentSpec.variant()`, not a TER primitive — reach for it only when a test would otherwise repeat the same agent construction several times (see `test_04_asymmetric_information.py`, `test_09_bank_run.py`).
 - **`Scenario`** — the agents, the initial objective state `F_0` (`initial_state`) and `parameters` (fixed scenario conditions), and (optionally) the `reality`, `transition`, and `observation` rules and the `schedule` that govern interaction and change over time.
-- **`DecisionProcess` / `ValuationRule` / `RealityRule` / `TransitionRule` / `ObservationRule` / `UpdateRule`** — enums naming every shared, reusable D/V/R/transition/observation/update implementation, e.g. `DecisionProcess.MAXIMIZE`, `DecisionProcess.SATISFICE`, `ValuationRule.NET`, `RealityRule.SOCIAL_VALUE`. Pick from these before writing anything new. Any rule field also accepts a plain callable.
+- **Shared rule functions** — reusable D/V/R/transition/observation/update implementations in `research.ter.rules`, such as `maximize_value`, `satisfice`, `net_value`, and `social_value_reality`. Import and pass the function directly.
 - **`run_scenario(scenario)`** — executes it and returns a `ScenarioResult`.
 - **`AgentResult`** — what `result.agent(name)` gives you back: one agent's final state and outcome, addressed by name.
 
@@ -87,13 +83,13 @@ The canonical architecture is defined in `theory/academic.md` §3 and §5; this 
 | `G` | `AgentSpec.objective` / `AgentState.objective` | the objective value itself |
 | `M` | `AgentSpec.model_of_reality` / `AgentState.model_of_reality` | a dict of beliefs; changes only through the agent's own `update_rule`, applied to what it observes |
 | `F_t` | no dedicated field: the objective state (`Scenario.initial_state` as `F_0`, advanced only by the `transition`) and `Scenario.parameters` may encode conditions and constraints relevant to what `F_t` permits | implementation fields, not TER primitives; no single field is identical to `F_t`. Not an `AgentSpec`/`AgentState` field; never read by a decision process |
-| `F̂` | `AgentSpec.perceived_feasible_set` / `AgentState.perceived_feasible_set` | agent-side; what a `DecisionProcess` selects from. Not a copy of what the scenario permits |
-| `V` | `AgentSpec.valuation` (data) + `AgentSpec.valuation_rule` (a `ValuationRule` member) | `valuation` is declarative data (e.g. a value map); `valuation_rule` names the function that reads it and returns a score. Neither the dict nor the enum member is a new TER primitive — together they implement `V`. |
+| `F̂` | `AgentSpec.perceived_feasible_set` / `AgentState.perceived_feasible_set` | agent-side; what the decision process selects from. Not a copy of what the scenario permits |
+| `V` | `AgentSpec.valuation` (data) + `AgentSpec.valuation_rule` (a callable) | `valuation` is declarative data (e.g. a value map); `valuation_rule` is the function that reads it and returns a score. Together they implement `V`. |
 | `H` | `AgentSpec.horizon` / `AgentState.horizon` | carried as data; no shared rule currently reads it |
-| `D` | `AgentSpec.decision_process` (a `DecisionProcess` member) + `AgentSpec.decision_parameters` (data) | the named rule implements `D`, which reads `F̂`, `G`, `M`, `V`, `H` and never `F_t`; `decision_parameters` configures it (e.g. `search_limit`, `search_order`) — not a new primitive |
+| `D` | `AgentSpec.decision_process` (a callable) + `AgentSpec.decision_parameters` (data) | the function implements `D`, which reads `F̂`, `G`, `M`, `V`, `H` and never `F_t`; `decision_parameters` configures it (e.g. `search_limit`, `search_order`) — not a new primitive |
 | `C` | return value of `select_action()` (`research/ter/decision.py`); read back as `AgentResult.selected_action` | the action actually selected |
 | `O` | the `RealityResult` the `reality` rule returns — `.system` is `O_t`, `.agents[name]` is `O_{i,t}` — recorded on `ScenarioResult.trace[t].reality`; read back per agent via `AgentResult` | `O_{i,t}` (Model 5.2) or `O_t` (Model 5.3), by the scope of the specification; the framework defines no aggregation of `O_{i,t}` into `O_t` |
-| `R` | `Scenario.reality` (a `RealityRule` member, local rule name, or callable) | implements the Model 5.2 relation for `O_{i,t}` in an agent-level specification and the Model 5.3 relation for `O_t` where interactions are explicitly modeled — the rule itself, not its output |
+| `R` | `Scenario.reality` (a callable) | implements the Model 5.2 relation for `O_{i,t}` in an agent-level specification and the Model 5.3 relation for `O_t` where interactions are explicitly modeled — the rule itself, not its output |
 
 Prevailing conditions, shocks, laws, institutions, resources, physical and market conditions, and other objective constraints are aspects of `F_t` (`theory/academic.md` §3), not separate variables. In an implementation, a `reality` rule reads the scenario-relevant conditions from `objective_state` (conditions that change over time, e.g. `liquidity`, `price`) and `Scenario.parameters` (fixed conditions, e.g. `actual_payoff_matrix`). Some specifications also use permission data, `objective_state["permitted_actions"]`, which maps an agent name to the actions the scenario permits for that agent. It is an implementation representation of a scenario-relevant constraint, indexed by agent for convenience — not `F_t` itself, not an agent-specific `F_t`, and not agent state. It is read only on the reality side, through `permitted_actions_for()` and `is_actually_feasible()` (`research/ter/outcome.py`, a per-agent membership check), never by a decision process. The Model 5.5 pathway is split in three (none a TER primitive): a `transition` carries the realized outcome into `F_t+1`, an `observation` rule decides what each agent learns, and each agent's `update_rule` turns its own observation into changed agent-side components. A shock that changes what reality permits is a scenario-specific change to the objective state or `parameters` independent of realized outcomes.
 
@@ -105,14 +101,14 @@ In practice: `objective`, `model_of_reality`, `valuation`, `valuation_rule`, `de
 
 ### Configuration distinction
 
-- `AgentSpec.decision_parameters` configures `D` — e.g. `search_limit`, `search_order`, `satisficing_threshold`, `tie_break_preference` (all read by the `decision_process` rule named on that same `AgentSpec`).
+- `AgentSpec.decision_parameters` configures `D` — e.g. `search_limit`, `search_order`, `satisficing_threshold`, `tie_break_preference` (all read by the `decision_process` callable assigned to that same `AgentSpec`).
 - `Scenario.parameters` configures the model-specific `reality`/`transition`/`observation` mechanics and encodes fixed scenario conditions a `reality` rule reads — e.g. `withdrawal_amount`, `price_sensitivity`, `actual_payoff_matrix`, `external_effects`. An `update_rule` never reads `parameters`; anything it needs beyond the observation belongs in the agent's own `model_of_reality`.
 
 ## Execution: One Decision Point at a Time
 
 `run_scenario` records every decision point in an immutable `Trace`. At each decision point `t`:
 
-1. **Schedule** (`Schedule.simultaneous()` — the default — `Schedule.sequential("a", "b")`, `Schedule.staged(("a", "b"), ("c",))`) names the actors. Inactive agents do not decide and contribute no action. Sequential and staged schedules cycle over `periods`.
+1. **Schedule** (`Schedule.simultaneous()` — the default — or `Schedule.sequential("a", "b")`) names the actors. Inactive agents do not decide and contribute no action. Sequential schedules cycle over `periods`.
 2. Every actor selects `C_i,t` from a frozen copy of its own state (Model 5.1), before anything at `t` is realized.
 3. **`reality`** — `R(actions, objective_state, parameters) -> RealityResult`. `actions` maps actor name to action; `objective_state` is `F_t`, frozen. `RealityResult.system` is `O_t`; `RealityResult.agents[name]` is `O_i,t`, derived from the same joint realization where it depends on the interaction. R never changes `F`. Without a reality rule, nothing is realized.
 4. **`transition`** — `(objective_state, reality, parameters) -> objective_state`: `F_t → F_t+1`. Without one, `F` carries forward unchanged.
@@ -126,7 +122,7 @@ In practice: `objective`, `model_of_reality`, `valuation`, `valuation_rule`, `de
 ```python
 result = run_scenario(SCENARIO)
 
-result.trace[t].actors                  # who acted at t
+result.trace[t].actors                  # derived from ordered action keys
 result.trace[t].actions[name]           # C_i,t
 result.trace[t].reality.system          # O_t
 result.trace[t].reality.agent(name)     # O_i,t
@@ -209,23 +205,23 @@ result = run_scenario(SCENARIO)
 agent = result.agent(BASE_AGENT.name)
 
 agent.selected_action          # C: what the agent actually chose
-agent.social_value             # any O_i,t field this scenario's reality rule reported for this agent
-agent.failure_probability      # falls through to agent.model_of_reality["failure_probability"]
+agent.outcome["social_value"]  # an O_i,t field reported by this scenario's reality rule
+agent.state.model_of_reality["failure_probability"]
 agent.value_of("coffee_c")     # V: the agent's own valuation of any action, selected or not
-agent.outcome_for(DO_NOT_PRODUCE).social_value   # counterfactual outcome for an action that wasn't selected
+agent.outcome_for(DO_NOT_PRODUCE).outcome["social_value"]
 ```
 
-`.agent(name)` looks up by name, never by position — there should be no `result.final["..."][0]`-style indexing in a test. Attribute lookup checks, in order: the `O_{i,t}` fields the `reality` rule reported for this agent at its last decision point, then the agent's own fields (`objective`, `perceived_feasible_set`, `model_of_reality`, ...), then that agent's `model_of_reality` dict directly — so `agent.model_of_reality["x"]` and `agent.x` both work, and you should prefer the latter.
+`.agent(name)` looks up by name, never by position. Provenance is explicit: read realized fields from `.outcome` and final agent-side state from `.state`.
 
 `.value_of()` reads the agent's own value function directly (the same one its decision used); it runs no reality rule. `.outcome_for()` re-runs only `R`, at the agent's last decision point, with that agent's action replaced and everything else held as recorded — a counterfactual, not another realized outcome.
 
 ## Shared Rules vs. Local Rules
 
-Always reach for the public enums first — `DecisionProcess`, `ValuationRule`, `RealityRule`, `TransitionRule`, `ObservationRule`, `UpdateRule` — imported from `research.ter`. A bare string like `"maximize_value"` should not appear in a new test in place of a *shared* rule's enum member.
+Import shared rule functions directly from `research.ter.rules`. Rule fields accept callables only; symbolic strings such as `"maximize_value"` are not supported.
 
-If no existing rule fits, a test may define and register its own **local** rule — one that's genuinely specific to that test's economics, not meant to be reused. Register it in the same file, right above its first use, with a short docstring saying what it computes and why it isn't shared, and reference it by its bare registered name (there is no enum member for a local rule — see `capacity_constrained_realization` in `test_feasibility_contract.py`).
+If no existing rule fits, define a **local** rule — one that's genuinely specific to the test's economics — in the same file, before its first use, with a short docstring saying what it computes and why it isn't shared. Pass the function directly to `AgentSpec` or `Scenario`; see `test_22_feasible_set_learning.py` and `test_26_sequential_entry.py`.
 
-The trigger to promote a local rule into the shared registry is simple: a **second** test wants the same mechanism. (`social_value_reality`, `private_value`, and `internalized_value` all started this way.)
+The trigger to move a local rule into `research.ter.rules` is simple: a **second** test wants the same mechanism. (`social_value_reality`, `private_value`, and `internalized_value` all started this way.)
 
 ## Modify an Existing Test
 
@@ -247,7 +243,7 @@ Before defining agents, consult [`ter-methodology-notes.md`](ter-methodology-not
 1. Copy the existing test closest to your economic question — `test_01` for a single-agent decision, `test_08` for per-agent economic outcomes.
 2. Rename it `test_NN_your_topic.py`.
 3. Update the economic question and assumptions in the docstring.
-4. Define agents (`AgentSpec`) and a scenario (`Scenario`), using `DecisionProcess`/`ValuationRule`/`RealityRule`/`TransitionRule`/`ObservationRule`/`UpdateRule` where they fit.
+4. Define agents (`AgentSpec`) and a scenario (`Scenario`), importing shared rule functions from `research.ter.rules` where they fit.
 5. Run it with `run_scenario` and read results with `.agent(name)`.
 6. Add assertions for your hypothesis; run the new test, then the full suite.
 
@@ -263,7 +259,7 @@ Only needed if you're authoring a new **shared** reusable rule or working on the
 
 - [`ter/scenario.py`](ter/scenario.py) — `AgentSpec`, `AgentGroup`, `Scenario`, `ScenarioResult`, `AgentResult`
 - [`ter/runner.py`](ter/runner.py) — `run_scenario`
-- [`ter/rules.py`](ter/rules.py) — the registry behind the public enums, and the six rule signatures every rule follows (decision, value, reality, transition, observation, update — see the comment block near the top of the file)
+- [`ter/rules.py`](ter/rules.py) — shared rule functions and the six rule signatures every rule follows (decision, value, reality, transition, observation, update — see the comment block near the top of the file)
 - [`ter/agent.py`](ter/agent.py) — `AgentState`, the executable form of an agent
 - [`ter/decision.py`](ter/decision.py) — `select_action`, the shared decision step
 - [`ter/outcome.py`](ter/outcome.py) — `is_actually_feasible` and `permitted_actions_for`, the per-agent lookups against the permission data in `objective_state["permitted_actions"]`, used on the reality side (Model 5.2)
@@ -271,7 +267,7 @@ Only needed if you're authoring a new **shared** reusable rule or working on the
 - [`ter/immutable.py`](ter/immutable.py) — `freeze`/`thaw` and the frozen containers the engine records with
 - [`ter/market.py`](ter/market.py) — `evaluate_market`, `find_market_clearing_states`; the price-grid comparative-statics path `test_07_supply_and_demand.py` uses instead of `run_scenario`
 
-Every numbered replication test and every framework test follows this API: public enums for shared rules, bare strings reserved for local test-scoped rules (see "Shared Rules vs. Local Rules" above), results read via `.agent(name)` rather than positional indexing.
+Use direct function references for shared and local rules (see "Shared Rules vs. Local Rules" above). Read named agent results via `.agent(name)` rather than positional indexing.
 
 
 ## AI Usage

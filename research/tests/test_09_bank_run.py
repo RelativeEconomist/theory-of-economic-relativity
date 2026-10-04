@@ -32,27 +32,27 @@ M   Model of Reality          failure_probability, risk_signal, and          var
                               reference_liquidity: each depositor's belief   by observation)
                               about the bank, not a valuation
 F̂   Perceived Feasible Set    STAY, WITHDRAW                                 fixed
-V   Valuation                 ValuationRule.BANK_DEPOSITOR: deposit_value,   fixed
+V   Valuation                 bank_depositor_value: deposit_value,   fixed
                               deposit_benefit, withdrawal_cost
 H   Time Horizon              immediate liquidity decision                   fixed
-D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+D   Decision Process          maximize_value                       fixed
 C   Selected Action           STAY, or WITHDRAW (a withdrawal request)       observed
 F_t aspects used by R         the bank's liquidity (objective state) and     varied (liquidity, by
                                                                              transition)
                               withdrawal_amount -- scenario-specified
                               conditions R reads (not a complete
                               representation of F_t)
-R   Reality Function          RealityRule.WITHDRAWALS: realizes as much of   fixed
+R   Reality Function          withdrawal_liquidity_reality: realizes as much of   fixed
                               the requested withdrawals as liquidity
                               allows
 O_t System Outcome            withdrawal requests, realized withdrawals,     observed
                               and remaining liquidity, from R
-Transition (O_t -> F_t+1)     TransitionRule.REMAINING_LIQUIDITY: the next   fixed
+Transition (O_t -> F_t+1)     remaining_liquidity_transition: the next   fixed
                               decision point's liquidity is what the
                               realized withdrawals left
-Observation                   ObservationRule.LIQUIDITY: every depositor     fixed
+Observation                   observe_liquidity: every depositor     fixed
                               observes the resulting liquidity exactly
-Update (O_t -> M_t+1)         UpdateRule.LIQUIDITY_RISK: each depositor      fixed
+Update (O_t -> M_t+1)         liquidity_risk_update: each depositor      fixed
                               revises its own failure_probability from
                               what it observed
 
@@ -61,7 +61,7 @@ actions together, so Model 5.3 applies. This test defines no individual
 outcomes O_{i,t} and no relationship between them and O_t.
 
 WITHDRAW means the depositor submits a withdrawal request. What happens
-to the request is R's job: RealityRule.WITHDRAWALS realizes only as
+to the request is R's job: withdrawal_liquidity_reality realizes only as
 much as the bank's liquidity allows. Requested withdrawals can therefore
 exceed realized withdrawals; the depositor's selected action stays
 WITHDRAW, and only how much of it is realized differs.
@@ -83,7 +83,7 @@ depositor's valuation or personal risk signal.
 Assumptions
 -----------
 - The bank itself is not an AgentState; liquidity is objective state
-  (F), and withdrawal capacity is capped by RealityRule.WITHDRAWALS
+  (F), and withdrawal capacity is capped by withdrawal_liquidity_reality
   reading objective_state["liquidity"], not by any per-agent permission.
 - reference_liquidity is each depositor's own belief (M) about what
   normal liquidity looks like, used to interpret the liquidity it
@@ -92,12 +92,12 @@ Assumptions
   its own risk_signal directly, not left for feedback to fill in:
   an update rule only ever runs on an observation of a realized
   outcome, and there is no realized outcome before period 0's decision.
-  This is exactly what UpdateRule.LIQUIDITY_RISK would compute anyway
+  This is exactly what liquidity_risk_update would compute anyway
   from a starting liquidity_risk of 0, stated up front instead of
   relying on that coincidence.
 - Every depositor is assumed to observe the bank's realized liquidity
   after each period (e.g. the bank reports it publicly). That
-  observation (ObservationRule.LIQUIDITY) is the only pathway through
+  observation (observe_liquidity) is the only pathway through
   which the realized outcome reaches each depositor's M; TER does not
   require liquidity to be observable, and a scenario without that
   pathway would need a different observation rule.
@@ -120,14 +120,16 @@ import unittest
 from research.ter import (
     AgentGroup,
     AgentSpec,
-    DecisionProcess,
-    ObservationRule,
-    RealityRule,
     Scenario,
-    TransitionRule,
-    UpdateRule,
-    ValuationRule,
     run_scenario,
+)
+from research.ter.rules import (
+    bank_depositor_value,
+    liquidity_risk_update,
+    maximize_value,
+    observe_liquidity,
+    remaining_liquidity_transition,
+    withdrawal_liquidity_reality,
 )
 
 
@@ -187,10 +189,10 @@ BASE_DEPOSITOR = AgentSpec(
         STAY,
         WITHDRAW,
     ],
-    valuation_rule=ValuationRule.BANK_DEPOSITOR,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=bank_depositor_value,
+    decision_process=maximize_value,
     horizon="immediate liquidity decision",
-    update_rule=UpdateRule.LIQUIDITY_RISK,
+    update_rule=liquidity_risk_update,
 )
 
 
@@ -258,9 +260,9 @@ STABLE_SCENARIO = Scenario(
         "withdrawal_amount": WITHDRAWAL_AMOUNT,
     },
 
-    reality=RealityRule.WITHDRAWALS,
-    transition=TransitionRule.REMAINING_LIQUIDITY,
-    observation=ObservationRule.LIQUIDITY,
+    reality=withdrawal_liquidity_reality,
+    transition=remaining_liquidity_transition,
+    observation=observe_liquidity,
 )
 
 
@@ -298,9 +300,9 @@ INSOLVENT_LIQUIDITY_SCENARIO = Scenario(
         "withdrawal_amount": WITHDRAWAL_AMOUNT,
     },
 
-    reality=RealityRule.WITHDRAWALS,
-    transition=TransitionRule.REMAINING_LIQUIDITY,
-    observation=ObservationRule.LIQUIDITY,
+    reality=withdrawal_liquidity_reality,
+    transition=remaining_liquidity_transition,
+    observation=observe_liquidity,
 )
 
 
@@ -370,7 +372,7 @@ class TestBankRun(unittest.TestCase):
         least_alarmed_depositor = result.agent(LEAST_ALARMED_DEPOSITOR_NAME)
 
         self.assertGreaterEqual(
-            least_alarmed_depositor.failure_probability,
+            least_alarmed_depositor.state.model_of_reality["failure_probability"],
             0.30,
         )
 

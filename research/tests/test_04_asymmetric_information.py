@@ -41,17 +41,17 @@ M   Model of Reality          price: the offered price the seller observes;  var
                               known_quality: each seller's own belief about  vs. verified)
                               its own car. Neither is read by R
 F̂   Perceived Feasible Set    sell, hold                                     fixed
-V   Valuation                 ValuationRule.PRICE_TAKING: the observed       fixed (by seller type)
+V   Valuation                 price_taking_value: the observed       fixed (by seller type)
                               price (M) minus the seller's reservation
                               value (valuation["costs"])
 H   Time Horizon              current sale decision                          fixed
-D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+D   Decision Process          maximize_value                       fixed
 C   Selected Action           sell or hold, one per seller                   observed
 F_t aspects used by R         actual_quality_by_seller: the actual quality   fixed
                               of each seller's car, a scenario-specified
                               condition R reads (not a complete
                               representation of F_t)
-R   Reality Function          RealityRule.QUALITY_MARKET: counts sales       fixed
+R   Reality Function          quality_market_reality: counts sales       fixed
                               by actual quality from the sellers' selected
                               actions
 O_t System Outcome            sold_high, sold_low, total_sold, from R        observed
@@ -76,7 +76,7 @@ Assumptions
   valuation["costs"]). Actual quality -- which determines who sold
   high vs low quality goods -- is a scenario-level fact
   (parameters["actual_quality_by_seller"]), read only by
-  RealityRule.QUALITY_MARKET, never by any agent or valuation rule.
+  quality_market_reality, never by any agent or valuation rule.
 - This test assumes sellers know their own quality perfectly: each
   seller's known_quality is set to match its actual quality exactly
   (see ACTUAL_QUALITY_BY_SELLER). TER does not require this.
@@ -113,12 +113,10 @@ import unittest
 from research.ter import (
     AgentGroup,
     AgentSpec,
-    DecisionProcess,
-    RealityRule,
     Scenario,
-    ValuationRule,
     run_scenario,
 )
+from research.ter.rules import maximize_value, price_taking_value, quality_market_reality
 
 
 # ---------------------------------------------------------------------------
@@ -180,8 +178,8 @@ BASE_SELLER = AgentSpec(
         SELL,
         HOLD,
     ],
-    valuation_rule=ValuationRule.PRICE_TAKING,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=price_taking_value,
+    decision_process=maximize_value,
     horizon="current sale decision",
 )
 
@@ -276,7 +274,7 @@ ASYMMETRIC_INFORMATION_SCENARIO = Scenario(
         "actual_quality_by_seller": ACTUAL_QUALITY_BY_SELLER,
     },
 
-    reality=RealityRule.QUALITY_MARKET,
+    reality=quality_market_reality,
 )
 
 
@@ -418,6 +416,6 @@ class TestAsymmetricInformation(unittest.TestCase):
         # individual.
         for seller in SELLERS:
             self.assertEqual(
-                result.agent(seller.name).model_of_reality["price"],
+                result.agent(seller.name).state.model_of_reality["price"],
                 expected_price,
             )

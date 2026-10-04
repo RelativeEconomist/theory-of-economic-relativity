@@ -36,10 +36,10 @@ G   Objective                 maximize personal compensation net of effort   fix
                               cost
 M   Model of Reality          specified but empty                            fixed
 F̂   Perceived Feasible Set    HIGH_EFFORT, LOW_EFFORT                        fixed
-V   Valuation                 ValuationRule.NET: compensation (benefit)      varied (HIGH_EFFORT's
+V   Valuation                 net_value: compensation (benefit)      varied (HIGH_EFFORT's
                               minus effort cost                              benefit only)
 H   Time Horizon              current effort decision                        fixed
-D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+D   Decision Process          maximize_value                       fixed
 C   Selected Action           HIGH_EFFORT or LOW_EFFORT                      observed
 F_t aspects used by R         principal_outcomes_by_effort: the principal's  fixed
                               outcome under each effort level, a
@@ -108,8 +108,13 @@ In this configured scenario:
 
 import unittest
 
-from research.ter import AgentSpec, DecisionProcess, RealityResult, Scenario, ValuationRule, run_scenario
-from research.ter.rules import register_rule
+from research.ter import (
+    AgentSpec,
+    RealityResult,
+    Scenario,
+    run_scenario,
+)
+from research.ter.rules import maximize_value, net_value
 
 
 # ---------------------------------------------------------------------------
@@ -134,7 +139,6 @@ PRINCIPAL_OUTCOME_HIGH_EFFORT = 20
 PRINCIPAL_OUTCOME_LOW_EFFORT = 8
 
 
-@register_rule("principal_outcome_by_effort")
 def principal_outcome_by_effort(actions, objective_state, parameters):
     """
     Local Model 5.2 reality rule for this test only.
@@ -193,8 +197,8 @@ BASE_WORKER = AgentSpec(
         HIGH_EFFORT,
         LOW_EFFORT,
     ],
-    valuation_rule=ValuationRule.NET,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=net_value,
+    decision_process=maximize_value,
     horizon="current effort decision",
 )
 
@@ -217,7 +221,7 @@ FIXED_COMPENSATION_SCENARIO = Scenario(
             LOW_EFFORT: PRINCIPAL_OUTCOME_LOW_EFFORT,
         },
     },
-    reality="principal_outcome_by_effort",
+    reality=principal_outcome_by_effort,
 )
 
 PERFORMANCE_INCENTIVE_SCENARIO = FIXED_COMPENSATION_SCENARIO.variant(
@@ -265,7 +269,7 @@ class TestPrincipalAgentMoralHazard(unittest.TestCase):
         )
 
         self.assertEqual(
-            fixed_result.agent(BASE_WORKER.name).principal_outcome,
+            fixed_result.agent(BASE_WORKER.name).outcome["principal_outcome"],
             PRINCIPAL_OUTCOME_LOW_EFFORT,
         )
 
@@ -275,13 +279,13 @@ class TestPrincipalAgentMoralHazard(unittest.TestCase):
         )
 
         self.assertEqual(
-            incentivized_result.agent(BASE_WORKER.name).principal_outcome,
+            incentivized_result.agent(BASE_WORKER.name).outcome["principal_outcome"],
             PRINCIPAL_OUTCOME_HIGH_EFFORT,
         )
 
         self.assertGreater(
-            incentivized_result.agent(BASE_WORKER.name).principal_outcome,
-            fixed_result.agent(BASE_WORKER.name).principal_outcome,
+            incentivized_result.agent(BASE_WORKER.name).outcome["principal_outcome"],
+            fixed_result.agent(BASE_WORKER.name).outcome["principal_outcome"],
         )
 
     def test_performance_bonus_makes_high_effort_privately_preferred(self):

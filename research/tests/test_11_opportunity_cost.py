@@ -25,9 +25,9 @@ Component                     Instantiation in this test                     Sta
 G   Objective                 choose how to spend one free evening           fixed
 M   Model of Reality          specified but empty                            fixed
 F̂   Perceived Feasible Set    STUDY, WORK_SHIFT, RELAX                       fixed
-V   Valuation                 ValuationRule.MAPPED, a static declared map    fixed
+V   Valuation                 mapped_value, a static declared map    fixed
 H   Time Horizon              this evening                                   fixed
-D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+D   Decision Process          maximize_value                       fixed
 C   Selected Action           STUDY                                          observed
 F_t, R, outcomes              F_t and outcome realization are outside this test's scope.
 
@@ -63,7 +63,8 @@ In this configuration:
 
 import unittest
 
-from research.ter import AgentSpec, DecisionProcess, Scenario, ValuationRule, run_scenario
+from research.ter import AgentSpec, Scenario, run_scenario
+from research.ter.rules import mapped_value, maximize_value
 
 
 # ---------------------------------------------------------------------------
@@ -104,8 +105,8 @@ BASE_STUDENT = AgentSpec(
         STUDY,
         RELAX,
     ],
-    valuation_rule=ValuationRule.MAPPED,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=mapped_value,
+    decision_process=maximize_value,
     horizon="this evening",
 )
 
@@ -145,7 +146,7 @@ class TestOpportunityCost(unittest.TestCase):
 
         unchosen_actions = [
             action
-            for action in agent.perceived_feasible_set
+            for action in agent.state.perceived_feasible_set
             if action != agent.selected_action
         ]
 
@@ -169,7 +170,7 @@ class TestOpportunityCost(unittest.TestCase):
 
         unchosen_actions = [
             action
-            for action in agent.perceived_feasible_set
+            for action in agent.state.perceived_feasible_set
             if action != agent.selected_action
         ]
 

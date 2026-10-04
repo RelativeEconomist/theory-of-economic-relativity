@@ -33,15 +33,19 @@ only; no transition is declared.
 
 import unittest
 
-from research.ter import AgentSpec, ObservationRule, RealityResult, Scenario, run_scenario
-from research.ter.rules import register_rule
+from research.ter import (
+    AgentSpec,
+    RealityResult,
+    Scenario,
+    run_scenario,
+)
+from research.ter.rules import mapped_value, observe_own_outcome
 
 
 LOW = "low"
 HIGH = "high"
 
 
-@register_rule("record_realized_action")
 def record_realized_action(actions, objective_state, parameters):
     """
     Local Model 5.2 reality rule for this test only.
@@ -58,7 +62,6 @@ def record_realized_action(actions, objective_state, parameters):
     )
 
 
-@register_rule("record_feedback_flag")
 def record_feedback_flag(agent, observation):
     """
     Local Model 5.5 update rule for this test only. Sets a
@@ -79,7 +82,6 @@ def record_feedback_flag(agent, observation):
     return {"model_of_reality": model}
 
 
-@register_rule("choose_by_flag")
 def choose_by_flag(agent):
     """
     Local Model 5.1 decision rule for this test only. Selects HIGH if a
@@ -97,10 +99,10 @@ AGENT = AgentSpec(
     objective="test objective",
     model_of_reality={},
     perceived_feasible_set=[LOW, HIGH],
-    valuation_rule="mapped_value",
-    decision_process="choose_by_flag",
+    valuation_rule=mapped_value,
+    decision_process=choose_by_flag,
     horizon="current decision",
-    update_rule="record_feedback_flag",
+    update_rule=record_feedback_flag,
 )
 
 
@@ -115,8 +117,8 @@ ONE_PERIOD_SCENARIO = Scenario(
     agents=[
         AGENT,
     ],
-    reality="record_realized_action",
-    observation=ObservationRule.OWN_OUTCOME,
+    reality=record_realized_action,
+    observation=observe_own_outcome,
 )
 
 TWO_PERIOD_SCENARIO = ONE_PERIOD_SCENARIO.variant(
@@ -133,72 +135,36 @@ TWO_PERIOD_SCENARIO = ONE_PERIOD_SCENARIO.variant(
 class TestFeedbackOrderingContract(unittest.TestCase):
     TEST_NAME = "Framework: Feedback Ordering Contract"
 
-    def test_no_feedback_runs_before_the_first_decision(self):
-        result = run_scenario(ONE_PERIOD_SCENARIO)
-        agent = result.agent(AGENT.name)
-
-        self.assertEqual(
-            agent.selected_action,
-            LOW,
-        )
-
-    def test_a_periods_feedback_is_not_visible_to_that_same_periods_decision(self):
-        result = run_scenario(TWO_PERIOD_SCENARIO)
-
-        self.assertEqual(
-            result.trace[0].actions[AGENT.name],
-            LOW,
-        )
-
-    def test_a_periods_feedback_is_visible_to_the_following_periods_decision(self):
-        result = run_scenario(TWO_PERIOD_SCENARIO)
-
-        self.assertEqual(
-            result.trace[1].actions[AGENT.name],
-            HIGH,
-        )
-
-    def test_reality_realizes_the_selected_action_before_feedback_reads_it(self):
+    def test_feedback_changes_only_the_later_decision_after_realization(self):
         result = run_scenario(TWO_PERIOD_SCENARIO)
         first_period = result.trace[0]
 
-        # record_realized_action (R) reports exactly what was selected,
-        # so O_{i,0} must match C_{i,0} for the same agent, same period.
+        self.assertEqual(
+            [step.actions[AGENT.name] for step in result.trace],
+            [LOW, HIGH],
+        )
         self.assertEqual(
             first_period.reality.agent(AGENT.name)["realized_action"],
             first_period.actions[AGENT.name],
         )
-
-        # The agent observed that realized outcome at the same point.
         self.assertEqual(
             first_period.observations[AGENT.name]["realized_action"],
             LOW,
         )
-
-        # record_feedback_flag reads observation["realized_action"] with
-        # no fallback -- it would raise rather than silently pass if it
-        # ever ran without an observed O_{i,t}. The flag having been set
-        # (proved by the HIGH selection in the following period) is
-        # therefore itself evidence that R ran, and the outcome was
-        # observed, before the update ran.
         self.assertTrue(
-            first_period.agents[AGENT.name].model_of_reality["flag_set_by_feedback"],
+            first_period.agents[AGENT.name].model_of_reality[
+                "flag_set_by_feedback"
+            ],
         )
 
-        self.assertEqual(
-            result.trace[1].actions[AGENT.name],
-            HIGH,
-        )
-
-    def test_without_an_observation_the_flag_is_never_set(self):
+    def test_without_observation_feedback_never_changes_a_later_decision(self):
         result = run_scenario(
             TWO_PERIOD_SCENARIO.variant(
                 observation=None,
             )
         )
-        agent = result.agent(AGENT.name)
 
         self.assertEqual(
-            agent.selected_action,
-            LOW,
+            [step.actions[AGENT.name] for step in result.trace],
+            [LOW, LOW],
         )

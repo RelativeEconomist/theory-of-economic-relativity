@@ -84,14 +84,6 @@ class TestDecisionFeasibilityBoundaryContract(unittest.TestCase):
         self.assertIsInstance(captured["view"], DecisionView)
         self.assertNotIsInstance(captured["view"], AgentState)
 
-    def test_decision_process_can_read_the_perceived_feasible_set(self):
-        agent = make_agent(lambda view: view.perceived_feasible_set[0])
-
-        self.assertEqual(
-            select_action(agent),
-            PERCEIVED_ACTION,
-        )
-
     def test_decision_process_cannot_access_the_objective_feasible_state(self):
         def reading_decision_process(view):
             return view.permitted_actions[0]

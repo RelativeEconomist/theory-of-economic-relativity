@@ -32,22 +32,22 @@ F̂   Perceived Feasible Set        STAY, WITHDRAW                              
 V   Valuation                     deposit_value, deposit_benefit,                fixed
                                   withdrawal_cost (BANK_DEPOSITOR)
 H   Time Horizon                  "immediate liquidity decision"                 fixed
-D   Decision Process              DecisionProcess.MAXIMIZE                       fixed
+D   Decision Process              maximize_value                       fixed
 C   Selected Action               STAY, or WITHDRAW (a withdrawal request)       observed
 F_t aspects used by R             the bank's available liquidity (objective      varied (by transition)
                                   state["liquidity"]), which limits how much
                                   of the requests can be honored
-R   Reality Function              RealityRule.WITHDRAWALS, applied to all 42     fixed
+R   Reality Function              withdrawal_liquidity_reality, applied to all 42     fixed
                                   depositors' selected actions and the
                                   liquidity condition
 O_t System Outcome                withdrawals, requested_liquidity,              observed
                                   realized_withdrawals, remaining_liquidity
-Transition (O_t -> F_t+1)         TransitionRule.REMAINING_LIQUIDITY: the next   fixed
+Transition (O_t -> F_t+1)         remaining_liquidity_transition: the next   fixed
                                   period's liquidity is what the realized
                                   withdrawals left
-Observation                       ObservationRule.LIQUIDITY: every depositor     fixed
+Observation                       observe_liquidity: every depositor     fixed
                                   observes the resulting liquidity exactly
-Update (O_t -> M_t+1)             UpdateRule.LIQUIDITY_RISK: each depositor      fixed
+Update (O_t -> M_t+1)             liquidity_risk_update: each depositor      fixed
                                   revises its own failure_probability from
                                   what it observed
 System state (Constraint 5.4)     the existing state in which withdrawal         observed
@@ -104,8 +104,8 @@ Assumptions
   risk. No permission data for F_t is
   instantiated here, so what F_t permits for STAY or WITHDRAW is outside
   this test's scope.
-- RealityRule.WITHDRAWALS, TransitionRule.REMAINING_LIQUIDITY,
-  ObservationRule.LIQUIDITY, and UpdateRule.LIQUIDITY_RISK are shared
+- withdrawal_liquidity_reality, remaining_liquidity_transition,
+  observe_liquidity, and liquidity_risk_update are shared
   framework rules. Each is one admissible implementation of R and of the
   Model 5.5 pathway for this scenario, not a TER primitive or a universal equation. This test defines
   no local rule.
@@ -138,14 +138,16 @@ import unittest
 from research.ter import (
     AgentGroup,
     AgentSpec,
-    DecisionProcess,
-    ObservationRule,
-    RealityRule,
     Scenario,
-    TransitionRule,
-    UpdateRule,
-    ValuationRule,
     run_scenario,
+)
+from research.ter.rules import (
+    bank_depositor_value,
+    liquidity_risk_update,
+    maximize_value,
+    observe_liquidity,
+    remaining_liquidity_transition,
+    withdrawal_liquidity_reality,
 )
 
 
@@ -196,10 +198,10 @@ BASE_DEPOSITOR = AgentSpec(
         STAY,
         WITHDRAW,
     ],
-    valuation_rule=ValuationRule.BANK_DEPOSITOR,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=bank_depositor_value,
+    decision_process=maximize_value,
     horizon="immediate liquidity decision",
-    update_rule=UpdateRule.LIQUIDITY_RISK,
+    update_rule=liquidity_risk_update,
 )
 
 EARLY_WITHDRAWAL_DEPOSITORS = AgentGroup(
@@ -254,9 +256,9 @@ LIQUIDITY_CONSTRAINT_SCENARIO = Scenario(
         "withdrawal_amount": WITHDRAWAL_AMOUNT,
     },
 
-    reality=RealityRule.WITHDRAWALS,
-    transition=TransitionRule.REMAINING_LIQUIDITY,
-    observation=ObservationRule.LIQUIDITY,
+    reality=withdrawal_liquidity_reality,
+    transition=remaining_liquidity_transition,
+    observation=observe_liquidity,
 )
 
 

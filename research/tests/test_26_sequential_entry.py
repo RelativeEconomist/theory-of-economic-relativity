@@ -31,9 +31,9 @@ M   Model of Reality          expected_other_action: each firm's belief      var
                               about the other's move                         observation)
 F̂   Perceived Feasible Set    incumbent: EXPAND, HOLD;                       fixed
                               entrant: ENTER, STAY_OUT
-V   Valuation                 ValuationRule.PAYOFF_MATRIX against M          fixed
+V   Valuation                 payoff_matrix_value against M          fixed
 H   Time Horizon              single market entry                            fixed
-D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+D   Decision Process          maximize_value                       fixed
 C   Selected Action           one per firm, at its own decision point        observed
 Schedule                      Schedule.sequential(incumbent, entrant), or    varied
                               Schedule.simultaneous() for comparison
@@ -46,7 +46,7 @@ R   Reality Function          entry_game_reality (local): realizes the       fix
                               actually holds
 Transition (O_t -> F_t+1)     entry_game_transition (local): a realized      fixed
                               capacity choice becomes F_t+1's capacity
-Observation                   ObservationRule.PUBLIC_ACTIONS: both firms     fixed
+Observation                   observe_public_actions: both firms     fixed
                               observe every move exactly
 Update (O_t -> M_t+1)         adopt_observed_move (local): a firm that       fixed
                               observes the other's move adopts it as its
@@ -96,15 +96,13 @@ import unittest
 
 from research.ter import (
     AgentSpec,
-    DecisionProcess,
-    ObservationRule,
     RealityResult,
     Scenario,
     Schedule,
-    ValuationRule,
     run_scenario,
 )
-from research.ter.rules import register_rule
+from research.ter.rules import maximize_value, observe_public_actions, payoff_matrix_value
+
 
 
 # ---------------------------------------------------------------------------
@@ -139,7 +137,6 @@ INCUMBENT_PAYOFFS = {
 # Rules -- scoped to this test
 # ---------------------------------------------------------------------------
 
-@register_rule("entry_game_reality")
 def entry_game_reality(actions, objective_state, parameters):
     """
     Local reality rule for this test only (Model 5.3).
@@ -178,7 +175,6 @@ def entry_game_reality(actions, objective_state, parameters):
     )
 
 
-@register_rule("entry_game_transition")
 def entry_game_transition(objective_state, reality, parameters):
     """
     Local transition for this test only: a realized capacity choice is
@@ -190,7 +186,6 @@ def entry_game_transition(objective_state, reality, parameters):
     return objective_state
 
 
-@register_rule("adopt_observed_move")
 def adopt_observed_move(agent, observation):
     """
     Local update rule for this test only: a firm that observes the
@@ -230,10 +225,10 @@ INCUMBENT = AgentSpec(
         EXPAND,
         HOLD,
     ],
-    valuation_rule=ValuationRule.PAYOFF_MATRIX,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=payoff_matrix_value,
+    decision_process=maximize_value,
     horizon="single market entry",
-    update_rule="adopt_observed_move",
+    update_rule=adopt_observed_move,
 )
 
 ENTRANT = AgentSpec(
@@ -257,10 +252,10 @@ ENTRANT = AgentSpec(
         ENTER,
         STAY_OUT,
     ],
-    valuation_rule=ValuationRule.PAYOFF_MATRIX,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=payoff_matrix_value,
+    decision_process=maximize_value,
     horizon="single market entry",
-    update_rule="adopt_observed_move",
+    update_rule=adopt_observed_move,
 )
 
 
@@ -286,9 +281,9 @@ SEQUENTIAL_SCENARIO = Scenario(
         "incumbent_payoffs": INCUMBENT_PAYOFFS,
         "entrant_payoffs": ENTRANT_PAYOFFS,
     },
-    reality="entry_game_reality",
-    transition="entry_game_transition",
-    observation=ObservationRule.PUBLIC_ACTIONS,
+    reality=entry_game_reality,
+    transition=entry_game_transition,
+    observation=observe_public_actions,
     schedule=Schedule.sequential(INCUMBENT.name, ENTRANT.name),
 )
 
@@ -310,10 +305,8 @@ class TestSequentialEntry(unittest.TestCase):
     def test_only_the_scheduled_agent_acts_at_each_decision_point(self):
         trace = run_scenario(SEQUENTIAL_SCENARIO).trace
 
-        self.assertEqual(trace[0].actors, (INCUMBENT.name,))
         self.assertEqual(set(trace[0].actions), {INCUMBENT.name})
 
-        self.assertEqual(trace[1].actors, (ENTRANT.name,))
         self.assertEqual(set(trace[1].actions), {ENTRANT.name})
 
     def test_incumbent_expands(self):
@@ -364,12 +357,12 @@ class TestSequentialEntry(unittest.TestCase):
         )
 
         self.assertEqual(
-            entrant.payoff,
+            entrant.outcome["payoff"],
             ENTRANT_PAYOFFS[EXPAND][ENTER],
         )
 
         self.assertLess(
-            entrant.payoff,
+            entrant.outcome["payoff"],
             0,
         )
 
@@ -384,14 +377,14 @@ class TestSequentialEntry(unittest.TestCase):
         )
 
         self.assertEqual(
-            entrant.payoff,
+            entrant.outcome["payoff"],
             ENTRANT_PAYOFFS[EXPAND][STAY_OUT],
         )
 
         # Counterfactual, not another realized outcome: the same R and
         # the same F_1, with the entrant entering instead.
         self.assertEqual(
-            entrant.outcome_for(ENTER).payoff,
+            entrant.outcome_for(ENTER).outcome["payoff"],
             ENTRANT_PAYOFFS[EXPAND][ENTER],
         )
 

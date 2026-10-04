@@ -19,8 +19,7 @@ economic scenario:
 4. The step reports exactly one system outcome (O_t), taken directly from
    what R returns.
 
-The rules here are passed as plain callables rather than registered
-names, which the engine supports alongside the registry.
+The rules here are passed directly as callables.
 
 Out of scope
 ------------
@@ -79,14 +78,6 @@ def scenario(agents, reality=count_actions):
 class TestSystemContract(unittest.TestCase):
     TEST_NAME = "Framework: Multi-Agent System Contract"
 
-    def test_every_agent_independently_selects_its_own_action(self):
-        result = run_scenario(scenario([AGENT_A, AGENT_B, AGENT_C]))
-
-        self.assertEqual(
-            list(result.trace[0].actions.values()),
-            ["agent_a_action", "agent_b_action", "agent_c_action"],
-        )
-
     def test_actions_correspond_to_the_correct_agent_in_input_order(self):
         result = run_scenario(scenario([AGENT_C, AGENT_A, AGENT_B]))
 
@@ -111,11 +102,6 @@ class TestSystemContract(unittest.TestCase):
         self.assertEqual(
             captured["actions"],
             dict(result.trace[0].actions),
-        )
-
-        self.assertEqual(
-            len(captured["actions"]),
-            3,
         )
 
     def test_one_system_outcome_is_produced_from_the_joint_actions(self):

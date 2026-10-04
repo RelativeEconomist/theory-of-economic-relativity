@@ -40,8 +40,8 @@ of what that selected action C itself means, not a separate fact of F_t.
 R below decodes it directly from the action string; F_t is never asked
 "what does this buyer offer."
 
-R (reality="single_unit_market_outcome", registered locally
-below -- this test's own admissible specification of R, not a universal
+R (reality=single_unit_market_outcome, passed directly below -- this
+test's own admissible specification of R, not a universal
 TER consequence rule):
 
     O_t = R(C_{buyer_a,t}, C_{buyer_b,t}, C_{seller_s,t}, F_t)
@@ -113,10 +113,15 @@ In this configured scenario:
 
 import unittest
 
-from research.ter import AgentSpec, DecisionProcess, RealityResult, Scenario, ValuationRule, run_scenario
+from research.ter import (
+    AgentSpec,
+    RealityResult,
+    Scenario,
+    run_scenario,
+)
+from research.ter.rules import mapped_value, maximize_value
 from research.ter.market import allocate_single_unit
 from research.ter.outcome import is_actually_feasible
-from research.ter.rules import register_rule
 
 
 # ---------------------------------------------------------------------------
@@ -136,7 +141,6 @@ HOLD = "hold"
 # capacity_constrained_realization in test_feasibility_contract.py
 # ---------------------------------------------------------------------------
 
-@register_rule("single_unit_market_outcome")
 def single_unit_market_outcome(actions, objective_state, parameters):
     """
     One admissible TER Model 5.3 reality function for this test only.
@@ -211,8 +215,8 @@ BUYER_A = AgentSpec(
         BUY_8,
         DO_NOT_BUY,
     ],
-    valuation_rule=ValuationRule.MAPPED,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=mapped_value,
+    decision_process=maximize_value,
     horizon="current period",
 )
 
@@ -233,8 +237,8 @@ BUYER_B = AgentSpec(
         BUY_10,
         DO_NOT_BUY,
     ],
-    valuation_rule=ValuationRule.MAPPED,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=mapped_value,
+    decision_process=maximize_value,
     horizon="current period",
 )
 
@@ -255,8 +259,8 @@ SELLER_S = AgentSpec(
         SELL_5,
         HOLD,
     ],
-    valuation_rule=ValuationRule.MAPPED,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=mapped_value,
+    decision_process=maximize_value,
     horizon="current period",
 )
 
@@ -297,7 +301,7 @@ SCENARIO = Scenario(
         "seller": SELLER_S.name,
         "sell_action": SELL_5,
     },
-    reality="single_unit_market_outcome",
+    reality=single_unit_market_outcome,
 )
 
 
@@ -345,11 +349,6 @@ class TestMultiAgentSystemOutcome(unittest.TestCase):
         self.assertEqual(
             system_outcome["quantity"],
             1,
-        )
-
-        self.assertLess(
-            system_outcome["quantity"],
-            2,
         )
 
     def test_reality_resolves_scarcity_into_one_system_outcome(self):

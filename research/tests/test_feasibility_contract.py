@@ -53,9 +53,10 @@ rules.py registry. It is not a universal TER consequence rule.
 
 import unittest
 
+from research.ter.rules import mapped_value, maximize_value
+
 from research.ter.outcome import is_actually_feasible, permitted_actions_for
 from research.ter.reality import RealityResult
-from research.ter.rules import register_rule
 from research.ter.runner import build_agent, run_scenario
 from research.ter.scenario import AgentSpec, Scenario
 
@@ -72,7 +73,6 @@ QUANTITY = {
 }
 
 
-@register_rule("capacity_constrained_realization")
 def capacity_constrained_realization(actions, objective_state, parameters):
     """
     One admissible TER Model 5.2 reality rule for this test only.
@@ -96,7 +96,7 @@ def capacity_constrained_realization(actions, objective_state, parameters):
     Each producer's outcome depends only on its own action, so each is
     reported as its own O_{i,t} (RealityResult.agents), looked up by
     name via ScenarioResult.agent(name). Kept local to this test rather
-    than promoted to RealityRule.
+    than moved into the shared rules module.
 
     Required parameter:
 
@@ -145,8 +145,8 @@ BASE_PRODUCER = AgentSpec(
         HOLD,
         PRODUCE_60,
     ],
-    valuation_rule="mapped_value",
-    decision_process="maximize_value",
+    valuation_rule=mapped_value,
+    decision_process=maximize_value,
     horizon="current production decision",
 )
 
@@ -218,7 +218,7 @@ SCENARIO = Scenario(
         "quantity": QUANTITY,
     },
 
-    reality="capacity_constrained_realization",
+    reality=capacity_constrained_realization,
 )
 
 
@@ -275,11 +275,11 @@ class TestModel52PerceivedFeasibleSetAndOutcomeRealization(unittest.TestCase):
         )
 
         self.assertTrue(
-            agent.actually_feasible
+            agent.outcome["actually_feasible"]
         )
 
         self.assertEqual(
-            agent.realized_units,
+            agent.outcome["realized_units"],
             60,
         )
 
@@ -293,11 +293,11 @@ class TestModel52PerceivedFeasibleSetAndOutcomeRealization(unittest.TestCase):
         )
 
         self.assertFalse(
-            agent.actually_feasible
+            agent.outcome["actually_feasible"]
         )
 
         self.assertEqual(
-            agent.realized_units,
+            agent.outcome["realized_units"],
             60,
         )
 
@@ -316,7 +316,7 @@ class TestModel52PerceivedFeasibleSetAndOutcomeRealization(unittest.TestCase):
         )
 
         self.assertEqual(
-            agent.realized_units,
+            agent.outcome["realized_units"],
             QUANTITY[PRODUCE_60],
         )
 
@@ -330,11 +330,11 @@ class TestModel52PerceivedFeasibleSetAndOutcomeRealization(unittest.TestCase):
         )
 
         self.assertFalse(
-            agent.actually_feasible
+            agent.outcome["actually_feasible"]
         )
 
         self.assertEqual(
-            agent.realized_units,
+            agent.outcome["realized_units"],
             0,
         )
 
@@ -349,6 +349,6 @@ class TestModel52PerceivedFeasibleSetAndOutcomeRealization(unittest.TestCase):
         )
 
         self.assertGreater(
-            mistaken.realized_units,
-            severe.realized_units,
+            mistaken.outcome["realized_units"],
+            severe.outcome["realized_units"],
         )

@@ -32,11 +32,11 @@ M   Model of Reality          the quoted market price, assumed correctly     fix
                               observed by both agents
 F̂   Perceived Feasible Set    BUY, DO_NOT_BUY (buyer); SELL, DO_NOT_SELL     fixed
                               (seller)
-V   Valuation                 ValuationRule.PRICE_TAKING: reservation value  varied (buyer vs.
+V   Valuation                 price_taking_value: reservation value  varied (buyer vs.
                               relative to price (buyer); price relative to   seller)
                               reservation cost (seller)
 H   Time Horizon              current transaction decision                   fixed
-D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+D   Decision Process          maximize_value                       fixed
 C   Selected Action           BUY (buyer), SELL (seller)                     observed
 F_t, R, outcomes              F_t and outcome realization are outside this test's scope.
 
@@ -53,7 +53,7 @@ The buyer buys because reservation value exceeds price (15 > 10); the
 seller sells because price exceeds reservation cost (10 > 7). Consumer
 surplus, producer surplus, and total surplus are derived measures in
 this test: they are read directly from each agent's own
-agent.value_of(...) under ValuationRule.PRICE_TAKING, then combined with
+agent.value_of(...) under price_taking_value, then combined with
 plain arithmetic.
 
 Assumptions
@@ -66,7 +66,7 @@ Assumptions
 - Consumer surplus, producer surplus, and total surplus are not
   separate outcome rules, primitives, or helpers, and no realized outcome
   or reality function is modeled. They are read directly from the buyer's
-  and seller's own agent.value_of(...) under ValuationRule.PRICE_TAKING,
+  and seller's own agent.value_of(...) under price_taking_value,
   then combined with plain arithmetic.
 - The market price is exogenously fixed; this test does not model how
   the price was set.
@@ -86,7 +86,8 @@ In this configured bilateral trade:
 
 import unittest
 
-from research.ter import AgentSpec, DecisionProcess, Scenario, ValuationRule, run_scenario
+from research.ter import AgentSpec, Scenario, run_scenario
+from research.ter.rules import maximize_value, price_taking_value
 
 
 # ---------------------------------------------------------------------------
@@ -135,8 +136,8 @@ BUYER = AgentSpec(
         DO_NOT_BUY,
         BUY,
     ],
-    valuation_rule=ValuationRule.PRICE_TAKING,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=price_taking_value,
+    decision_process=maximize_value,
     horizon="current purchase decision",
 )
 
@@ -162,8 +163,8 @@ SELLER = AgentSpec(
         DO_NOT_SELL,
         SELL,
     ],
-    valuation_rule=ValuationRule.PRICE_TAKING,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=price_taking_value,
+    decision_process=maximize_value,
     horizon="current sale decision",
 )
 

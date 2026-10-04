@@ -34,10 +34,10 @@ M   Model of Reality          expected_appreciation: a belief about future   var
                               the investor believes observed growth          feedback_strength,
                               carries forward                                across scenarios)
 F̂   Perceived Feasible Set    BUY, HOLD                                      fixed
-V   Valuation                 ValuationRule.EXPECTED_RETURN:                 fixed (distinct per
+V   Valuation                 expected_return:                 fixed (distinct per
                               required_return                                investor)
 H   Time Horizon              next period                                    fixed
-D   Decision Process          DecisionProcess.MAXIMIZE, with an explicit     fixed
+D   Decision Process          maximize_value, with an explicit     fixed
                               tie_break_preference of HOLD
 C   Selected Action           BUY or HOLD, one per investor                  observed
 F_t aspects used by R         the current price (objective state) and        varied (price, by
@@ -45,14 +45,14 @@ F_t aspects used by R         the current price (objective state) and        var
                               price_sensitivity -- scenario-specified
                               conditions R reads (not a complete
                               representation of F_t)
-R   Reality Function          RealityRule.DEMAND_MOVES_PRICE: moves price    fixed
+R   Reality Function          demand_price_reality: moves price    fixed
                               according to the number of buyers
 O_t System Outcome            buyers and the realized price, from R          observed
-Transition (O_t -> F_t+1)     TransitionRule.REALIZED_PRICE: the realized    fixed
+Transition (O_t -> F_t+1)     realized_price_transition: the realized    fixed
                               price becomes the next period's price
-Observation                   ObservationRule.PRICE: every investor          fixed
+Observation                   observe_price: every investor          fixed
                               observes the resulting price exactly
-Update (O_t -> M_t+1)         UpdateRule.PRICE_GROWTH_EXPECTATIONS: each     fixed
+Update (O_t -> M_t+1)         price_growth_expectation_update: each     fixed
                               investor sets its expected_appreciation to
                               its own feedback_strength times the
                               observed growth
@@ -78,7 +78,7 @@ in the following period.
 Assumptions
 -----------
 - price_sensitivity is a scenario parameter, not a TER primitive;
-  RealityRule.DEMAND_MOVES_PRICE is one admissible price rule, not a
+  demand_price_reality is one admissible price rule, not a
   universal TER asset-pricing equation.
 - feedback_strength is each investor's own belief (M) about how strongly
   observed growth carries forward, set equal for every investor within a
@@ -92,7 +92,7 @@ Assumptions
   unsustainability. Rising prices alone are not sufficient to prove an
   economic bubble.
 - Every investor is assumed to observe the realized market price after
-  each period. That observation (ObservationRule.PRICE) is the only
+  each period. That observation (observe_price) is the only
   pathway through which the realized outcome reaches each investor's M; TER does not require
   prices to be observable.
 
@@ -107,16 +107,14 @@ In this configured scenario:
 
 import unittest
 
-from research.ter import (
-    AgentSpec,
-    DecisionProcess,
-    ObservationRule,
-    RealityRule,
-    Scenario,
-    TransitionRule,
-    UpdateRule,
-    ValuationRule,
-    run_scenario,
+from research.ter import AgentSpec, Scenario, run_scenario
+from research.ter.rules import (
+    demand_price_reality,
+    expected_return,
+    maximize_value,
+    observe_price,
+    price_growth_expectation_update,
+    realized_price_transition,
 )
 
 
@@ -167,8 +165,8 @@ def build_investor(required_return, name, feedback_strength=BASE_FEEDBACK_STRENG
             "required_return": required_return,
         },
         perceived_feasible_set=[BUY, HOLD],
-        valuation_rule=ValuationRule.EXPECTED_RETURN,
-        decision_process=DecisionProcess.MAXIMIZE,
+        valuation_rule=expected_return,
+        decision_process=maximize_value,
         # Expected appreciation == required return is a real tie (buy
         # value 0 == hold value 0). Resolved explicitly by D, not by
         # [BUY, HOLD] order in F̂: expected appreciation == required
@@ -177,7 +175,7 @@ def build_investor(required_return, name, feedback_strength=BASE_FEEDBACK_STRENG
             "tie_break_preference": HOLD,
         },
         horizon="next period",
-        update_rule=UpdateRule.PRICE_GROWTH_EXPECTATIONS,
+        update_rule=price_growth_expectation_update,
     )
 
 
@@ -210,9 +208,9 @@ BASE_SCENARIO = Scenario(
         "price_sensitivity": 0.01,
     },
 
-    reality=RealityRule.DEMAND_MOVES_PRICE,
-    transition=TransitionRule.REALIZED_PRICE,
-    observation=ObservationRule.PRICE,
+    reality=demand_price_reality,
+    transition=realized_price_transition,
+    observation=observe_price,
 )
 
 

@@ -33,9 +33,10 @@ test_feasibility_contract.py.
 
 import unittest
 
+from research.ter.rules import mapped_value
+
 from research.ter.outcome import is_actually_feasible
 from research.ter.reality import RealityResult
-from research.ter.rules import register_rule
 from research.ter.runner import run_scenario
 from research.ter.scenario import AgentSpec, Scenario
 
@@ -44,7 +45,6 @@ ORDINARY_ACTION = "ordinary_action"
 UNREACHABLE_ACTION = "unreachable_action"
 
 
-@register_rule("always_select_unreachable")
 def always_select_unreachable(view):
     """
     Local Model 5.1 decision rule for this test only. Always selects
@@ -76,7 +76,6 @@ def _reaches(value, attribute, sentinel):
     return False
 
 
-@register_rule("boundary_probe_reality")
 def boundary_probe_reality(actions, objective_state, parameters):
     """
     Local Model 5.2 reality rule for this test only.
@@ -136,8 +135,8 @@ BASE_AGENT = AgentSpec(
         ORDINARY_ACTION,
         UNREACHABLE_ACTION,
     ],
-    valuation_rule="mapped_value",
-    decision_process="always_select_unreachable",
+    valuation_rule=mapped_value,
+    decision_process=always_select_unreachable,
     horizon="current decision",
 )
 
@@ -176,64 +175,30 @@ SCENARIO = Scenario(
         BLOCKED_AGENT,
         CLEAR_AGENT,
     ],
-    reality="boundary_probe_reality",
+    reality=boundary_probe_reality,
 )
 
 
 class TestRealityBeliefBoundaryContract(unittest.TestCase):
     TEST_NAME = "Framework: Reality/Belief Boundary Contract"
 
-    def test_r_can_access_the_selected_c(self):
+    def test_r_receives_selected_actions_and_objective_permission_data(self):
         result = run_scenario(SCENARIO)
+        blocked = result.agent(BLOCKED_AGENT.name).outcome
+        clear = result.agent(CLEAR_AGENT.name).outcome
 
-        self.assertEqual(
-            result.agent(BLOCKED_AGENT.name).c_seen_by_r,
-            UNREACHABLE_ACTION,
-        )
+        self.assertEqual(blocked["c_seen_by_r"], UNREACHABLE_ACTION)
+        self.assertEqual(clear["c_seen_by_r"], UNREACHABLE_ACTION)
+        self.assertFalse(blocked["actually_feasible"])
+        self.assertTrue(clear["actually_feasible"])
+        self.assertTrue(blocked["sees_permitted_actions"])
 
-        self.assertEqual(
-            result.agent(CLEAR_AGENT.name).c_seen_by_r,
-            UNREACHABLE_ACTION,
-        )
+    def test_r_cannot_access_agent_side_decision_inputs(self):
+        outcome = run_scenario(SCENARIO).agent(BLOCKED_AGENT.name).outcome
 
-    def test_r_can_check_the_selected_action_against_permitted_actions(self):
-        result = run_scenario(SCENARIO)
-
-        self.assertFalse(
-            result.agent(BLOCKED_AGENT.name).actually_feasible,
-        )
-
-        self.assertTrue(
-            result.agent(CLEAR_AGENT.name).actually_feasible,
-        )
-
-    def test_r_cannot_access_model_of_reality(self):
-        result = run_scenario(SCENARIO)
-
-        self.assertFalse(
-            result.agent(BLOCKED_AGENT.name).has_model_of_reality,
-        )
-
-    def test_r_cannot_access_perceived_feasible_set(self):
-        result = run_scenario(SCENARIO)
-
-        self.assertFalse(
-            result.agent(BLOCKED_AGENT.name).has_perceived_feasible_set,
-        )
-
-    def test_r_cannot_access_valuation(self):
-        result = run_scenario(SCENARIO)
-
-        self.assertFalse(
-            result.agent(BLOCKED_AGENT.name).has_valuation,
-        )
-
-    def test_r_can_read_the_permission_data_carried_in_the_objective_state(self):
-        result = run_scenario(SCENARIO)
-
-        self.assertTrue(
-            result.agent(BLOCKED_AGENT.name).sees_permitted_actions,
-        )
+        self.assertFalse(outcome["has_model_of_reality"])
+        self.assertFalse(outcome["has_perceived_feasible_set"])
+        self.assertFalse(outcome["has_valuation"])
 
     def test_selected_action_record_is_preserved_by_the_boundary_check(self):
         result = run_scenario(SCENARIO)
@@ -248,6 +213,6 @@ class TestRealityBeliefBoundaryContract(unittest.TestCase):
         )
 
         self.assertEqual(
-            blocked.c_seen_by_r,
+            blocked.outcome["c_seen_by_r"],
             blocked.selected_action,
         )

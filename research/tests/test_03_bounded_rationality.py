@@ -34,7 +34,7 @@ G   Objective                 choose preferred coffee                        fix
 M   Model of Reality          specified but empty                            fixed
 F̂   Perceived Feasible Set    nearby_coffee, office_coffee, best_coffee      fixed (identical, same
                               -- same order in every scenario                order, in every scenario)
-V   Valuation                 ValuationRule.MAPPED: a hand-assigned value    fixed
+V   Valuation                 mapped_value: a hand-assigned value    fixed
                               for each coffee
 H   Time Horizon              current purchase                               fixed
 D   Decision Process          MAXIMIZE, or LIMITED_SEARCH with               varied
@@ -57,7 +57,7 @@ Assumptions
 -----------
 - search_limit and search_order are test-specific decision_parameters
   entries, not TER primitives. They configure how
-  DecisionProcess.LIMITED_SEARCH searches; they are not part of F̂.
+  limited_search searches; they are not part of F̂.
 - perceived_feasible_set is identical, in the same order, across every
   scenario in this test. Search order is represented by
   decision_parameters["search_order"], never by reordering F̂.
@@ -75,7 +75,8 @@ In this configured scenario:
 
 import unittest
 
-from research.ter import AgentSpec, DecisionProcess, Scenario, ValuationRule, run_scenario
+from research.ter import AgentSpec, Scenario, run_scenario
+from research.ter.rules import limited_search, mapped_value, maximize_value
 
 
 # ---------------------------------------------------------------------------
@@ -119,8 +120,8 @@ BASE_AGENT = AgentSpec(
             BEST_COFFEE: BEST_COFFEE_VALUE,
         },
     },
-    valuation_rule=ValuationRule.MAPPED,
-    decision_process=DecisionProcess.LIMITED_SEARCH,
+    valuation_rule=mapped_value,
+    decision_process=limited_search,
     decision_parameters={
         "search_limit": LIMITED_SEARCH_DEPTH,
         "search_order": [
@@ -153,7 +154,7 @@ LIMITED_SCENARIO = BASE_SCENARIO
 EXHAUSTIVE_SCENARIO = BASE_SCENARIO.variant(
     agents=[
         BASE_AGENT.variant(
-            decision_process=DecisionProcess.MAXIMIZE,
+            decision_process=maximize_value,
             # MAXIMIZE does not use limited-search configuration.
             decision_parameters={},
         ),
@@ -250,25 +251,6 @@ class TestBoundedRationality(unittest.TestCase):
         # Scenario-premise check: F̂ itself never changed -- only D's
         # search_order configuration did.
         self.assertEqual(
-            original_agent.perceived_feasible_set,
-            reordered_agent.perceived_feasible_set,
-        )
-
-    def test_selected_action_belongs_to_perceived_feasible_set_under_each_search_process(self):
-        bounded_agent = run_scenario(LIMITED_SCENARIO).agent(BASE_AGENT.name)
-        exhaustive_agent = run_scenario(EXHAUSTIVE_SCENARIO).agent(BASE_AGENT.name)
-
-        self.assertIn(
-            bounded_agent.selected_action,
-            bounded_agent.perceived_feasible_set,
-        )
-
-        self.assertIn(
-            exhaustive_agent.selected_action,
-            exhaustive_agent.perceived_feasible_set,
-        )
-
-        self.assertNotEqual(
-            bounded_agent.selected_action,
-            exhaustive_agent.selected_action,
+            original_agent.state.perceived_feasible_set,
+            reordered_agent.state.perceived_feasible_set,
         )

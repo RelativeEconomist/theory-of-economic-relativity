@@ -36,7 +36,7 @@ V   Valuation                 horizon_scoped_value (local): counts an        var
                               action's consequence only if it falls within   consequence of H)
                               H; reads M and H
 H   Time Horizon              SHORT_HORIZON vs. LONG_HORIZON                 varied
-D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+D   Decision Process          maximize_value                       fixed
 C   Selected Action           immediate (short horizon), delayed (long       observed
                               horizon)
 F_t, R, outcomes              F_t and outcome realization are outside this test's scope.
@@ -83,8 +83,7 @@ Assumptions
   period falls within the agent's horizon; otherwise it contributes
   nothing. It is not a TER primitive or a universal equation, and TER
   does not require V to read H directly; this valuation reads H because
-  it specifies which consequences the agent counts. (It is registered
-  with register_rule, an implementation detail.)
+  it specifies which consequences the agent counts. It is passed directly as a local callable.
 - This is a binary inclusion boundary, not a discount rate. There is no
   decay, weighting, or continuous function of time, and nothing in
   horizon_scoped_value favors the immediate action for being immediate.
@@ -109,8 +108,8 @@ In this configured decision:
 
 import unittest
 
-from research.ter import AgentSpec, DecisionProcess, Scenario, run_scenario
-from research.ter.rules import register_rule
+from research.ter import AgentSpec, Scenario, run_scenario
+from research.ter.rules import maximize_value
 
 
 # ---------------------------------------------------------------------------
@@ -137,7 +136,6 @@ SHORT_HORIZON = 2
 LONG_HORIZON = 8
 
 
-@register_rule("horizon_scoped_value")
 def horizon_scoped_value(action, agent):
     """
     Local valuation rule for this test only. Implements V (Model 5.1) as a
@@ -189,8 +187,8 @@ BASE_AGENT = AgentSpec(
         IMMEDIATE_PAYOFF_ACTION,
         DELAYED_PAYOFF_ACTION,
     ],
-    valuation_rule="horizon_scoped_value",
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=horizon_scoped_value,
+    decision_process=maximize_value,
     horizon=SHORT_HORIZON,
 )
 

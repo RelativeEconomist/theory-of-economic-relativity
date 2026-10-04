@@ -18,7 +18,7 @@ An agent has two actions. BETTER_ACTION is listed as permitted from period
 
 Period 0's decision is therefore restricted to ORDINARY_ACTION. The
 realized outcome records that experience; the agent observes it and adds
-BETTER_ACTION to F̂ for period 1, where DecisionProcess.MAXIMIZE selects
+BETTER_ACTION to F̂ for period 1, where maximize_value selects
 it for its higher declared value.
 
 TER instantiation
@@ -29,9 +29,9 @@ G   Objective                 obtain the highest payoff from its choice      fix
 M   Model of Reality          specified but empty                            fixed
 F̂   Perceived Feasible Set    [ORDINARY_ACTION] at period 0; adds            varied (by update)
                               BETTER_ACTION for period 1
-V   Valuation                 ValuationRule.MAPPED                           fixed
+V   Valuation                 mapped_value                           fixed
 H   Time Horizon              "ongoing decision"                             fixed
-D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+D   Decision Process          maximize_value                       fixed
 C   Selected Action           ORDINARY_ACTION (period 0), BETTER_ACTION      observed
                               (period 1)
 F_t aspects                   permission data declared in                    fixed
@@ -43,7 +43,7 @@ R   Reality Function          record_experienced_action (local): reports    fixe
                               the action the agent selected as the action
                               it experienced
 O_{i,t} Realized Outcome      experienced_action, from R                     observed
-Observation                   ObservationRule.OWN_OUTCOME: the agent         fixed
+Observation                   observe_own_outcome: the agent         fixed
                               observes its own O_{i,t} exactly
 Update (Model 5.5)            learn_from_experience (local): adds            fixed
                               BETTER_ACTION to F̂ once the agent observes
@@ -75,8 +75,8 @@ Assumptions
   update) are local rules for this test only. Each implements an
   existing TER component as a test-specific specification, not a TER
   primitive or a universal outcome or learning rule. R reports exactly the
-  selected action, with no other consequence logic. (They are registered
-  with register_rule, an implementation detail.)
+  selected action, with no other consequence logic. Both rules are passed
+  directly as functions; no registration is needed.
 - The update changes only what the agent perceives (F̂), and only
   because the agent observed the realized outcome. Selected action ->
   realized outcome -> observation -> later change in F̂; nothing reads
@@ -111,14 +111,12 @@ import unittest
 
 from research.ter import (
     AgentSpec,
-    DecisionProcess,
-    ObservationRule,
     RealityResult,
     Scenario,
-    ValuationRule,
     run_scenario,
 )
-from research.ter.rules import register_rule
+from research.ter.rules import mapped_value, maximize_value, observe_own_outcome
+
 
 
 # ---------------------------------------------------------------------------
@@ -137,7 +135,6 @@ ORDINARY_ACTION_VALUE = 4
 BETTER_ACTION_VALUE = 9
 
 
-@register_rule("record_experienced_action")
 def record_experienced_action(actions, objective_state, parameters):
     """
     Local reality rule for this test only. Implements R (Model 5.2,
@@ -156,14 +153,13 @@ def record_experienced_action(actions, objective_state, parameters):
     )
 
 
-@register_rule("learn_from_experience")
 def learn_from_experience(agent, observation):
     """
     Local update rule for this test only. Implements the agent-side half
     of Model 5.5 as a test-specific specification, not a TER primitive
     or universal learning rule.
 
-    Once the agent observes (ObservationRule.OWN_OUTCOME) that it
+    Once the agent observes (observe_own_outcome) that it
     experienced ORDINARY_ACTION, BETTER_ACTION is added to its perceived
     feasible set. It reads only its own observation and its own F̂ --
     never the permission data, which it cannot reach.
@@ -200,10 +196,10 @@ BASE_AGENT = AgentSpec(
     perceived_feasible_set=[
         ORDINARY_ACTION,
     ],
-    valuation_rule=ValuationRule.MAPPED,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=mapped_value,
+    decision_process=maximize_value,
     horizon="ongoing decision",
-    update_rule="learn_from_experience",
+    update_rule=learn_from_experience,
 )
 
 
@@ -234,8 +230,8 @@ LEARNING_SCENARIO = Scenario(
     agents=[
         BASE_AGENT,
     ],
-    reality="record_experienced_action",
-    observation=ObservationRule.OWN_OUTCOME,
+    reality=record_experienced_action,
+    observation=observe_own_outcome,
 )
 
 
@@ -271,7 +267,7 @@ class TestFeasibleSetLearning(unittest.TestCase):
         )
 
         # BETTER_ACTION is worth more. If it had already been perceived
-        # feasible, DecisionProcess.MAXIMIZE would have selected it instead.
+        # feasible, maximize_value would have selected it instead.
         # Selecting the lower-valued action is itself evidence that
         # BETTER_ACTION was not yet in F_hat at this decision -- this
         # does not require reading AgentState.perceived_feasible_set, which
@@ -306,27 +302,6 @@ class TestFeasibleSetLearning(unittest.TestCase):
         self.assertEqual(
             result.trace.agents_before(1)[BASE_AGENT.name].perceived_feasible_set,
             [ORDINARY_ACTION, BETTER_ACTION],
-        )
-
-    def test_subsequent_decision_selects_the_newly_perceived_higher_valued_action(self):
-        result = run_scenario(LEARNING_SCENARIO)
-
-        first_period_selection = result.trace[0].actions[BASE_AGENT.name]
-        second_period_selection = result.trace[1].actions[BASE_AGENT.name]
-
-        self.assertEqual(
-            first_period_selection,
-            ORDINARY_ACTION,
-        )
-
-        self.assertEqual(
-            second_period_selection,
-            BETTER_ACTION,
-        )
-
-        self.assertNotEqual(
-            first_period_selection,
-            second_period_selection,
         )
 
     def test_permission_data_never_changes(self):

@@ -36,18 +36,18 @@ M   Model of Reality          expected_other_action: the business's belief   var
                               about which action the counterpart will        single-business
                               choose                                         scenarios)
 F̂   Perceived Feasible Set    CONTRIBUTE, FREE_RIDE                          fixed
-V   Valuation                 ValuationRule.PAYOFF_MATRIX: the business's    fixed
+V   Valuation                 payoff_matrix_value: the business's    fixed
                               own perceived payoff_matrix, looked up
                               against M
 H   Time Horizon              single contribution decision                   fixed
-D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+D   Decision Process          maximize_value                       fixed
 C   Selected Action           "contribute" or "free_ride", one per business  observed
 F_t aspects used by R         actual_payoff_matrix: the scenario's own       fixed
                               payoff structure, a scenario-specified
                               condition R reads (not a complete
                               representation of F_t); two-business
                               scenario only
-R   Reality Function          RealityRule.PAYOFF_MATRIX:                     fixed
+R   Reality Function          payoff_matrix_reality:                     fixed
                               realizes payoffs from both businesses'
                               selected actions and actual_payoff_matrix,
                               never from any business's V
@@ -63,7 +63,7 @@ O_t is defined, and no aggregation of the O_{i,t} into one.
 
 Economic mechanism
 ------------------
-ValuationRule.PAYOFF_MATRIX values FREE_RIDE above CONTRIBUTE against
+payoff_matrix_value values FREE_RIDE above CONTRIBUTE against
 either belief about the counterpart (5 > 3 if the other contributes;
 1 > 0 if the other free rides), so FREE_RIDE is strictly preferred
 against either counterpart action for each business under this payoff
@@ -87,7 +87,7 @@ consistency.
 
 Assumptions
 -----------
-- expected_other_action is read directly by ValuationRule.PAYOFF_MATRIX at
+- expected_other_action is read directly by payoff_matrix_value at
   decision time; it is a real input to valuation, not documentation the
   test author resolved by hand before building the agent.
 - This test does not model endogenous belief formation or real-time
@@ -102,7 +102,7 @@ Assumptions
   requirement -- declared independently, not aliased.
 - Because FREE_RIDE strictly dominates CONTRIBUTE for each business
   under this payoff structure, no scenario driven by
-  DecisionProcess.MAXIMIZE selects mutual contribution. The
+  maximize_value selects mutual contribution. The
   mutual-contribution comparison therefore reads the payoff directly off
   the actual payoff structure (ACTUAL_PAYOFF_MATRIX) as an explicitly
   labeled counterfactual -- the payoff both businesses would receive had
@@ -125,14 +125,8 @@ In this configured scenario:
 
 import unittest
 
-from research.ter import (
-    AgentSpec,
-    DecisionProcess,
-    RealityRule,
-    Scenario,
-    ValuationRule,
-    run_scenario,
-)
+from research.ter import AgentSpec, Scenario, run_scenario
+from research.ter.rules import maximize_value, payoff_matrix_reality, payoff_matrix_value
 
 
 # ---------------------------------------------------------------------------
@@ -153,7 +147,7 @@ FREE_RIDE_WHILE_OTHER_CONTRIBUTES_PAYOFF = 5
 MUTUAL_FREE_RIDING_PAYOFF = 1
 
 # V: what each business believes the payoff structure is, used only for
-# valuation (ValuationRule.PAYOFF_MATRIX).
+# valuation (payoff_matrix_value).
 PAYOFF_MATRIX = {
     CONTRIBUTE: {
         CONTRIBUTE: MUTUAL_CONTRIBUTION_PAYOFF,
@@ -166,7 +160,7 @@ PAYOFF_MATRIX = {
 }
 
 # R: the actual payoff structure used to realize O_t
-# (RealityRule.PAYOFF_MATRIX). This test assumes each
+# (payoff_matrix_reality). This test assumes each
 # business understands the game correctly, so this matches
 # PAYOFF_MATRIX exactly -- but it is declared independently and read
 # only by the reality side, never derived from any business's own
@@ -200,8 +194,8 @@ BASE_AGENT = AgentSpec(
         CONTRIBUTE,
         FREE_RIDE,
     ],
-    valuation_rule=ValuationRule.PAYOFF_MATRIX,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=payoff_matrix_value,
+    decision_process=maximize_value,
     horizon="single contribution decision",
 )
 
@@ -256,7 +250,7 @@ MUTUAL_FREE_RIDING_SCENARIO = EXPECTS_CONTRIBUTION_SCENARIO.variant(
     parameters={
         "actual_payoff_matrix": ACTUAL_PAYOFF_MATRIX,
     },
-    reality=RealityRule.PAYOFF_MATRIX,
+    reality=payoff_matrix_reality,
 )
 
 def payoffs_of(result):
@@ -323,7 +317,7 @@ class TestPublicGoods(unittest.TestCase):
             (FREE_RIDE, FREE_RIDE),
         )
 
-        # Realized payoffs come from O (RealityRule.PAYOFF_MATRIX), not
+        # Realized payoffs come from O (payoff_matrix_reality), not
         # from re-deriving them off
         # PAYOFF_MATRIX by hand.
         realized_payoffs = payoffs_of(result)

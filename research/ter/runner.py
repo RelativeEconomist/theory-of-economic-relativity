@@ -7,7 +7,6 @@ from research.ter.decision import select_action
 from research.ter.immutable import FrozenDict, freeze, thaw
 from research.ter.observation import UPDATABLE_FIELDS, Observation, update_view
 from research.ter.reality import RealityResult
-from research.ter.rules import get_rule
 from research.ter.scenario import AgentSpec, Scenario, ScenarioResult
 from research.ter.schedule import Schedule
 from research.ter.trace import Trace, TraceStep, record_agents
@@ -18,20 +17,26 @@ def build_agent(spec: AgentSpec) -> AgentState:
     Convert a declarative AgentSpec into an executable TER AgentState.
     """
 
-    valuation_rule = get_rule(spec.valuation_rule)
-    decision_process = get_rule(spec.decision_process)
+    if not callable(spec.valuation_rule):
+        raise TypeError("AgentSpec.valuation_rule must be callable.")
+
+    if not callable(spec.decision_process):
+        raise TypeError("AgentSpec.decision_process must be callable.")
+
+    if spec.update_rule is not None and not callable(spec.update_rule):
+        raise TypeError("AgentSpec.update_rule must be callable or None.")
 
     return AgentState(
         name=spec.name,
         objective=spec.objective,
         model_of_reality=deepcopy(spec.model_of_reality),
         perceived_feasible_set=list(spec.perceived_feasible_set),
-        value=valuation_rule,
+        value=spec.valuation_rule,
         horizon=spec.horizon,
-        decision_process=decision_process,
+        decision_process=spec.decision_process,
         valuation=deepcopy(spec.valuation),
         decision_parameters=deepcopy(spec.decision_parameters),
-        update=get_rule(spec.update_rule) if spec.update_rule else None,
+        update=spec.update_rule,
     )
 
 
@@ -124,17 +129,14 @@ def run_scenario(scenario: Scenario) -> ScenarioResult:
 
     schedule.validate(agent_names)
 
-    reality = get_rule(scenario.reality) if scenario.reality else None
-    transition = (
-        get_rule(scenario.transition)
-        if scenario.transition
-        else None
-    )
-    observation = (
-        get_rule(scenario.observation)
-        if scenario.observation
-        else None
-    )
+    for name in ("reality", "transition", "observation"):
+        rule = getattr(scenario, name)
+        if rule is not None and not callable(rule):
+            raise TypeError(f"Scenario.{name} must be callable or None.")
+
+    reality = scenario.reality
+    transition = scenario.transition
+    observation = scenario.observation
 
     parameters = freeze(scenario.parameters)
 
@@ -182,7 +184,7 @@ def run_scenario(scenario: Scenario) -> ScenarioResult:
 
         return freeze(next_state)
 
-    def observe(step, actions, result, objective_state):
+    def observe(actions, result, objective_state):
         if observation is None:
             return FrozenDict()
 
@@ -203,7 +205,7 @@ def run_scenario(scenario: Scenario) -> ScenarioResult:
             )
 
         return FrozenDict(
-            (name, Observation(agent=name, step=step, data=data))
+            (name, Observation(data=data))
             for name, data in received.items()
         )
 
@@ -252,7 +254,7 @@ def run_scenario(scenario: Scenario) -> ScenarioResult:
 
         result = realize(actions, objective_state)
         next_objective_state = advance(objective_state, result)
-        observations = observe(step, actions, result, next_objective_state)
+        observations = observe(actions, result, next_objective_state)
 
         for name, observed in observations.items():
             if agents[name].update is not None:
@@ -261,7 +263,6 @@ def run_scenario(scenario: Scenario) -> ScenarioResult:
         steps.append(
             TraceStep(
                 step=step,
-                actors=tuple(actors),
                 actions=actions,
                 reality=result,
                 observations=observations,
@@ -280,10 +281,6 @@ def run_scenario(scenario: Scenario) -> ScenarioResult:
 
     return ScenarioResult(
         scenario=scenario,
-        history=[initial_objective_state] + [
-            step.objective_state
-            for step in steps
-        ],
         trace=trace,
         agent_states=agents,
         realize=realize,

@@ -27,10 +27,10 @@ M   Model of Reality          the quoted price, set by the market helper     var
                               at each candidate price                        price grid)
 F̂   Perceived Feasible Set    BUY, DO_NOT_BUY (buyers); SELL, DO_NOT_SELL    fixed
                               (sellers)
-V   Valuation                 ValuationRule.PRICE_TAKING: reservation value  fixed
+V   Valuation                 price_taking_value: reservation value  fixed
                               minus price (buyer), price minus cost (seller)
 H   Time Horizon              current transaction                            fixed
-D   Decision Process          DecisionProcess.MAXIMIZE with an explicit      fixed
+D   Decision Process          maximize_value with an explicit      fixed
                               tie_break_preference (BUY for buyers, SELL
                               for sellers)
 C   Selected Action           BUY / DO_NOT_BUY or SELL / DO_NOT_SELL, one    observed
@@ -99,7 +99,8 @@ In this configured market:
 
 import unittest
 
-from research.ter import AgentSpec, DecisionProcess, ValuationRule
+from research.ter import AgentSpec
+from research.ter.rules import maximize_value, price_taking_value
 from research.ter.market import evaluate_market, find_market_clearing_states
 
 
@@ -150,8 +151,8 @@ BASE_BUYER = AgentSpec(
         BUY,
         DO_NOT_BUY,
     ],
-    valuation_rule=ValuationRule.PRICE_TAKING,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=price_taking_value,
+    decision_process=maximize_value,
     # A buyer transacts on a zero-surplus tie -- decided explicitly by
     # D, not by perceived_feasible_set order.
     decision_parameters={
@@ -183,8 +184,8 @@ BASE_SELLER = AgentSpec(
         SELL,
         DO_NOT_SELL,
     ],
-    valuation_rule=ValuationRule.PRICE_TAKING,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=price_taking_value,
+    decision_process=maximize_value,
     # A seller transacts on a zero-surplus tie -- decided explicitly by
     # D, not by perceived_feasible_set order.
     decision_parameters={

@@ -39,7 +39,7 @@ F̂   Perceived Feasible Set      LOW_PRODUCTION, HIGH_PRODUCTION               
 V   Valuation                   cobweb_producer_value (local): expected_price    varied (as a consequence
                                 * perceived quantity - perceived cost; reads M   of M)
 H   Time Horizon                current production period                        fixed
-D   Decision Process            DecisionProcess.MAXIMIZE                         fixed
+D   Decision Process            maximize_value                         fixed
 C   Selected Action             LOW_PRODUCTION or HIGH_PRODUCTION                observed (alternates)
 F_t aspects used by R           inverse demand conditions (demand_intercept,     fixed
                                 demand_slope) and the actual production
@@ -49,7 +49,7 @@ F_t aspects used by R           inverse demand conditions (demand_intercept,    
 R   Reality Function            linear_inverse_demand_price (local): price       fixed
                                 from the actual quantity of the selected action
 O_{i,t} Realized Outcome        quantity_produced and price, from R              observed (alternates)
-Observation                     ObservationRule.OWN_OUTCOME: the producer        fixed
+Observation                     observe_own_outcome: the producer        fixed
                                 observes its own O_{i,t} exactly
 Update (Model 5.5)              expected_price_from_realized_price (local):      fixed
                                 sets the next period's expected_price to the
@@ -89,8 +89,7 @@ Assumptions
   and expected_price_from_realized_price (the Model 5.5 update) are local
   to this test. Each implements an existing TER component, is a
   test-specific specification choice, and is neither a TER primitive nor a
-  universal economic equation. No shared rule fits this shape. (They are
-  registered with register_rule, an implementation detail.)
+  universal economic equation. No shared rule fits this shape, so they are passed directly as local callables.
 - Analysis 5.6 is optional, and this test does not rely on it for any TER
   claim. Oscillation here is an analytical behavior observed in one
   configured simulation. The test does not claim that TER predicts
@@ -116,8 +115,13 @@ In this configured cobweb system:
 
 import unittest
 
-from research.ter import AgentSpec, DecisionProcess, ObservationRule, RealityResult, Scenario, run_scenario
-from research.ter.rules import register_rule
+from research.ter import (
+    AgentSpec,
+    RealityResult,
+    Scenario,
+    run_scenario,
+)
+from research.ter.rules import maximize_value, observe_own_outcome
 
 
 # ---------------------------------------------------------------------------
@@ -155,7 +159,6 @@ ACTUAL_QUANTITY_BY_ACTION = {
 }
 
 
-@register_rule("cobweb_producer_value")
 def cobweb_producer_value(action, agent):
     """
     Local valuation rule for this test only. Implements V (Model 5.1) for
@@ -178,7 +181,6 @@ def cobweb_producer_value(action, agent):
     return expected_price * quantity - cost
 
 
-@register_rule("expected_price_from_realized_price")
 def expected_price_from_realized_price(agent, observation):
     """
     Local update rule for this test only. Implements the Model 5.5
@@ -204,7 +206,6 @@ def expected_price_from_realized_price(agent, observation):
     return {"model_of_reality": model}
 
 
-@register_rule("linear_inverse_demand_price")
 def linear_inverse_demand_price(actions, objective_state, parameters):
     """
     Local reality rule for this test only. Implements R (Model 5.2,
@@ -283,10 +284,10 @@ PRODUCER = AgentSpec(
         LOW_PRODUCTION,
         HIGH_PRODUCTION,
     ],
-    valuation_rule="cobweb_producer_value",
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=cobweb_producer_value,
+    decision_process=maximize_value,
     horizon="current production period",
-    update_rule="expected_price_from_realized_price",
+    update_rule=expected_price_from_realized_price,
 )
 
 
@@ -317,8 +318,8 @@ COBWEB_SCENARIO = Scenario(
         "actual_quantity_by_action": ACTUAL_QUANTITY_BY_ACTION,
     },
 
-    reality="linear_inverse_demand_price",
-    observation=ObservationRule.OWN_OUTCOME,
+    reality=linear_inverse_demand_price,
+    observation=observe_own_outcome,
 )
 
 

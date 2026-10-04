@@ -34,17 +34,17 @@ M   Model of Reality          expected_other_action: the firm's belief       var
                               about which standard the counterpart will      scenarios)
                               adopt
 F̂   Perceived Feasible Set    standard_a, standard_b                         fixed
-V   Valuation                 ValuationRule.PAYOFF_MATRIX: the firm's own    fixed
+V   Valuation                 payoff_matrix_value: the firm's own    fixed
                               perceived payoff_matrix, looked up against M
 H   Time Horizon              current coordination decision                  fixed
-D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+D   Decision Process          maximize_value                       fixed
 C   Selected Action           "standard_a" or "standard_b", one per firm     observed
 F_t aspects used by R         actual_payoff_matrix: the scenario's own       fixed
                               payoff structure, a scenario-specified
                               condition R reads (not a complete
                               representation of F_t); two-firm scenarios
                               only
-R   Reality Function          RealityRule.PAYOFF_MATRIX:                     fixed
+R   Reality Function          payoff_matrix_reality:                     fixed
                               realizes payoffs from both firms' selected
                               actions and actual_payoff_matrix, never from
                               any firm's V
@@ -60,7 +60,7 @@ and no aggregation of the O_{i,t} into one.
 
 Economic mechanism
 ------------------
-ValuationRule.PAYOFF_MATRIX values matching the expected counterpart
+payoff_matrix_value values matching the expected counterpart
 standard above switching, so each firm's best response is simply to
 adopt whichever standard it expects the other to adopt. When both firms
 share the same expectation, (A, A) and (B, B) are both mutual
@@ -85,7 +85,7 @@ profile, and the test does not call that profile an equilibrium.
 
 Assumptions
 -----------
-- expected_other_action is read directly by ValuationRule.PAYOFF_MATRIX
+- expected_other_action is read directly by payoff_matrix_value
   at decision time; it is a real input to valuation, not documentation
   the test author resolved by hand before building the agent.
 - This test does not model endogenous belief formation or real-time
@@ -112,14 +112,8 @@ In this configured scenario:
 
 import unittest
 
-from research.ter import (
-    AgentSpec,
-    DecisionProcess,
-    RealityRule,
-    Scenario,
-    ValuationRule,
-    run_scenario,
-)
+from research.ter import AgentSpec, Scenario, run_scenario
+from research.ter.rules import maximize_value, payoff_matrix_reality, payoff_matrix_value
 
 
 # ---------------------------------------------------------------------------
@@ -135,7 +129,7 @@ STANDARD_B = "standard_b"
 # ---------------------------------------------------------------------------
 
 # V: what each firm believes the payoff structure is, used only for
-# valuation (ValuationRule.PAYOFF_MATRIX).
+# valuation (payoff_matrix_value).
 PAYOFF_MATRIX = {
     STANDARD_A: {
         STANDARD_A: 4,
@@ -148,7 +142,7 @@ PAYOFF_MATRIX = {
 }
 
 # R: the actual payoff structure used to realize O_t
-# (RealityRule.PAYOFF_MATRIX). This test assumes each firm
+# (payoff_matrix_reality). This test assumes each firm
 # understands the game correctly, so this matches PAYOFF_MATRIX exactly
 # -- but it is declared independently and read only by the reality
 # side, never derived from any firm's own valuation.
@@ -181,8 +175,8 @@ BASE_AGENT = AgentSpec(
         STANDARD_A,
         STANDARD_B,
     ],
-    valuation_rule=ValuationRule.PAYOFF_MATRIX,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=payoff_matrix_value,
+    decision_process=maximize_value,
     horizon="current coordination decision",
 )
 
@@ -266,7 +260,7 @@ BOTH_EXPECT_A_SCENARIO = EXPECTS_A_SCENARIO.variant(
     parameters={
         "actual_payoff_matrix": ACTUAL_PAYOFF_MATRIX,
     },
-    reality=RealityRule.PAYOFF_MATRIX,
+    reality=payoff_matrix_reality,
 )
 
 BOTH_EXPECT_B_SCENARIO = EXPECTS_A_SCENARIO.variant(
@@ -279,7 +273,7 @@ BOTH_EXPECT_B_SCENARIO = EXPECTS_A_SCENARIO.variant(
     parameters={
         "actual_payoff_matrix": ACTUAL_PAYOFF_MATRIX,
     },
-    reality=RealityRule.PAYOFF_MATRIX,
+    reality=payoff_matrix_reality,
 )
 
 MISCOORDINATION_SCENARIO = EXPECTS_A_SCENARIO.variant(
@@ -292,7 +286,7 @@ MISCOORDINATION_SCENARIO = EXPECTS_A_SCENARIO.variant(
     parameters={
         "actual_payoff_matrix": ACTUAL_PAYOFF_MATRIX,
     },
-    reality=RealityRule.PAYOFF_MATRIX,
+    reality=payoff_matrix_reality,
 )
 
 def payoffs_of(result):
@@ -345,8 +339,8 @@ class TestCoordination(unittest.TestCase):
 
         # Scenario-premise check: only M differs between the two agents.
         self.assertEqual(
-            expects_a.objective,
-            expects_b.objective,
+            expects_a.state.objective,
+            expects_b.state.objective,
         )
 
     def test_both_coordinated_outcomes_are_equilibria(self):
@@ -369,7 +363,7 @@ class TestCoordination(unittest.TestCase):
             (STANDARD_B, STANDARD_B),
         )
 
-        # Realized payoffs come from O (RealityRule.PAYOFF_MATRIX), not
+        # Realized payoffs come from O (payoff_matrix_reality), not
         # from re-deriving them off
         # PAYOFF_MATRIX by hand.
         payoffs_a = payoffs_of(result_a)

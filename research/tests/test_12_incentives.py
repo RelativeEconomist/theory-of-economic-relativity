@@ -25,10 +25,10 @@ Component                     Instantiation in this test                     Sta
 G   Objective                 choose the most valuable way to commute        fixed
 M   Model of Reality          specified but empty                            fixed
 F̂   Perceived Feasible Set    DRIVE, TAKE_TRANSIT                            fixed
-V   Valuation                 ValuationRule.NET: benefit minus cost          varied (DRIVE's cost
+V   Valuation                 net_value: benefit minus cost          varied (DRIVE's cost
                                                                              only)
 H   Time Horizon              current commute decision                       fixed
-D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+D   Decision Process          maximize_value                       fixed
 C   Selected Action           DRIVE or TAKE_TRANSIT                          observed
 F_t, R, outcomes              F_t and outcome realization are outside this test's scope.
 
@@ -47,7 +47,7 @@ Driving tax:
 Assumptions
 -----------
 - The driving tax is a test-specific economic assumption represented as
-  a cost inside ValuationRule.NET's existing benefit-minus-cost valuation,
+  a cost inside net_value's existing benefit-minus-cost valuation,
   not a new TER primitive, rule, or helper.
 - The tax is represented here as a cost in V because this test models
   its effect on the commuter's valuation. A belief about the tax --
@@ -65,7 +65,8 @@ In this configured scenario:
 
 import unittest
 
-from research.ter import AgentSpec, DecisionProcess, Scenario, ValuationRule, run_scenario
+from research.ter import AgentSpec, Scenario, run_scenario
+from research.ter.rules import maximize_value, net_value
 
 
 # ---------------------------------------------------------------------------
@@ -108,8 +109,8 @@ BASE_COMMUTER = AgentSpec(
         DRIVE,
         TAKE_TRANSIT,
     ],
-    valuation_rule=ValuationRule.NET,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=net_value,
+    decision_process=maximize_value,
     horizon="current commute decision",
 )
 

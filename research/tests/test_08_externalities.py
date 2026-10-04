@@ -37,13 +37,13 @@ V   Valuation                 private_values (always); under INTERNALIZED,   var
                               from M, so V depends on M without the two
                               becoming the same thing
 H   Time Horizon              current production decision                    fixed
-D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+D   Decision Process          maximize_value                       fixed
 C   Selected Action           PRODUCE or DO_NOT_PRODUCE                      observed
 F_t aspects used by R         the scenario's actual private_values and       fixed
                               external_effects for each action --
                               scenario-specified conditions R reads (not a
                               complete representation of F_t)
-R   Reality Function          RealityRule.SOCIAL_VALUE: realizes O from      fixed
+R   Reality Function          social_value_reality: realizes O from      fixed
                               the firm's selected action and the scenario's
                               own parameters, never from the firm's belief
                               or declared valuation
@@ -116,7 +116,7 @@ Assumptions
 - Social value is not precomputed into its own constant: assertions
   express it directly as PRIVATE_VALUE + EXTERNAL_EFFECT for the action in
   question, so the raw assumptions above stay the only place a number is
-  defined; firm.social_value remains the framework's own computed result.
+  defined; firm.outcome["social_value"] remains the framework's own computed result.
 - The selected action produces the realized outcome O_{i,t}.
   AgentResult.outcome_for(action) is used only for counterfactual
   comparison with the alternative action and must not be interpreted as
@@ -139,7 +139,13 @@ In this configured scenario:
 
 import unittest
 
-from research.ter import AgentSpec, DecisionProcess, RealityRule, Scenario, ValuationRule, run_scenario
+from research.ter import AgentSpec, Scenario, run_scenario
+from research.ter.rules import (
+    internalized_value,
+    maximize_value,
+    private_value,
+    social_value_reality,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -189,8 +195,8 @@ BASE_FIRM = AgentSpec(
         PRODUCE,
         DO_NOT_PRODUCE,
     ],
-    valuation_rule=ValuationRule.PRIVATE,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=private_value,
+    decision_process=maximize_value,
     horizon="current production decision",
 )
 
@@ -225,7 +231,7 @@ PRIVATE_INCENTIVE_SCENARIO = Scenario(
             DO_NOT_PRODUCE: DO_NOT_PRODUCE_EXTERNAL_EFFECT,
         },
     },
-    reality=RealityRule.SOCIAL_VALUE,
+    reality=social_value_reality,
 )
 
 
@@ -234,7 +240,7 @@ INTERNALIZED_SCENARIO = PRIVATE_INCENTIVE_SCENARIO.variant(
     description="The firm's own valuation already incorporates the external cost.",
     agents=[
         BASE_FIRM.variant(
-            valuation_rule=ValuationRule.INTERNALIZED,
+            valuation_rule=internalized_value,
         ),
     ],
 )
@@ -256,7 +262,7 @@ class TestExternalities(unittest.TestCase):
         )
 
         self.assertEqual(
-            firm.private_value,
+            firm.outcome["private_value"],
             PRODUCE_PRIVATE_VALUE,
         )
 
@@ -264,12 +270,12 @@ class TestExternalities(unittest.TestCase):
         firm = run_scenario(PRIVATE_INCENTIVE_SCENARIO).agent(BASE_FIRM.name)
 
         self.assertEqual(
-            firm.external_effect,
+            firm.outcome["external_effect"],
             PRODUCE_EXTERNAL_EFFECT,
         )
 
         self.assertLess(
-            firm.external_effect,
+            firm.outcome["external_effect"],
             0,
         )
 
@@ -277,22 +283,22 @@ class TestExternalities(unittest.TestCase):
         firm = run_scenario(PRIVATE_INCENTIVE_SCENARIO).agent(BASE_FIRM.name)
 
         self.assertEqual(
-            firm.private_value,
+            firm.outcome["private_value"],
             PRODUCE_PRIVATE_VALUE,
         )
 
         self.assertEqual(
-            firm.social_value,
+            firm.outcome["social_value"],
             PRODUCE_PRIVATE_VALUE + PRODUCE_EXTERNAL_EFFECT,
         )
 
         self.assertGreater(
-            firm.private_value,
+            firm.outcome["private_value"],
             0,
         )
 
         self.assertLess(
-            firm.social_value,
+            firm.outcome["social_value"],
             0,
         )
 
@@ -304,10 +310,10 @@ class TestExternalities(unittest.TestCase):
             PRODUCE,
         )
 
-        # firm.social_value is the realized O for the action actually
+        # firm.outcome["social_value"] is the realized O for the action actually
         # selected (PRODUCE).
         self.assertEqual(
-            firm.social_value,
+            firm.outcome["social_value"],
             PRODUCE_PRIVATE_VALUE + PRODUCE_EXTERNAL_EFFECT,
         )
 
@@ -315,13 +321,13 @@ class TestExternalities(unittest.TestCase):
         # social value would have resulted from the alternative action,
         # not another realized outcome.
         self.assertEqual(
-            firm.outcome_for(DO_NOT_PRODUCE).social_value,
+            firm.outcome_for(DO_NOT_PRODUCE).outcome["social_value"],
             DO_NOT_PRODUCE_PRIVATE_VALUE + DO_NOT_PRODUCE_EXTERNAL_EFFECT,
         )
 
         self.assertLess(
-            firm.social_value,
-            firm.outcome_for(DO_NOT_PRODUCE).social_value,
+            firm.outcome["social_value"],
+            firm.outcome_for(DO_NOT_PRODUCE).outcome["social_value"],
         )
 
     def test_internalizing_external_cost_changes_selected_action(self):

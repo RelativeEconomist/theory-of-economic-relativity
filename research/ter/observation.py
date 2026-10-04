@@ -21,8 +21,6 @@ class Observation:
     told cannot be rewritten after the fact.
     """
 
-    agent: str
-    step: int
     data: Mapping[str, Any]
 
     def __post_init__(self):

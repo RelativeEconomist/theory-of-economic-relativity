@@ -20,11 +20,10 @@ import unittest
 from research.ter import (
     AgentGroup,
     AgentSpec,
-    DecisionProcess,
     Scenario,
-    ValuationRule,
     run_scenario,
 )
+from research.ter.rules import mapped_value, maximize_value
 
 
 BASE_AGENT = AgentSpec(
@@ -37,8 +36,8 @@ BASE_AGENT = AgentSpec(
         },
     },
     perceived_feasible_set=["a"],
-    valuation_rule=ValuationRule.MAPPED,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=mapped_value,
+    decision_process=maximize_value,
 )
 
 

@@ -26,10 +26,10 @@ G   Objective                 maximize transaction value                     fix
 M   Model of Reality          the quoted market price, assumed correctly     fixed
                               observed
 F̂   Perceived Feasible Set    SELL, DO_NOT_SELL                              fixed
-V   Valuation                 ValuationRule.PRICE_TAKING: price relative to  varied (by seller)
+V   Valuation                 price_taking_value: price relative to  varied (by seller)
                               reservation cost
 H   Time Horizon              current sale decision                          fixed
-D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+D   Decision Process          maximize_value                       fixed
 C   Selected Action           SELL or DO_NOT_SELL, one per seller            observed
 F_t, R, outcomes              F_t and outcome realization are outside this test's scope.
 
@@ -83,7 +83,8 @@ In this configured market:
 
 import unittest
 
-from research.ter import AgentSpec, DecisionProcess, Scenario, ValuationRule, run_scenario
+from research.ter import AgentSpec, Scenario, run_scenario
+from research.ter.rules import maximize_value, price_taking_value
 
 
 # ---------------------------------------------------------------------------
@@ -132,8 +133,8 @@ BASE_SELLER = AgentSpec(
         SELL,
         DO_NOT_SELL,
     ],
-    valuation_rule=ValuationRule.PRICE_TAKING,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=price_taking_value,
+    decision_process=maximize_value,
     horizon="current sale decision",
 )
 

@@ -23,11 +23,10 @@ class AgentSpec:
     configuration is never mistaken for the agent's beliefs about
     reality.
 
-    update_rule names how this agent turns an Observation into changed
+    update_rule defines how this agent turns an Observation into changed
     agent-side components (M, F_hat, G, V data, H, decision_parameters)
     between decision points -- the agent-side half of Model 5.5.
-    valuation_rule, decision_process, and update_rule are each a
-    registered rule name, a public enum member, or a plain callable.
+    valuation_rule, decision_process, and update_rule are callables.
 
     F_t, the objective feasible state of reality, is not declared here.
     It is not agent specific: it belongs to the Scenario (see
@@ -38,12 +37,12 @@ class AgentSpec:
     objective: Any
     model_of_reality: dict[str, Any]
     perceived_feasible_set: list[Any]
-    valuation_rule: "RuleRef"
-    decision_process: "RuleRef"
+    valuation_rule: Callable[..., Any]
+    decision_process: Callable[..., Any]
     horizon: Any = None
     valuation: dict[str, Any] = field(default_factory=dict)
     decision_parameters: dict[str, Any] = field(default_factory=dict)
-    update_rule: "RuleRef | None" = None
+    update_rule: Callable[..., Any] | None = None
 
     def variant(
         self,
@@ -135,8 +134,7 @@ class Scenario:
     )
 
     # The rules that govern execution (research.ter.runner.run_scenario).
-    # Each is a registered rule name, a public enum member, or a plain
-    # callable:
+    # Each rule is passed directly as a callable:
     #
     #   reality      R:  (actions, objective_state, parameters)
     #                    -> RealityResult          realizes O, nothing else
@@ -155,14 +153,10 @@ class Scenario:
     # objective_state["permitted_actions"] (agent name -> permitted
     # actions); see research.ter.outcome. Agents change only through
     # their own update_rule, applied to the Observation they receive.
-    reality: "RuleRef | None" = None
-    transition: "RuleRef | None" = None
-    observation: "RuleRef | None" = None
+    reality: Callable[..., Any] | None = None
+    transition: Callable[..., Any] | None = None
+    observation: Callable[..., Any] | None = None
     schedule: Any = None
-
-    metadata: dict[str, Any] = field(
-        default_factory=dict
-    )
 
     def variant(
         self,
@@ -213,26 +207,8 @@ class AgentResult:
     decision process selected at its last decision point, not something
     any reality rule needs to report (None if the agent never acted).
 
-    Common state attributes are available directly, e.g. `firm.objective`,
-    `firm.perceived_feasible_set`, `firm.model_of_reality`. The full AgentState remains available as
-    `.state` for advanced use; normal tests should not need it.
-
-    Attribute lookup precedence:
-
-        1. per-agent outcome fields (e.g. `.social_value`) -- O_i,t, as
-           the scenario's reality rule reported it in
-           RealityResult.agents for this agent's name.
-        2. AgentState's own fields (`.objective`,
-           `.perceived_feasible_set`, `.model_of_reality`, `.horizon`,
-           `.name`, etc).
-        3. AgentState.model_of_reality fields -- an agent's own declared
-           economic facts and beliefs, e.g.
-           `agent.model_of_reality["failure_probability"]` becomes
-           `result.agent(name).failure_probability`. This is a
-           read-through only: model_of_reality data is never copied or
-           moved, and looking it up this way changes nothing about how
-           it was computed or stored.
-        4. AttributeError if none of the above has the key.
+    State and outcome provenance stays explicit: use `.state` for the
+    final AgentState and `.outcome` for the last realized O_i,t mapping.
 
     `outcome_for(action)` gives this agent's outcome for an alternative
     action by re-running R once, deterministically, at the agent's last
@@ -246,21 +222,6 @@ class AgentResult:
     outcome: Mapping[str, Any]
     selected_action: Any = None
     rerun_reality: Callable[[Any], Mapping[str, Any]] | None = None
-
-    def __getattr__(self, key: str) -> Any:
-        if key in self.outcome:
-            return self.outcome[key]
-
-        if hasattr(self.state, key):
-            return getattr(self.state, key)
-
-        if key in self.state.model_of_reality:
-            return self.state.model_of_reality[key]
-
-        raise AttributeError(
-            f"AgentResult for {self.state.name!r} has no {key!r}. "
-            f"Available outcome fields: {sorted(self.outcome)}"
-        )
 
     def value_of(self, action: Any) -> float:
         """
@@ -307,18 +268,21 @@ class ScenarioResult:
     """
 
     scenario: Scenario
-    history: list[Any]
     trace: Any
     agent_states: dict[str, Any]
     realize: Callable[..., Any] = field(repr=False)
 
     @property
     def initial(self):
-        return self.history[0]
+        return self.trace.initial
 
     @property
     def final(self):
-        return self.history[-1]
+        return self.trace.final
+
+    @property
+    def history(self):
+        return self.trace.history
 
     def counterfactual(self, step: int, actions: dict[str, Any]):
         """
@@ -398,10 +362,6 @@ class ScenarioResult:
             selected_action=step.actions[name],
             rerun_reality=rerun_reality,
         )
-
-
-RuleRef = str | Callable[..., Any]
-
 SCENARIO_FIELDS = frozenset(
     scenario_field.name
     for scenario_field in fields(Scenario)

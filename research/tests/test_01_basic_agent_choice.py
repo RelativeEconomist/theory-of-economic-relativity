@@ -21,10 +21,10 @@ Component                     Instantiation in this test                     Sta
 G   Objective                 choose coffee                                  fixed
 M   Model of Reality          specified but empty                            fixed
 F̂   Perceived Feasible Set    coffee_a, coffee_c, coffee_b                   fixed
-V   Valuation                 ValuationRule.MAPPED: a hand-assigned value    fixed
+V   Valuation                 mapped_value: a hand-assigned value    fixed
                               for each coffee
 H   Time Horizon              current decision                               fixed
-D   Decision Process          DecisionProcess.MAXIMIZE                       fixed
+D   Decision Process          maximize_value                       fixed
 C   Selected Action           coffee_c                                       observed
 F_t, R, outcomes              F_t and outcome realization are outside this test's scope.
 
@@ -48,7 +48,8 @@ In this configured scenario:
 
 import unittest
 
-from research.ter import AgentSpec, DecisionProcess, Scenario, ValuationRule, run_scenario
+from research.ter import AgentSpec, Scenario, run_scenario
+from research.ter.rules import mapped_value, maximize_value
 
 
 # ---------------------------------------------------------------------------
@@ -89,8 +90,8 @@ BASE_AGENT = AgentSpec(
             COFFEE_C: COFFEE_C_VALUE,
         },
     },
-    valuation_rule=ValuationRule.MAPPED,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=mapped_value,
+    decision_process=maximize_value,
     horizon="current decision",
 )
 

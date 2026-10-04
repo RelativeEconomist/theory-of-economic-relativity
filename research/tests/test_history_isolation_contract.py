@@ -26,15 +26,19 @@ any direct C_t -> F_t+1 pathway.
 
 import unittest
 
-from research.ter import AgentSpec, RealityResult, Scenario, run_scenario
-from research.ter.rules import register_rule
+from research.ter import (
+    AgentSpec,
+    RealityResult,
+    Scenario,
+    run_scenario,
+)
+from research.ter.rules import mapped_value, observe_own_outcome
 
 
 TAG_A = "a"
 TAG_B = "b"
 
 
-@register_rule("history_contract_echo_reality")
 def history_contract_echo_reality(actions, objective_state, parameters):
     """Each agent's O_i,t is the action it selected."""
     return RealityResult(
@@ -45,17 +49,6 @@ def history_contract_echo_reality(actions, objective_state, parameters):
     )
 
 
-@register_rule("history_contract_observe_own")
-def history_contract_observe_own(agents, actions, reality, objective_state, parameters):
-    """Each agent observes its own O_i,t."""
-    return {
-        name: dict(reality.agent(name))
-        for name in agents
-        if name in reality.agents
-    }
-
-
-@register_rule("history_contract_mutating_update")
 def history_contract_mutating_update(agent, observation):
     """
     Artificial stressor, not a TER update specification: after the
@@ -76,7 +69,6 @@ def history_contract_mutating_update(agent, observation):
     }
 
 
-@register_rule("history_contract_mutating_transition")
 def history_contract_mutating_transition(objective_state, reality, parameters):
     """
     Artificial stressor, not a TER transition: remove TAG_B from every
@@ -86,10 +78,11 @@ def history_contract_mutating_transition(objective_state, reality, parameters):
         if TAG_B in permitted:
             permitted.remove(TAG_B)
 
+    objective_state["generation"] += 1
+
     return objective_state
 
 
-@register_rule("history_contract_prefer_a")
 def history_contract_prefer_a(agent):
     """Always select TAG_A, so decisions stay constant."""
     return TAG_A
@@ -104,9 +97,9 @@ BASE_AGENT = AgentSpec(
     perceived_feasible_set=[
         TAG_A,
     ],
-    valuation_rule="mapped_value",
-    decision_process="history_contract_prefer_a",
-    update_rule="history_contract_mutating_update",
+    valuation_rule=mapped_value,
+    decision_process=history_contract_prefer_a,
+    update_rule=history_contract_mutating_update,
 )
 
 
@@ -115,6 +108,7 @@ SCENARIO = Scenario(
     description="Minimal scenario for verifying history isolation.",
     periods=2,
     initial_state={
+        "generation": 0,
         "permitted_actions": {
             BASE_AGENT.name: [TAG_A, TAG_B],
         },
@@ -122,10 +116,10 @@ SCENARIO = Scenario(
     agents=[
         BASE_AGENT,
     ],
-    reality="history_contract_echo_reality",
-    observation="history_contract_observe_own",
+    reality=history_contract_echo_reality,
+    observation=observe_own_outcome,
     # Artificial mutation used to test history isolation; not a TER dynamic.
-    transition="history_contract_mutating_transition",
+    transition=history_contract_mutating_transition,
 )
 
 
@@ -139,8 +133,8 @@ class TestHistoryIsolationContract(unittest.TestCase):
         final = result.agent(BASE_AGENT.name)
 
         # The agent was changed by its update; the initial record was not.
-        self.assertIn(TAG_B, final.perceived_feasible_set)
-        self.assertTrue(final.model_of_reality["mutated"])
+        self.assertIn(TAG_B, final.state.perceived_feasible_set)
+        self.assertTrue(final.state.model_of_reality["mutated"])
 
         self.assertEqual(initial.perceived_feasible_set, [TAG_A])
         self.assertFalse(initial.model_of_reality["mutated"])
@@ -178,10 +172,13 @@ class TestHistoryIsolationContract(unittest.TestCase):
             {BASE_AGENT.name: [TAG_A, TAG_B]},
         )
 
-    def test_recording_does_not_change_execution_behavior(self):
+    def test_successive_trace_snapshots_keep_each_periods_objective_state(self):
         result = run_scenario(SCENARIO)
 
         self.assertEqual(
-            [step.actions[BASE_AGENT.name] for step in result.trace],
-            [TAG_A, TAG_A],
+            [state["generation"] for state in result.history],
+            [0, 1, 2],
         )
+
+        self.assertEqual(result.initial["generation"], 0)
+        self.assertEqual(result.final["generation"], 2)
