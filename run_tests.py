@@ -52,9 +52,18 @@ def main():
     repo_root = Path(__file__).resolve().parent
     tests_dir = repo_root / "research" / "tests"
 
+    # Optional: run a single test file, e.g.
+    # python3 run_tests.py research/tests/test_27_pokemon_card_choice.py
+    pattern = "test_*.py"
+    if len(sys.argv) > 1:
+        test_file = Path(sys.argv[1])
+        if not (tests_dir / test_file.name).is_file():
+            raise SystemExit(f"Test file not found in research/tests: {sys.argv[1]}")
+        pattern = test_file.name
+
     suite = unittest.defaultTestLoader.discover(
         start_dir=str(tests_dir),
-        pattern="test_*.py",
+        pattern=pattern,
         top_level_dir=str(repo_root),
     )
 

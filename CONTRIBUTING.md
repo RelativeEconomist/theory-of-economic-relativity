@@ -55,7 +55,7 @@ Run `python3 run_tests.py` and check that:
 
 - existing tests still pass
 - the new test has a clear economic question
-- shared rules are selected via the public enums; bare strings are used only for local, test-scoped rules registered in that same file/module
+- shared rules are imported from `research.ter.rules`; local rules are passed directly as callables, never symbolic strings
 - results are read via `.agent(name)`, not positional indexing
 - important numeric assumptions are visible near the top, not buried
 - test assumptions are not presented as TER rules

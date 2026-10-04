@@ -28,26 +28,34 @@ TER instantiation
 -----------------
 Component                     Instantiation in this test                     Status
 G   Objective                 increase investment value                      fixed
-M   Model of Reality          expected_appreciation: a belief about future   varied (by feedback)
-                              price movement, the same for every investor
-                              at the start
+M   Model of Reality          expected_appreciation: a belief about future   varied (expected_
+                              price movement, the same for every investor    appreciation, by
+                              at the start; feedback_strength: how strongly  observation;
+                              the investor believes observed growth          feedback_strength,
+                              carries forward                                across scenarios)
 F̂   Perceived Feasible Set    BUY, HOLD                                      fixed
-V   Valuation                 ValuationRule.EXPECTED_RETURN:                 fixed (distinct per
+V   Valuation                 expected_return:                 fixed (distinct per
                               required_return                                investor)
 H   Time Horizon              next period                                    fixed
-D   Decision Process          DecisionProcess.MAXIMIZE, with an explicit     fixed
+D   Decision Process          maximize_value, with an explicit     fixed
                               tie_break_preference of HOLD
 C   Selected Action           BUY or HOLD, one per investor                  observed
-F_t aspects used by R         the current price (scenario state) and         varied (price, by R)
+F_t aspects used by R         the current price (objective state) and        varied (price, by
+                                                                             transition)
                               price_sensitivity -- scenario-specified
                               conditions R reads (not a complete
                               representation of F_t)
-R   Reality Function          RealityFunction.DEMAND_MOVES_PRICE: moves      fixed
-                              price according to the number of buyers
+R   Reality Function          demand_price_reality: moves price    fixed
+                              according to the number of buyers
 O_t System Outcome            buyers and the realized price, from R          observed
-Feedback (Model 5.5)          FeedbackRule.PRICE_GROWTH_EXPECTATIONS:        varied
-                              updates the next period's M from this          (feedback_strength)
-                              period's realized price growth
+Transition (O_t -> F_t+1)     realized_price_transition: the realized    fixed
+                              price becomes the next period's price
+Observation                   observe_price: every investor          fixed
+                              observes the resulting price exactly
+Update (O_t -> M_t+1)         price_growth_expectation_update: each     fixed
+                              investor sets its expected_appreciation to
+                              its own feedback_strength times the
+                              observed growth
 
 This is a multi-agent specification: R takes all investors' selected
 actions together, so Model 5.3 applies. This test defines no individual
@@ -61,24 +69,32 @@ investor is indifferent (expected appreciation == required return,
 buy value 0 == hold value 0); this test's explicit tie convention
 resolves that to HOLD, via decision_parameters, not by the [BUY, HOLD]
 order in F̂. Aggregate buying moves price upward through
-DEMAND_MOVES_PRICE. Feedback then recomputes expected_appreciation from
-that period's own realized growth, which can again exceed some
+demand_price_reality. Every investor observes the realized price, and its
+update rule recomputes expected_appreciation from that period's own
+realized growth, which can again exceed some
 investors' required returns -- reinforcing buying, and price growth,
 in the following period.
 
 Assumptions
 -----------
-- feedback_strength and price_sensitivity are scenario parameters, not TER
-  primitives; RealityFunction.DEMAND_MOVES_PRICE is one admissible price rule,
-  not a universal TER asset-pricing equation.
+- price_sensitivity is a scenario parameter, not a TER primitive;
+  demand_price_reality is one admissible price rule, not a
+  universal TER asset-pricing equation.
+- feedback_strength is each investor's own belief (M) about how strongly
+  observed growth carries forward, set equal for every investor within a
+  scenario and varied across scenarios. It is not a TER primitive.
 - Every investor's initial expected_appreciation (M_0) is set directly
   from the growth already observed in the scenario's own starting price
-  history (previous_price -> price), not left for feedback to fill in --
-  there is no realized outcome before period 0's decision.
+  history (previous_price -> price), not left for an update to fill in
+  -- there is no realized outcome before period 0's decision.
 - This test represents a bubble-like positive-feedback mechanism, but
   does not establish fundamental overvaluation, irrationality, or
   unsustainability. Rising prices alone are not sufficient to prove an
   economic bubble.
+- Every investor is assumed to observe the realized market price after
+  each period. That observation (observe_price) is the only
+  pathway through which the realized outcome reaches each investor's M; TER does not require
+  prices to be observable.
 
 Hypothesis
 ----------
@@ -91,14 +107,14 @@ In this configured scenario:
 
 import unittest
 
-from research.ter import (
-    AgentSpec,
-    DecisionProcess,
-    FeedbackRule,
-    RealityFunction,
-    Scenario,
-    ValuationRule,
-    run_scenario,
+from research.ter import AgentSpec, Scenario, run_scenario
+from research.ter.rules import (
+    demand_price_reality,
+    expected_return,
+    maximize_value,
+    observe_price,
+    price_growth_expectation_update,
+    realized_price_transition,
 )
 
 
@@ -119,13 +135,15 @@ INVESTOR_REQUIRED_RETURNS = [0.01, 0.02, 0.03, 0.04, 0.05]
 INITIAL_PREVIOUS_PRICE = 100
 INITIAL_PRICE = 105
 
+BASE_FEEDBACK_STRENGTH = 1.0
+
 # M_0: each investor's initial expected_appreciation is the growth
 # already observed in the scenario's own starting price history
 # (INITIAL_PREVIOUS_PRICE -> INITIAL_PRICE), stated directly rather than
-# left for feedback to fill in -- there is no realized outcome before
-# period 0's decision for feedback to act on. Investors carry this
-# belief into period 0 regardless of feedback_strength, which only
-# governs how later, newly observed growth updates it from period 1 on.
+# left for an update to fill in -- there is no realized outcome before
+# period 0's decision to observe. Investors carry this belief into
+# period 0 regardless of feedback_strength, which only governs how
+# later, newly observed growth updates it from period 1 on.
 INITIAL_EXPECTED_APPRECIATION = (
     (INITIAL_PRICE - INITIAL_PREVIOUS_PRICE) / INITIAL_PREVIOUS_PRICE
 )
@@ -135,19 +153,20 @@ INITIAL_EXPECTED_APPRECIATION = (
 # Agents
 # ---------------------------------------------------------------------------
 
-def build_investor(required_return, name):
+def build_investor(required_return, name, feedback_strength=BASE_FEEDBACK_STRENGTH):
     return AgentSpec(
         name=name,
         objective="increase investment value",
         model_of_reality={
             "expected_appreciation": INITIAL_EXPECTED_APPRECIATION,
+            "feedback_strength": feedback_strength,
         },
         valuation={
             "required_return": required_return,
         },
         perceived_feasible_set=[BUY, HOLD],
-        valuation_rule=ValuationRule.EXPECTED_RETURN,
-        decision_process=DecisionProcess.MAXIMIZE,
+        valuation_rule=expected_return,
+        decision_process=maximize_value,
         # Expected appreciation == required return is a real tie (buy
         # value 0 == hold value 0). Resolved explicitly by D, not by
         # [BUY, HOLD] order in F̂: expected appreciation == required
@@ -156,6 +175,7 @@ def build_investor(required_return, name):
             "tie_break_preference": HOLD,
         },
         horizon="next period",
+        update_rule=price_growth_expectation_update,
     )
 
 
@@ -178,22 +198,37 @@ BASE_SCENARIO = Scenario(
     periods=5,
 
     initial_state={
-        "period": 0,
         "previous_price": INITIAL_PREVIOUS_PRICE,
         "price": INITIAL_PRICE,
-        "buyers": 0,
     },
 
     agents=INVESTORS,
 
     parameters={
-        "feedback_strength": 1.0,
         "price_sensitivity": 0.01,
     },
 
-    reality_function=RealityFunction.DEMAND_MOVES_PRICE,
-    feedback_rule=FeedbackRule.PRICE_GROWTH_EXPECTATIONS,
+    reality=demand_price_reality,
+    transition=realized_price_transition,
+    observation=observe_price,
 )
+
+
+def with_feedback_strength(feedback_strength):
+    """
+    BASE_SCENARIO with every investor holding the given feedback_strength
+    belief instead of BASE_FEEDBACK_STRENGTH.
+    """
+    return BASE_SCENARIO.variant(
+        agents=[
+            investor.variant(
+                model_of_reality={
+                    "feedback_strength": feedback_strength,
+                },
+            )
+            for investor in INVESTORS
+        ],
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -209,7 +244,7 @@ class TestSpeculativeBubble(unittest.TestCase):
         )
 
         self.assertGreater(
-            result.history[1]["buyers"],
+            result.trace[0].reality.system["buyers"],
             0,
         )
 
@@ -225,19 +260,11 @@ class TestSpeculativeBubble(unittest.TestCase):
 
     def test_stronger_feedback_produces_more_amplification(self):
         weak = run_scenario(
-            BASE_SCENARIO.variant(
-                parameters={
-                    "feedback_strength": 0.5,
-                }
-            )
+            with_feedback_strength(0.5)
         )
 
         strong = run_scenario(
-            BASE_SCENARIO.variant(
-                parameters={
-                    "feedback_strength": 1.5,
-                }
-            )
+            with_feedback_strength(1.5)
         )
 
         self.assertGreater(
@@ -247,11 +274,7 @@ class TestSpeculativeBubble(unittest.TestCase):
 
     def test_removing_feedback_dampens_price_path(self):
         no_feedback = run_scenario(
-            BASE_SCENARIO.variant(
-                parameters={
-                    "feedback_strength": 0.0,
-                }
-            )
+            with_feedback_strength(0.0)
         )
 
         positive_feedback = run_scenario(

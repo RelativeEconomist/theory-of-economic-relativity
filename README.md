@@ -208,7 +208,10 @@ research/ter/scenario.py
 research/ter/runner.py
 research/ter/rules.py
 research/ter/outcome.py
-research/ter/system.py
+research/ter/reality.py
+research/ter/observation.py
+research/ter/schedule.py
+research/ter/trace.py
 ```
 
 The framework separates TER's common architecture from scenario-specific economics. Specialized assumptions belong in configurations or rules rather than being silently promoted into universal TER claims.

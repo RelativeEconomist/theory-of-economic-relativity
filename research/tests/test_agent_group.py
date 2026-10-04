@@ -20,11 +20,10 @@ import unittest
 from research.ter import (
     AgentGroup,
     AgentSpec,
-    DecisionProcess,
     Scenario,
-    ValuationRule,
     run_scenario,
 )
+from research.ter.rules import mapped_value, maximize_value
 
 
 BASE_AGENT = AgentSpec(
@@ -37,8 +36,8 @@ BASE_AGENT = AgentSpec(
         },
     },
     perceived_feasible_set=["a"],
-    valuation_rule=ValuationRule.MAPPED,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=mapped_value,
+    decision_process=maximize_value,
 )
 
 
@@ -131,14 +130,14 @@ class TestAgentGroup(unittest.TestCase):
                 name="AgentGroup combination smoke test",
                 description="Two combined AgentGroups run as a normal agent list.",
                 periods=1,
-                initial_state={"period": 0},
+                initial_state={},
                 agents=combined,
             )
         )
 
         self.assertEqual(
-            len(result.final["agents"]),
-            4,
+            set(result.trace[0].actions),
+            {"high_risk_1", "high_risk_2", "low_risk_3", "low_risk_4"},
         )
 
     def test_count_below_one_raises_value_error(self):
@@ -166,7 +165,7 @@ class TestAgentGroup(unittest.TestCase):
             name="AgentGroup duplicate name smoke test",
             description="Two groups reusing the same prefix and range collide.",
             periods=1,
-            initial_state={"period": 0},
+            initial_state={},
             agents=first + second,
         )
 

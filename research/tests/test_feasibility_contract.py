@@ -13,7 +13,7 @@ Not an economic replication test.
 
 Representation:
 
-- F_t is not agent-specific. state["permitted_actions"] (agent name ->
+- F_t is not agent-specific. objective_state["permitted_actions"] (agent name ->
   permitted actions) is an implementation index of the scenario-relevant
   aspects of F_t -- here, each producer's production ceiling -- read only
   by the local R.
@@ -47,14 +47,16 @@ Verified behavior
 Out of scope
 ------------
 capacity_constrained_realization is one admissible specification of R,
-scoped to this test and registered here rather than in the generic
-rules.py registry. It is not a universal TER consequence rule.
+scoped to this test and defined here rather than in the shared
+research.ter.rules module. It is not a universal TER consequence rule.
 """
 
 import unittest
 
+from research.ter.rules import mapped_value, maximize_value
+
 from research.ter.outcome import is_actually_feasible, permitted_actions_for
-from research.ter.rules import build_agent_results, register_rule
+from research.ter.reality import RealityResult
 from research.ter.runner import build_agent, run_scenario
 from research.ter.scenario import AgentSpec, Scenario
 
@@ -71,13 +73,12 @@ QUANTITY = {
 }
 
 
-@register_rule("capacity_constrained_realization")
-def capacity_constrained_realization(state, agents, actions, parameters):
+def capacity_constrained_realization(actions, objective_state, parameters):
     """
-    One admissible TER Model 5.2 reality function for this test only.
+    One admissible TER Model 5.2 reality rule for this test only.
 
     For each agent, if the selected action is among the actions the
-    scenario permits for that agent (state["permitted_actions"], an
+    scenario permits for that agent (objective_state["permitted_actions"], an
     implementation index of the scenario-relevant aspects of F_t), it is
     realized exactly as selected. Otherwise, R caps the realized quantity
     at the largest quantity among the actions permitted for that agent.
@@ -92,11 +93,10 @@ def capacity_constrained_realization(state, agents, actions, parameters):
     This is not a universal TER consequence rule. A different scenario
     may specify a different R.
 
-    Uses the internal build_agent_results helper so each producer's
-    actually_feasible/realized_units (implementation field names) can be
-    looked up by name via
-    ScenarioResult.agent(name), the same convention social_value_outcome
-    uses. Kept local to this test rather than promoted to RealityFunction.
+    Each producer's outcome depends only on its own action, so each is
+    reported as its own O_{i,t} (RealityResult.agents), looked up by
+    name via ScenarioResult.agent(name). Kept local to this test rather
+    than moved into the shared rules module.
 
     Required parameter:
 
@@ -105,8 +105,8 @@ def capacity_constrained_realization(state, agents, actions, parameters):
     """
     quantity = parameters["quantity"]
 
-    def compute(agent, action):
-        if is_actually_feasible(state, agent, action):
+    def compute(name, action):
+        if is_actually_feasible(objective_state, name, action):
             return {
                 "actually_feasible": True,
                 "realized_units": quantity[action],
@@ -114,7 +114,7 @@ def capacity_constrained_realization(state, agents, actions, parameters):
 
         capacity = max(
             quantity[feasible_action]
-            for feasible_action in permitted_actions_for(state, agent)
+            for feasible_action in permitted_actions_for(objective_state, name)
         )
 
         return {
@@ -122,7 +122,12 @@ def capacity_constrained_realization(state, agents, actions, parameters):
             "realized_units": min(quantity[action], capacity),
         }
 
-    return build_agent_results(state, agents, actions, compute)
+    return RealityResult(
+        agents={
+            name: compute(name, action)
+            for name, action in actions.items()
+        },
+    )
 
 
 BASE_PRODUCER = AgentSpec(
@@ -140,8 +145,8 @@ BASE_PRODUCER = AgentSpec(
         HOLD,
         PRODUCE_60,
     ],
-    valuation_rule="mapped_value",
-    decision_process="maximize_value",
+    valuation_rule=mapped_value,
+    decision_process=maximize_value,
     horizon="current production decision",
 )
 
@@ -200,7 +205,6 @@ SCENARIO = Scenario(
     periods=1,
 
     initial_state={
-        "period": 0,
         "permitted_actions": PERMITTED_ACTIONS,
     },
 
@@ -214,7 +218,7 @@ SCENARIO = Scenario(
         "quantity": QUANTITY,
     },
 
-    reality_function="capacity_constrained_realization",
+    reality=capacity_constrained_realization,
 )
 
 
@@ -271,11 +275,11 @@ class TestModel52PerceivedFeasibleSetAndOutcomeRealization(unittest.TestCase):
         )
 
         self.assertTrue(
-            agent.actually_feasible
+            agent.outcome["actually_feasible"]
         )
 
         self.assertEqual(
-            agent.realized_units,
+            agent.outcome["realized_units"],
             60,
         )
 
@@ -289,11 +293,11 @@ class TestModel52PerceivedFeasibleSetAndOutcomeRealization(unittest.TestCase):
         )
 
         self.assertFalse(
-            agent.actually_feasible
+            agent.outcome["actually_feasible"]
         )
 
         self.assertEqual(
-            agent.realized_units,
+            agent.outcome["realized_units"],
             60,
         )
 
@@ -312,7 +316,7 @@ class TestModel52PerceivedFeasibleSetAndOutcomeRealization(unittest.TestCase):
         )
 
         self.assertEqual(
-            agent.realized_units,
+            agent.outcome["realized_units"],
             QUANTITY[PRODUCE_60],
         )
 
@@ -326,11 +330,11 @@ class TestModel52PerceivedFeasibleSetAndOutcomeRealization(unittest.TestCase):
         )
 
         self.assertFalse(
-            agent.actually_feasible
+            agent.outcome["actually_feasible"]
         )
 
         self.assertEqual(
-            agent.realized_units,
+            agent.outcome["realized_units"],
             0,
         )
 
@@ -345,6 +349,6 @@ class TestModel52PerceivedFeasibleSetAndOutcomeRealization(unittest.TestCase):
         )
 
         self.assertGreater(
-            mistaken.realized_units,
-            severe.realized_units,
+            mistaken.outcome["realized_units"],
+            severe.outcome["realized_units"],
         )

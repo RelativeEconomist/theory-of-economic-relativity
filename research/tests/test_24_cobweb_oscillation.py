@@ -34,12 +34,12 @@ TER instantiation
 Component                       Instantiation in this test                       Status
 G   Objective                   profit from current-period production            fixed
 M   Model of Reality            expected_price, plus perceived quantities and    expected_price varied
-                                costs                                            (by feedback)
+                                costs                                            (by observation)
 F̂   Perceived Feasible Set      LOW_PRODUCTION, HIGH_PRODUCTION                  fixed
 V   Valuation                   cobweb_producer_value (local): expected_price    varied (as a consequence
                                 * perceived quantity - perceived cost; reads M   of M)
 H   Time Horizon                current production period                        fixed
-D   Decision Process            DecisionProcess.MAXIMIZE                         fixed
+D   Decision Process            maximize_value                         fixed
 C   Selected Action             LOW_PRODUCTION or HIGH_PRODUCTION                observed (alternates)
 F_t aspects used by R           inverse demand conditions (demand_intercept,     fixed
                                 demand_slope) and the actual production
@@ -49,9 +49,11 @@ F_t aspects used by R           inverse demand conditions (demand_intercept,    
 R   Reality Function            linear_inverse_demand_price (local): price       fixed
                                 from the actual quantity of the selected action
 O_{i,t} Realized Outcome        quantity_produced and price, from R              observed (alternates)
-Feedback (Model 5.5)            expected_price_from_realized_price (local):      fixed
+Observation                     observe_own_outcome: the producer        fixed
+                                observes its own O_{i,t} exactly
+Update (Model 5.5)              expected_price_from_realized_price (local):      fixed
                                 sets the next period's expected_price to the
-                                price just realized
+                                price just observed
 
 Action permission is not modeled: what F_t permits for LOW_PRODUCTION and
 HIGH_PRODUCTION is outside this test's scope.
@@ -84,11 +86,10 @@ Assumptions
   levels falls at an expected price of 50, comfortably inside the range
   [40, 80] the trajectory visits, so no assertion depends on a tie.
 - Local rules: cobweb_producer_value (V), linear_inverse_demand_price (R)
-  and expected_price_from_realized_price (Model 5.5 feedback) are local to
-  this test. Each implements an existing TER component, is a
+  and expected_price_from_realized_price (the Model 5.5 update) are local
+  to this test. Each implements an existing TER component, is a
   test-specific specification choice, and is neither a TER primitive nor a
-  universal economic equation. No shared rule fits this shape. (They are
-  registered with register_rule, an implementation detail.)
+  universal economic equation. No shared rule fits this shape, so they are passed directly as local callables.
 - Analysis 5.6 is optional, and this test does not rely on it for any TER
   claim. Oscillation here is an analytical behavior observed in one
   configured simulation. The test does not claim that TER predicts
@@ -103,7 +104,8 @@ In this configured cobweb system:
 1. The first production decision follows from the initial expected price.
 2. That production generates the corresponding realized price (via R).
 3. The realized price becomes the next period's expected price (via
-   feedback), and the next production decision reverses direction.
+   observation and update), and the next production decision reverses
+   direction.
 4. The following realized price reverses direction too.
 5. Production alternates over four periods -- repeated reversal, not a
    one-time adjustment.
@@ -113,8 +115,13 @@ In this configured cobweb system:
 
 import unittest
 
-from research.ter import AgentSpec, DecisionProcess, Scenario, run_scenario
-from research.ter.rules import register_rule
+from research.ter import (
+    AgentSpec,
+    RealityResult,
+    Scenario,
+    run_scenario,
+)
+from research.ter.rules import maximize_value, observe_own_outcome
 
 
 # ---------------------------------------------------------------------------
@@ -152,7 +159,6 @@ ACTUAL_QUANTITY_BY_ACTION = {
 }
 
 
-@register_rule("cobweb_producer_value")
 def cobweb_producer_value(action, agent):
     """
     Local valuation rule for this test only. Implements V (Model 5.1) for
@@ -175,39 +181,34 @@ def cobweb_producer_value(action, agent):
     return expected_price * quantity - cost
 
 
-@register_rule("expected_price_from_realized_price")
-def expected_price_from_realized_price(state, outcome, parameters):
+def expected_price_from_realized_price(agent, observation):
     """
-    Local feedback rule for this test only. Implements the Model 5.5
-    feedback from the realized outcome to M; a test-specific specification
-    choice, not a TER primitive, universal feedback coefficient, or
-    stability criterion.
+    Local update rule for this test only. Implements the Model 5.5
+    update from the observed realized outcome to M; a test-specific
+    specification choice, not a TER primitive, universal feedback
+    coefficient, or stability criterion.
 
-    Sets every agent's expected_price to exactly the current
-    state["price"] -- this period's own just-realized price (see
-    research/ter/runner.py::step: decision -> reality -> feedback, in
-    that order). Because feedback updates the environment for the
-    *next* period rather than the one it ran in, this is always the
-    *previous* period's outcome from that next decision's point of
-    view. This one-period lag is the entire mechanism producing
-    delayed feedback; nothing else does.
+    Sets the producer's expected_price to exactly the price it just
+    observed -- this period's own realized price. Because an update only
+    takes effect for the *next* decision point, this is always the
+    *previous* period's outcome from that next decision's point of view.
+    This one-period lag is the entire mechanism producing delayed
+    feedback; nothing else does.
 
-    Required state field:
+    Required observation field:
 
-        price   populated by linear_inverse_demand_price every period.
-                The very first call to this rule (after period 0) is no
-                different: it reads period 0's own just-realized price.
+        price   the producer's own O_{i,t}, reported by
+                linear_inverse_demand_price every period.
     """
-    for agent in state["agents"]:
-        agent.model_of_reality["expected_price"] = state["price"]
+    model = agent.model_of_reality
+    model["expected_price"] = observation["price"]
 
-    return state
+    return {"model_of_reality": model}
 
 
-@register_rule("linear_inverse_demand_price")
-def linear_inverse_demand_price(state, agents, actions, parameters):
+def linear_inverse_demand_price(actions, objective_state, parameters):
     """
-    Local reality function for this test only. Implements R (Model 5.2,
+    Local reality rule for this test only. Implements R (Model 5.2,
     single-agent specification) for this scenario; the price it reports is
     a market-level quantity computed inside that specification, part of the
     producer's realized outcome.
@@ -233,7 +234,7 @@ def linear_inverse_demand_price(state, agents, actions, parameters):
 
     quantity_produced = sum(
         actual_quantity_by_action[action]
-        for action in actions
+        for action in actions.values()
     )
 
     price = (
@@ -241,10 +242,15 @@ def linear_inverse_demand_price(state, agents, actions, parameters):
         - parameters["demand_slope"] * quantity_produced
     )
 
-    return {
-        "quantity_produced": quantity_produced,
-        "price": price,
-    }
+    return RealityResult(
+        agents={
+            name: {
+                "quantity_produced": quantity_produced,
+                "price": price,
+            }
+            for name in actions
+        },
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -258,7 +264,7 @@ PRODUCER = AgentSpec(
         # M_0: the producer starts period 0 already expecting the
         # market's own stated initial price -- there is no realized
         # outcome yet for expected_price_from_realized_price to act on,
-        # so this cannot be left for feedback to fill in.
+        # so this cannot be left for an update to fill in.
         "expected_price": INITIAL_PRICE_SIGNAL,
         # Decision-side (perceived) quantities, read only by
         # cobweb_producer_value (V) to compute value(action). This test
@@ -278,9 +284,10 @@ PRODUCER = AgentSpec(
         LOW_PRODUCTION,
         HIGH_PRODUCTION,
     ],
-    valuation_rule="cobweb_producer_value",
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=cobweb_producer_value,
+    decision_process=maximize_value,
     horizon="current production period",
+    update_rule=expected_price_from_realized_price,
 )
 
 
@@ -299,9 +306,7 @@ COBWEB_SCENARIO = Scenario(
     ),
     periods=4,
 
-    initial_state={
-        "period": 0,
-    },
+    initial_state={},
 
     agents=[
         PRODUCER,
@@ -313,8 +318,8 @@ COBWEB_SCENARIO = Scenario(
         "actual_quantity_by_action": ACTUAL_QUANTITY_BY_ACTION,
     },
 
-    reality_function="linear_inverse_demand_price",
-    feedback_rule="expected_price_from_realized_price",
+    reality=linear_inverse_demand_price,
+    observation=observe_own_outcome,
 )
 
 
@@ -329,6 +334,16 @@ def _producer_value(expected_price, action):
     return expected_price * quantity - cost
 
 
+def _decision(result, period):
+    """The producer's selected action at decision point `period`."""
+    return result.trace[period].actions[PRODUCER.name]
+
+
+def _realized(result, period):
+    """The producer's realized outcome O_{i,t} at decision point `period`."""
+    return result.trace[period].reality.agent(PRODUCER.name)
+
+
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
@@ -339,7 +354,7 @@ class TestCobwebOscillation(unittest.TestCase):
     def test_first_decision_follows_from_the_initial_expected_price(self):
         result = run_scenario(COBWEB_SCENARIO)
 
-        first_decision = result.history[1]["selected_action_by_agent"]["producer"]
+        first_decision = _decision(result, 0)
 
         self.assertEqual(
             first_decision,
@@ -354,7 +369,7 @@ class TestCobwebOscillation(unittest.TestCase):
     def test_that_production_generates_the_corresponding_realized_price(self):
         result = run_scenario(COBWEB_SCENARIO)
 
-        period_0 = result.history[1]
+        period_0 = _realized(result, 0)
 
         self.assertEqual(
             period_0["quantity_produced"],
@@ -369,8 +384,8 @@ class TestCobwebOscillation(unittest.TestCase):
     def test_the_realized_price_feeds_the_next_decision_which_reverses(self):
         result = run_scenario(COBWEB_SCENARIO)
 
-        period_0 = result.history[1]
-        period_1_decision = result.history[2]["selected_action_by_agent"]["producer"]
+        period_0 = _realized(result, 0)
+        period_1_decision = _decision(result, 1)
 
         # period_0's realized price is exactly what expected_price_from
         # _realized_price will have handed to period 1's decision.
@@ -388,14 +403,14 @@ class TestCobwebOscillation(unittest.TestCase):
 
         self.assertNotEqual(
             period_1_decision,
-            result.history[1]["selected_action_by_agent"]["producer"],
+            _decision(result, 0),
         )
 
     def test_the_subsequent_realized_price_reverses_direction_too(self):
         result = run_scenario(COBWEB_SCENARIO)
 
-        period_0_price = result.history[1]["price"]
-        period_1_price = result.history[2]["price"]
+        period_0_price = _realized(result, 0)["price"]
+        period_1_price = _realized(result, 1)["price"]
 
         self.assertEqual(
             period_1_price,
@@ -411,8 +426,8 @@ class TestCobwebOscillation(unittest.TestCase):
         result = run_scenario(COBWEB_SCENARIO)
 
         decisions = [
-            result.history[t]["selected_action_by_agent"]["producer"]
-            for t in (1, 2, 3, 4)
+            _decision(result, t)
+            for t in (0, 1, 2, 3)
         ]
 
         self.assertEqual(
@@ -437,8 +452,8 @@ class TestCobwebOscillation(unittest.TestCase):
         result = run_scenario(COBWEB_SCENARIO)
 
         expected_price_entering_period = [INITIAL_PRICE_SIGNAL] + [
-            result.history[t]["price"]
-            for t in (1, 2, 3)
+            _realized(result, t)["price"]
+            for t in (0, 1, 2)
         ]
 
         for period_index, expected_price in enumerate(expected_price_entering_period):
@@ -449,7 +464,7 @@ class TestCobwebOscillation(unittest.TestCase):
                 else LOW_PRODUCTION
             )
 
-            actual = result.history[period_index + 1]["selected_action_by_agent"]["producer"]
+            actual = _decision(result, period_index)
 
             self.assertEqual(
                 actual,

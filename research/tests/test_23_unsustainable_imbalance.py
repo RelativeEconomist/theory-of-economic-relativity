@@ -26,24 +26,30 @@ TER instantiation
 -----------------
 Component                         Instantiation in this test                     Status
 G   Objective                     preserve deposit value                         fixed
-M   Model of Reality              failure_probability, risk_signal               varied (by feedback)
+M   Model of Reality              failure_probability, risk_signal,              varied (failure_probability,
+                                  reference_liquidity                            by observation)
 F̂   Perceived Feasible Set        STAY, WITHDRAW                                 fixed
 V   Valuation                     deposit_value, deposit_benefit,                fixed
-                                  withdrawal_cost (BANK_DEPOSITOR)
+                                  withdrawal_cost (bank_depositor_value)
 H   Time Horizon                  "immediate liquidity decision"                 fixed
-D   Decision Process              DecisionProcess.MAXIMIZE                       fixed
+D   Decision Process              maximize_value                       fixed
 C   Selected Action               STAY, or WITHDRAW (a withdrawal request)       observed
-F_t aspects used by R             the bank's available liquidity (scenario       varied (by outcome)
+F_t aspects used by R             the bank's available liquidity (objective      varied (by transition)
                                   state["liquidity"]), which limits how much
                                   of the requests can be honored
-R   Reality Function              RealityFunction.WITHDRAWALS_REDUCE_LIQUIDITY,  fixed
-                                  applied to all 42 depositors' selected
-                                  actions and the liquidity condition
+R   Reality Function              withdrawal_liquidity_reality, applied to all 42     fixed
+                                  depositors' selected actions and the
+                                  liquidity condition
 O_t System Outcome                withdrawals, requested_liquidity,              observed
-                                  realized_withdrawals, remaining liquidity
-Feedback (Model 5.5)              FeedbackRule.BANK_LIQUIDITY_CONFIDENCE:        fixed
-                                  updates each depositor's M from the
-                                  remaining liquidity in the prior outcome
+                                  realized_withdrawals, remaining_liquidity
+Transition (O_t -> F_t+1)         remaining_liquidity_transition: the next   fixed
+                                  period's liquidity is what the realized
+                                  withdrawals left
+Observation                       observe_liquidity: every depositor     fixed
+                                  observes the resulting liquidity exactly
+Update (O_t -> M_t+1)             liquidity_risk_update: each depositor      fixed
+                                  revises its own failure_probability from
+                                  what it observed
 System state (Constraint 5.4)     the existing state in which withdrawal         observed
                                   requests are honored in full from the
                                   bank's available liquidity
@@ -52,8 +58,8 @@ Economic mechanism
 ------------------
 The 2 early depositors' requests are honored in full while liquidity
 covers them (periods 0 and 1), and each realized withdrawal lowers the
-bank's liquidity. The feedback rule raises every depositor's perceived
-failure risk as liquidity falls, until the 40 latent depositors' beliefs
+bank's liquidity. Every depositor observes the falling liquidity, and its
+own update rule raises its perceived failure risk accordingly, until the 40 latent depositors' beliefs
 cross their own threshold too. In period 2, requested withdrawals (4200)
 exceed the liquidity available going into that period (3600), so the
 existing state -- requests honored in full -- cannot be continued. In
@@ -89,21 +95,27 @@ Assumptions
   not that state. The bank's available liquidity is the scenario condition
   that implements the relevant aspect of F_t, and R applies it to the
   requests. The remaining liquidity is reported in the outcome and carried
-  into the next period's state. WITHDRAW is a request, so R decides how
+  into the next period's F by the transition. WITHDRAW is a request, so R decides how
   much of it is realized.
-- withdrawal_amount (the size of each request) is an R parameter, and
-  initial_liquidity is read only by the feedback rule to scale perceived
-  risk into M; neither is a TER variable. No permission data for F_t is
+- withdrawal_amount (the size of each request) is an R parameter, not a
+  TER variable. reference_liquidity is each depositor's own belief (M)
+  about normal liquidity, set equal to the starting liquidity, and read
+  only by its update rule to scale observed liquidity into perceived
+  risk. No permission data for F_t is
   instantiated here, so what F_t permits for STAY or WITHDRAW is outside
   this test's scope.
-- RealityFunction.WITHDRAWALS_REDUCE_LIQUIDITY and
-  FeedbackRule.BANK_LIQUIDITY_CONFIDENCE are shared framework rules. Each is
-  one admissible implementation of R and of the Model 5.5 feedback for this
-  scenario, not a TER primitive or a universal equation. This test defines
+- withdrawal_liquidity_reality, remaining_liquidity_transition,
+  observe_liquidity, and liquidity_risk_update are shared
+  framework rules. Each is one admissible implementation of R and of the
+  Model 5.5 pathway for this scenario, not a TER primitive or a universal equation. This test defines
   no local rule.
 - This test does not claim all liquidity-constrained systems behave this
   way, that TER predicts when continuation becomes infeasible, or that any
   subsequent state follows from Constraint 5.4.
+- As in test_09, every depositor is assumed to observe the bank's
+  realized liquidity after each period. That observation is the only
+  pathway through which the realized outcome reaches each depositor's M;
+  TER does not require liquidity to be observable.
 
 Hypothesis
 ----------
@@ -126,12 +138,16 @@ import unittest
 from research.ter import (
     AgentGroup,
     AgentSpec,
-    DecisionProcess,
-    FeedbackRule,
-    RealityFunction,
     Scenario,
-    ValuationRule,
     run_scenario,
+)
+from research.ter.rules import (
+    bank_depositor_value,
+    liquidity_risk_update,
+    maximize_value,
+    observe_liquidity,
+    remaining_liquidity_transition,
+    withdrawal_liquidity_reality,
 )
 
 
@@ -171,6 +187,7 @@ BASE_DEPOSITOR = AgentSpec(
     model_of_reality={
         "failure_probability": 0.0,
         "risk_signal": 0.0,
+        "reference_liquidity": STARTING_LIQUIDITY,
     },
     valuation={
         "deposit_value": DEPOSIT_VALUE,
@@ -181,9 +198,10 @@ BASE_DEPOSITOR = AgentSpec(
         STAY,
         WITHDRAW,
     ],
-    valuation_rule=ValuationRule.BANK_DEPOSITOR,
-    decision_process=DecisionProcess.MAXIMIZE,
+    valuation_rule=bank_depositor_value,
+    decision_process=maximize_value,
     horizon="immediate liquidity decision",
+    update_rule=liquidity_risk_update,
 )
 
 EARLY_WITHDRAWAL_DEPOSITORS = AgentGroup(
@@ -192,8 +210,8 @@ EARLY_WITHDRAWAL_DEPOSITORS = AgentGroup(
     name_prefix="early_withdrawal_depositor",
     model_of_reality={
         # M_0: this belief is set directly at construction, not left for
-        # feedback to fill in -- there is no realized outcome before
-        # period 0's decision for feedback to act on.
+        # an update to fill in -- there is no realized outcome before
+        # period 0's decision for any depositor to observe.
         "risk_signal": EARLY_WITHDRAWAL_RISK_SIGNAL,
         "failure_probability": EARLY_WITHDRAWAL_RISK_SIGNAL,
     },
@@ -229,20 +247,18 @@ LIQUIDITY_CONSTRAINT_SCENARIO = Scenario(
     periods=3,
 
     initial_state={
-        "period": 0,
         "liquidity": STARTING_LIQUIDITY,
-        "withdrawals": 0,
     },
 
     agents=DEPOSITORS,
 
     parameters={
-        "initial_liquidity": STARTING_LIQUIDITY,
         "withdrawal_amount": WITHDRAWAL_AMOUNT,
     },
 
-    reality_function=RealityFunction.WITHDRAWALS_REDUCE_LIQUIDITY,
-    feedback_rule=FeedbackRule.BANK_LIQUIDITY_CONFIDENCE,
+    reality=withdrawal_liquidity_reality,
+    transition=remaining_liquidity_transition,
+    observation=observe_liquidity,
 )
 
 
@@ -254,27 +270,20 @@ class TestStatePersistenceLiquidityConstraint(unittest.TestCase):
     TEST_NAME = "Test 23: State Persistence Under a Liquidity Constraint"
 
     def test_early_requests_remain_within_available_liquidity(self):
-        result = run_scenario(LIQUIDITY_CONSTRAINT_SCENARIO)
+        trace = run_scenario(LIQUIDITY_CONSTRAINT_SCENARIO).trace
 
-        period_0 = result.history[1]
-        period_1 = result.history[2]
-
-        self.assertLessEqual(
-            period_0["requested_liquidity"],
-            result.history[0]["liquidity"],
-        )
-
-        self.assertLessEqual(
-            period_1["requested_liquidity"],
-            period_0["liquidity"],
-        )
+        for period in (0, 1):
+            self.assertLessEqual(
+                trace[period].reality.system["requested_liquidity"],
+                trace.objective_state_before(period)["liquidity"],
+            )
 
     def test_withdrawal_pressure_persists_then_grows_across_periods(self):
-        result = run_scenario(LIQUIDITY_CONSTRAINT_SCENARIO)
+        trace = run_scenario(LIQUIDITY_CONSTRAINT_SCENARIO).trace
 
-        period_0 = result.history[1]
-        period_1 = result.history[2]
-        period_2 = result.history[3]
+        period_0 = trace[0].reality.system
+        period_1 = trace[1].reality.system
+        period_2 = trace[2].reality.system
 
         # Persists: the same early group withdraws again, unchanged.
         self.assertEqual(
@@ -300,25 +309,20 @@ class TestStatePersistenceLiquidityConstraint(unittest.TestCase):
         )
 
     def test_a_later_period_requests_exceed_available_liquidity(self):
-        result = run_scenario(LIQUIDITY_CONSTRAINT_SCENARIO)
+        trace = run_scenario(LIQUIDITY_CONSTRAINT_SCENARIO).trace
 
-        period_1 = result.history[2]
-        period_2 = result.history[3]
-
-        # The liquidity actually available going into period 2 is
-        # period 1's resulting liquidity -- an immutable, already-
-        # computed outcome field, not a read of any mutable agent state.
-        available_liquidity = period_1["liquidity"]
+        # The liquidity actually available going into period 2 is F_2,
+        # the immutable objective state period 1's transition produced
+        # -- not a read of any mutable agent state.
+        available_liquidity = trace.objective_state_before(2)["liquidity"]
 
         self.assertGreater(
-            period_2["requested_liquidity"],
+            trace[2].reality.system["requested_liquidity"],
             available_liquidity,
         )
 
     def test_reality_prevents_the_full_request_from_being_realized(self):
-        result = run_scenario(LIQUIDITY_CONSTRAINT_SCENARIO)
-
-        period_2 = result.history[3]
+        period_2 = run_scenario(LIQUIDITY_CONSTRAINT_SCENARIO).trace[2].reality.system
 
         self.assertLess(
             period_2["realized_withdrawals"],
@@ -326,26 +330,21 @@ class TestStatePersistenceLiquidityConstraint(unittest.TestCase):
         )
 
     def test_realized_withdrawals_are_constrained_by_available_liquidity(self):
-        result = run_scenario(LIQUIDITY_CONSTRAINT_SCENARIO)
-
-        period_1 = result.history[2]
-        period_2 = result.history[3]
+        trace = run_scenario(LIQUIDITY_CONSTRAINT_SCENARIO).trace
 
         self.assertEqual(
-            period_2["realized_withdrawals"],
-            period_1["liquidity"],
+            trace[2].reality.system["realized_withdrawals"],
+            trace.objective_state_before(2)["liquidity"],
         )
 
-    def test_the_remaining_liquidity_is_zero_under_the_scenarios_reality_function(self):
+    def test_the_remaining_liquidity_is_zero_under_the_scenarios_reality_rule(self):
         result = run_scenario(LIQUIDITY_CONSTRAINT_SCENARIO)
 
-        period_2 = result.history[3]
-
-        # max(0, liquidity - realized_withdrawals), as implemented by
-        # withdrawals_reduce_liquidity, with nothing left to realize the
+        # liquidity - realized_withdrawals, as implemented by
+        # withdrawal_liquidity_reality, with nothing left to realize the
         # remainder of the request.
         self.assertEqual(
-            period_2["liquidity"],
+            result.trace[2].reality.system["remaining_liquidity"],
             0,
         )
 

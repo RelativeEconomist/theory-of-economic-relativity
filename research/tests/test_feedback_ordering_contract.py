@@ -5,97 +5,88 @@ Canonical TER: theory/academic.md, Models 5.1, 5.2 and 5.5
 
 Purpose
 -------
-Verifies the execution ordering inside run_scenario
+Verifies the execution ordering inside the engine
 (research/ter/runner.py::run_scenario):
 
-    decision -> realized outcome -> feedback -> later conditions
+    decision -> realized outcome -> observation -> update -> later decision
 
-Each period's feedback_rule runs only after that period's own decision
-and reality function have produced a realized outcome (O_{i,t}, single
-agent), and it changes only the conditions seen by the *following*
-period's decision -- never the period the outcome was computed from, and
-never before the first decision (there is no realized outcome yet to feed
-back). The local feedback rule below requires and reads that realized
-outcome directly, and does not read the selected action, so if feedback
-ever ran before reality had produced an outcome this test would raise
-instead of silently passing.
+Each period's update rule runs only after that period's own decision and
+reality rule have produced a realized outcome (O_{i,t}, single agent) and
+the agent has observed it, and it changes only the conditions seen by the
+*following* period's decision -- never the period the outcome was
+computed from, and never before the first decision (there is no realized
+outcome yet to observe). The local update rule below requires and reads
+that observed outcome directly, and does not read the selected action, so
+if an update ever ran before reality had produced an outcome this test
+would raise instead of silently passing.
 
 The bank run (test_09) and speculative bubble (test_10) replication tests
 demonstrate feedback producing particular economic outcomes across
 multiple periods. This test isolates the ordering guarantee itself, using
-a minimal local rule triple scoped to this file only.
+minimal local rules scoped to this file only.
 
 Out of scope
 ------------
-F_t. The local feedback rule updates an agent-side model_of_reality field
-from the realized outcome; it represents no change to F_t.
+F_t. The local update rule changes an agent-side model_of_reality field
+only; no transition is declared.
 """
 
 import unittest
 
-from research.ter import AgentSpec, Scenario, run_scenario
-from research.ter.rules import register_rule
+from research.ter import (
+    AgentSpec,
+    RealityResult,
+    Scenario,
+    run_scenario,
+)
+from research.ter.rules import mapped_value, observe_own_outcome
 
 
 LOW = "low"
 HIGH = "high"
 
 
-@register_rule("record_realized_action")
-def record_realized_action(state, agents, actions, parameters):
+def record_realized_action(actions, objective_state, parameters):
     """
-    Local Model 5.2 reality function for this test only.
+    Local Model 5.2 reality rule for this test only.
 
     Realizes O_{i,t} as simply the action each agent selected -- this
     contract needs nothing more elaborate than "the agent's selected
-    action was realized." Read by record_feedback_flag as a genuine
-    realized outcome, never inferred from state alone.
+    action was realized."
     """
-    return {
-        "realized_action_by_agent": {
-            agent.name: action
-            for agent, action in zip(agents, actions)
+    return RealityResult(
+        agents={
+            name: {"realized_action": action}
+            for name, action in actions.items()
         },
-    }
+    )
 
 
-@register_rule("record_feedback_flag")
-def record_feedback_flag(state, outcome, parameters):
+def record_feedback_flag(agent, observation):
     """
-    Local Model 5.5 feedback rule for this test only. Requires O_{i,t}
-    (from record_realized_action) and sets a model_of_reality field every
-    agent's *next* decision can observe, only once the realized outcome
-    records that this agent's realized action was LOW. It reads the
-    realized outcome, not the selected action.
+    Local Model 5.5 update rule for this test only. Sets a
+    model_of_reality field the agent's *next* decision can observe, only
+    once the agent has observed that its realized action was LOW. It
+    reads the observed outcome, not the selected action.
 
-    Reading outcome["realized_action_by_agent"] directly (no default)
-    is deliberate: if feedback ever ran before reality had produced O_{i,t},
-    this would raise instead of silently succeeding -- proving reality
-    necessarily precedes feedback, not just that feedback runs after
-    decision.
-
-    Required outcome field:
-
-        realized_action_by_agent   set every period by
-                                    record_realized_action, the reality
-                                    function this scenario runs
-                                    immediately before feedback.
+    Reading observation["realized_action"] directly (no default) is
+    deliberate: if an update ever ran without a realized outcome having
+    been observed, this would raise instead of silently succeeding.
     """
-    realized_action_by_agent = outcome["realized_action_by_agent"]
+    if observation["realized_action"] != LOW:
+        return {}
 
-    for agent in state["agents"]:
-        if realized_action_by_agent.get(agent.name) == LOW:
-            agent.model_of_reality["flag_set_by_feedback"] = True
+    model = agent.model_of_reality
+    model["flag_set_by_feedback"] = True
 
-    return state
+    return {"model_of_reality": model}
 
 
-@register_rule("choose_by_flag")
 def choose_by_flag(agent):
     """
     Local Model 5.1 decision rule for this test only. Selects HIGH if a
-    prior period's feedback update is visible when the decision runs,
-    otherwise LOW.
+    prior period's update is visible when the decision runs, otherwise
+    LOW.
     """
     if agent.model_of_reality.get("flag_set_by_feedback"):
         return HIGH
@@ -108,9 +99,10 @@ AGENT = AgentSpec(
     objective="test objective",
     model_of_reality={},
     perceived_feasible_set=[LOW, HIGH],
-    valuation_rule="mapped_value",
-    decision_process="choose_by_flag",
+    valuation_rule=mapped_value,
+    decision_process=choose_by_flag,
     horizon="current decision",
+    update_rule=record_feedback_flag,
 )
 
 
@@ -118,25 +110,23 @@ ONE_PERIOD_SCENARIO = Scenario(
     name="Feedback Ordering Contract (one period)",
     description=(
         "A minimal single-agent, single-period scenario isolating "
-        "whether feedback can run before the first decision."
+        "whether an update can run before the first decision."
     ),
     periods=1,
-    initial_state={
-        "period": 0,
-    },
+    initial_state={},
     agents=[
         AGENT,
     ],
-    reality_function="record_realized_action",
-    feedback_rule="record_feedback_flag",
+    reality=record_realized_action,
+    observation=observe_own_outcome,
 )
 
 TWO_PERIOD_SCENARIO = ONE_PERIOD_SCENARIO.variant(
     name="Feedback Ordering Contract (two periods)",
     description=(
         "A minimal single-agent, two-period scenario isolating whether "
-        "a period's feedback update is visible to that same period's "
-        "decision or only to the following one."
+        "a period's update is visible to that same period's decision or "
+        "only to the following one."
     ),
     periods=2,
 )
@@ -145,76 +135,36 @@ TWO_PERIOD_SCENARIO = ONE_PERIOD_SCENARIO.variant(
 class TestFeedbackOrderingContract(unittest.TestCase):
     TEST_NAME = "Framework: Feedback Ordering Contract"
 
-    def test_no_feedback_runs_before_the_first_decision(self):
-        result = run_scenario(ONE_PERIOD_SCENARIO)
-        agent = result.agent(AGENT.name)
+    def test_feedback_changes_only_the_later_decision_after_realization(self):
+        result = run_scenario(TWO_PERIOD_SCENARIO)
+        first_period = result.trace[0]
 
         self.assertEqual(
-            agent.selected_action,
+            [step.actions[AGENT.name] for step in result.trace],
+            [LOW, HIGH],
+        )
+        self.assertEqual(
+            first_period.reality.agent(AGENT.name)["realized_action"],
+            first_period.actions[AGENT.name],
+        )
+        self.assertEqual(
+            first_period.observations[AGENT.name]["realized_action"],
             LOW,
         )
-
-    def test_a_periods_feedback_is_not_visible_to_that_same_periods_decision(self):
-        result = run_scenario(TWO_PERIOD_SCENARIO)
-
-        first_period_decision = result.history[1]["selected_action_by_agent"]
-
-        self.assertEqual(
-            first_period_decision[AGENT.name],
-            LOW,
+        self.assertTrue(
+            first_period.agents[AGENT.name].model_of_reality[
+                "flag_set_by_feedback"
+            ],
         )
 
-    def test_a_periods_feedback_is_visible_to_the_following_periods_decision(self):
-        result = run_scenario(TWO_PERIOD_SCENARIO)
-
-        second_period_decision = result.history[2]["selected_action_by_agent"]
-
-        self.assertEqual(
-            second_period_decision[AGENT.name],
-            HIGH,
-        )
-
-    def test_reality_realizes_the_selected_action_before_feedback_reads_it(self):
-        result = run_scenario(TWO_PERIOD_SCENARIO)
-
-        first_period_selection = result.history[1]["selected_action_by_agent"]
-        first_period_realization = result.history[1]["realized_action_by_agent"]
-
-        # record_realized_action (R) reports exactly what was selected,
-        # so O_{i,0} must match C_{i,0} for the same agent, same period.
-        self.assertEqual(
-            first_period_realization[AGENT.name],
-            first_period_selection[AGENT.name],
-        )
-
-        self.assertEqual(
-            first_period_realization[AGENT.name],
-            LOW,
-        )
-
-        # record_feedback_flag (feedback) reads
-        # outcome["realized_action_by_agent"] with no fallback -- it
-        # would raise KeyError rather than silently pass if the runner
-        # ever invoked feedback before reality had produced O_{i,t}. The
-        # flag having been set (proved by the HIGH selection in the
-        # following period, above) is therefore itself evidence that R
-        # ran and produced O_{i,0} before feedback ran.
-        second_period_selection = result.history[2]["selected_action_by_agent"]
-
-        self.assertEqual(
-            second_period_selection[AGENT.name],
-            HIGH,
-        )
-
-    def test_without_a_feedback_rule_the_flag_is_never_set(self):
+    def test_without_observation_feedback_never_changes_a_later_decision(self):
         result = run_scenario(
             TWO_PERIOD_SCENARIO.variant(
-                feedback_rule=None,
+                observation=None,
             )
         )
-        agent = result.agent(AGENT.name)
 
         self.assertEqual(
-            agent.selected_action,
-            LOW,
+            [step.actions[AGENT.name] for step in result.trace],
+            [LOW, LOW],
         )
