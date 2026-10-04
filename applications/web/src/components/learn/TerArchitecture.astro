@@ -14,14 +14,17 @@ const renderSymbol = (symbol: string) => symbol.replace(/_(\w+)/, "<sub>$1</sub>
   <p class="eyebrow">TER architecture</p>
   <h2 class="doc-heading">How this test uses the TER framework.</h2>
   <p class="lede">
-    Every TER agent selects an action through the same nine-component
-    architecture. The table below shows what each component means, how it
-    is instantiated in this test, and whether this test fixes it, varies
-    it, selects it, or produces it as a result.
+    TER describes agent decisions and their outcomes through a common
+    architecture. The decision process selects from the perceived feasible
+    set; the objective and time horizon condition valuation when valuation
+    is used; and F<sub>t</sub> enters only when the selected action is
+    realized, never as an input to the decision. The table below shows what
+    each component means, how it is instantiated in this test, and whether
+    this test fixes it, varies it, selects it, or produces it as a result.
   </p>
 
-  <div class="equation card" role="img" aria-label="C sub i,t equals D sub i,t of F-hat sub i,t, G sub i,t, M sub i,t, V sub i,t, H sub i,t">
-    <code>C<sub>i,t</sub> = D<sub>i,t</sub>(F̂<sub>i,t</sub>, G<sub>i,t</sub>, M<sub>i,t</sub>, V<sub>i,t</sub>, H<sub>i,t</sub>)</code>
+  <div class="equation card" role="img" aria-label="C sub i,t equals D sub i,t of F-hat sub i,t, M sub i,t, and V sub i,t given G sub i,t, M sub i,t, H sub i,t">
+    <code>C<sub>i,t</sub> = D<sub>i,t</sub>(F̂<sub>i,t</sub>, M<sub>i,t</sub>, V<sub>i,t</sub>(· | G<sub>i,t</sub>, M<sub>i,t</sub>, H<sub>i,t</sub>))</code>
   </div>
 
   <div class="architecture-table" role="table">

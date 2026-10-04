@@ -79,7 +79,7 @@ export const scenarios: Scenario[] = [
         key: "G",
         symbol: "G",
         name: "Objective",
-        definition: "Objective pursued by the agent.",
+        definition: "Result or condition that provides the reference for valuation when valuation is used.",
         mapping: "The agent's objective is \"choose coffee.\"",
         testTreatment: "Fixed",
       },
@@ -98,7 +98,7 @@ export const scenarios: Scenario[] = [
         symbol: "F_t",
         name: "Objective feasible state of reality",
         definition:
-          "The objective feasible state of reality at time t, including all conditions and constraints that determine what can occur.",
+          "The objectively realized conditions and constraints relevant when the selected action(s) at decision point t are realized. Not agent specific, and not an input to the decision process.",
         mapping:
           "F_t and outcome realization are outside this scenario's scope.",
         testTreatment: "Outside scope",
@@ -107,7 +107,7 @@ export const scenarios: Scenario[] = [
         key: "F_hat",
         symbol: "F̂",
         name: "Perceived feasible set",
-        definition: "The possibilities the agent perceives as available.",
+        definition: "Actions the agent perceives as available to attempt.",
         mapping:
           "The agent perceives all three coffees as available.",
         testTreatment: "Fixed",
@@ -125,7 +125,7 @@ export const scenarios: Scenario[] = [
         key: "H",
         symbol: "H",
         name: "Time horizon",
-        definition: "Time horizon considered relevant to the decision.",
+        definition: "Which future consequences the agent considers relevant to valuation.",
         mapping: "\"current decision\"",
         testTreatment: "Fixed",
       },
@@ -134,7 +134,7 @@ export const scenarios: Scenario[] = [
         symbol: "D",
         name: "Decision process",
         definition:
-          "Decision process used to evaluate and select among perceived feasible actions.",
+          "Process through which the agent selects among perceived feasible actions. It may condition directly on the model of reality and may use valuation when applicable.",
         mapping:
           "The agent compares all perceived feasible coffees and selects the one with the highest assigned value.",
         testTreatment: "Fixed",
@@ -200,7 +200,7 @@ export const scenarios: Scenario[] = [
         key: "G",
         symbol: "G",
         name: "Objective",
-        definition: "Objective pursued by the agent.",
+        definition: "Result or condition that provides the reference for valuation when valuation is used.",
         mapping: "The agent's objective is \"choose preferred coffee.\"",
         testTreatment: "Fixed",
       },
@@ -219,7 +219,7 @@ export const scenarios: Scenario[] = [
         symbol: "F_t",
         name: "Objective feasible state of reality",
         definition:
-          "The objective feasible state of reality at time t, including all conditions and constraints that determine what can occur.",
+          "The objectively realized conditions and constraints relevant when the selected action(s) at decision point t are realized. Not agent specific, and not an input to the decision process.",
         mapping:
           "F_t and outcome realization are outside this scenario's scope.",
         testTreatment: "Outside scope",
@@ -228,7 +228,7 @@ export const scenarios: Scenario[] = [
         key: "F_hat",
         symbol: "F̂",
         name: "Perceived feasible set",
-        definition: "The possibilities the agent perceives as available.",
+        definition: "Actions the agent perceives as available to attempt.",
         mapping:
           "The same three coffees, in the same order, in every case. Only the decision process's search configuration changes across cases — not which coffees the agent perceives as feasible.",
         testTreatment: "Fixed",
@@ -239,14 +239,14 @@ export const scenarios: Scenario[] = [
         name: "Valuation",
         definition: "Valuation of actions relative to the agent's objective.",
         mapping:
-          "Each coffee has a fixed value, read directly from the same declared value map used in Test 01: Nearby Coffee = 6, Office Coffee = 7, Best Coffee = 10.",
+          "Each coffee has a fixed value, read directly from a declared value map, as in Test 1: Nearby Coffee = 6, Office Coffee = 7, Best Coffee = 10.",
         testTreatment: "Fixed per action",
       },
       {
         key: "H",
         symbol: "H",
         name: "Time horizon",
-        definition: "Time horizon considered relevant to the decision.",
+        definition: "Which future consequences the agent considers relevant to valuation.",
         mapping: "\"current purchase\"",
         testTreatment: "Fixed",
       },
@@ -255,7 +255,7 @@ export const scenarios: Scenario[] = [
         symbol: "D",
         name: "Decision process",
         definition:
-          "Decision process used to evaluate and select among perceived feasible actions.",
+          "Process through which the agent selects among perceived feasible actions. It may condition directly on the model of reality and may use valuation when applicable.",
         mapping:
           "The agent either checks every perceived feasible coffee before deciding (exhaustive search), or stops after checking only the first few, in its search order (limited search).",
         testTreatment: "Varied across cases",
@@ -332,7 +332,7 @@ export const scenarios: Scenario[] = [
         key: "G",
         symbol: "G",
         name: "Objective",
-        definition: "Objective pursued by the agent.",
+        definition: "Result or condition that provides the reference for valuation when valuation is used.",
         mapping: "Every buyer and seller pursues \"maximize transaction value.\"",
         testTreatment: "Fixed across agents",
       },
@@ -351,7 +351,7 @@ export const scenarios: Scenario[] = [
         symbol: "F_t",
         name: "Objective feasible state of reality",
         definition:
-          "The objective feasible state of reality at time t, including all conditions and constraints that determine what can occur.",
+          "The objectively realized conditions and constraints relevant when the selected action(s) at decision point t are realized. Not agent specific, and not an input to the decision process.",
         mapping: "F_t and outcome realization are outside this scenario's scope.",
         testTreatment: "Outside scope",
       },
@@ -359,7 +359,7 @@ export const scenarios: Scenario[] = [
         key: "F_hat",
         symbol: "F̂",
         name: "Perceived feasible set",
-        definition: "The possibilities the agent perceives as available.",
+        definition: "Actions the agent perceives as available to attempt.",
         mapping:
           "Buyers perceive buying and not buying as available; sellers perceive selling and not selling as available.",
         testTreatment: "Fixed",
@@ -377,7 +377,7 @@ export const scenarios: Scenario[] = [
         key: "H",
         symbol: "H",
         name: "Time horizon",
-        definition: "Time horizon considered relevant to the decision.",
+        definition: "Which future consequences the agent considers relevant to valuation.",
         mapping: "\"current transaction\"",
         testTreatment: "Fixed",
       },
@@ -385,7 +385,7 @@ export const scenarios: Scenario[] = [
         key: "D",
         symbol: "D",
         name: "Decision process",
-        definition: "Decision process used to evaluate and select among perceived feasible actions.",
+        definition: "Process through which the agent selects among perceived feasible actions. It may condition directly on the model of reality and may use valuation when applicable.",
         mapping:
           "Each buyer compares buying with not buying, and each seller compares selling with not selling. The action with the higher value is selected. If the two actions have equal value, the test is configured so the agent transacts.",
         testTreatment: "Fixed",
@@ -468,14 +468,14 @@ export const scenarios: Scenario[] = [
     economicSetup:
       "The market contains three high-quality sellers and three low-quality sellers. High-quality goods are worth 10, and their sellers have a reservation value of 8. Low-quality goods are worth 4, and their sellers have a reservation value of 2. The market initially believes that 50% of the goods for sale are high quality. Every seller chooses between selling at the offered price and holding onto the good.",
     whatChanges:
-      "The sellers, reservation values, perceived feasible sets, and decision process stay the same. The test changes what quality information the pricing mechanism can use. Under pooled pricing, individual quality is unobservable. Under verified pricing, each seller's quality can be used directly.",
+      "The sellers, reservation values, perceived feasible sets, and decision process stay the same. The test changes what quality information the offered price reflects, and so the price each seller observes. Under pooled pricing, individual quality is unobservable. Under verified pricing, each seller's quality can be used directly.",
     terComponents: [
       {
         key: "G",
         symbol: "G",
         name: "Objective",
-        definition: "Objective pursued by the agent.",
-        mapping: "Every seller seeks to maximize proceeds from selling.",
+        definition: "Result or condition that provides the reference for valuation when valuation is used.",
+        mapping: "Every seller's objective is \"maximize value from the sale decision.\"",
         testTreatment: "Fixed",
       },
       {
@@ -485,15 +485,15 @@ export const scenarios: Scenario[] = [
         definition:
           "The agent's model of reality, including information, beliefs, assumptions, expectations, and interpretations.",
         mapping:
-          "Each seller's model includes its own car's quality, which the reality rule never reads. What changes between the two cases is the quality information available to the pricing mechanism: pooled pricing cannot use individual quality, while verified pricing can.",
-        testTreatment: "Each seller's own model is fixed; the pricing mechanism's access to it varies",
+          "Each seller's model holds the offered price it observes and its belief about its own car's quality. The reality rule reads neither. The observed price is what changes between the two cases: the pooled price under asymmetric information, or the seller's own true-quality price under verified pricing.",
+        testTreatment: "Observed price varies across cases",
       },
       {
         key: "F",
         symbol: "F_t",
         name: "Objective feasible state of reality",
         definition:
-          "The objective feasible state of reality at time t, including all conditions and constraints that determine what can occur.",
+          "The objectively realized conditions and constraints relevant when the selected action(s) at decision point t are realized. Not agent specific, and not an input to the decision process.",
         mapping:
           "The reality rule reads each car's actual quality, a scenario-specified condition that represents one relevant aspect of F_t. It is not a complete representation of F_t.",
         testTreatment: "Fixed",
@@ -502,7 +502,7 @@ export const scenarios: Scenario[] = [
         key: "F_hat",
         symbol: "F̂",
         name: "Perceived feasible set",
-        definition: "The possibilities the agent perceives as available.",
+        definition: "Actions the agent perceives as available to attempt.",
         mapping:
           "Every seller perceives both selling and holding as available.",
         testTreatment: "Fixed",
@@ -513,14 +513,14 @@ export const scenarios: Scenario[] = [
         name: "Valuation",
         definition: "Valuation of actions relative to the agent's objective.",
         mapping:
-          "A seller evaluates selling as the offered price minus its reservation value, which represents the opportunity cost of giving up the good.",
+          "A seller values selling as the offered price it observes (from its model of reality) minus its reservation value, which represents the opportunity cost of giving up the good.",
         testTreatment: "Varies with the price offered and each seller's reservation value",
       },
       {
         key: "H",
         symbol: "H",
         name: "Time horizon",
-        definition: "Time horizon considered relevant to the decision.",
+        definition: "Which future consequences the agent considers relevant to valuation.",
         mapping: "\"current sale decision\"",
         testTreatment: "Fixed",
       },
@@ -529,7 +529,7 @@ export const scenarios: Scenario[] = [
         symbol: "D",
         name: "Decision process",
         definition:
-          "Decision process used to evaluate and select among perceived feasible actions.",
+          "Process through which the agent selects among perceived feasible actions. It may condition directly on the model of reality and may use valuation when applicable.",
         mapping:
           "Each seller compares selling with holding and selects the higher-valued option.",
         testTreatment: "Fixed",
@@ -553,10 +553,11 @@ export const scenarios: Scenario[] = [
       },
     ],
     assumptions: [
-      "Buyers are not represented as individual TER agents in this test. The market price each seller faces is set directly as a fixed valuation input, not computed by a separate buyer agent or rule.",
-      "Under pooled pricing, every seller's valuation is initialized with the same population-level price (based on the believed share of high-quality goods) — the same price regardless of the seller's own quality.",
-      "Under verified pricing, each seller's valuation is instead initialized with its own true price, so a seller's quality determines the price it faces.",
-      "Both prices are fixed scenario data, set directly in each seller's initial valuation (V) through the declared valuation rule — not TER feedback, since neither price depends on a realized outcome.",
+      "Buyers are not represented as individual TER agents in this test. The price each seller is offered is information the seller observes when deciding, so it is held in the seller's model of reality (M), not computed by a separate buyer agent or rule. Each seller is assumed to observe its offered price correctly.",
+      "Under pooled pricing, every seller observes the same population-level price (based on the believed share of high-quality goods) — the same price regardless of the seller's own quality.",
+      "Under verified pricing, each seller instead observes its own true price, so a seller's quality determines the price it faces.",
+      "Both prices are fixed scenario data, set directly in each seller's initial model of reality — not TER feedback, since neither price depends on a realized outcome.",
+      "Sellers are assumed to know their own quality perfectly. TER does not require this.",
       "Divergence between F̂ and what reality permits is not modeled in this test.",
     ],
     hypotheses: [
@@ -620,8 +621,8 @@ export const scenarios: Scenario[] = [
         key: "G",
         symbol: "G",
         name: "Objective",
-        definition: "Objective pursued by the agent.",
-        mapping: "The firm seeks to maximize firm net value.",
+        definition: "Result or condition that provides the reference for valuation when valuation is used.",
+        mapping: "The firm's objective is \"maximize value from the production decision.\"",
         testTreatment: "Fixed",
       },
       {
@@ -639,16 +640,16 @@ export const scenarios: Scenario[] = [
         symbol: "F_t",
         name: "Objective feasible state of reality",
         definition:
-          "The objective feasible state of reality at time t, including all conditions and constraints that determine what can occur.",
+          "The objectively realized conditions and constraints relevant when the selected action(s) at decision point t are realized. Not agent specific, and not an input to the decision process.",
         mapping:
-          "The reality rule reads the scenario's actual private values and external effects for each action, and the actions permitted for the firm. These are scenario-specified conditions that represent relevant aspects of F_t, not a complete representation of it.",
+          "The reality rule reads the scenario's actual private values and external effects for each action. These are scenario-specified conditions that represent relevant aspects of F_t, not a complete representation of it.",
         testTreatment: "Fixed",
       },
       {
         key: "F_hat",
         symbol: "F̂",
         name: "Perceived feasible set",
-        definition: "The possibilities the agent perceives as available.",
+        definition: "Actions the agent perceives as available to attempt.",
         mapping: "The firm perceives both actions as available.",
         testTreatment: "Fixed",
       },
@@ -665,7 +666,7 @@ export const scenarios: Scenario[] = [
         key: "H",
         symbol: "H",
         name: "Time horizon",
-        definition: "Time horizon considered relevant to the decision.",
+        definition: "Which future consequences the agent considers relevant to valuation.",
         mapping: "\"current production decision\"",
         testTreatment: "Fixed",
       },
@@ -674,7 +675,7 @@ export const scenarios: Scenario[] = [
         symbol: "D",
         name: "Decision process",
         definition:
-          "Decision process used to evaluate and select among perceived feasible actions.",
+          "Process through which the agent selects among perceived feasible actions. It may condition directly on the model of reality and may use valuation when applicable.",
         mapping:
           "The firm compares all perceived feasible actions and selects the one with the highest value.",
         testTreatment: "Fixed",
@@ -761,7 +762,7 @@ export const scenarios: Scenario[] = [
         key: "G",
         symbol: "G",
         name: "Objective",
-        definition: "Objective pursued by the agent.",
+        definition: "Result or condition that provides the reference for valuation when valuation is used.",
         mapping: "Every producer seeks to maximize realized production value.",
         testTreatment: "Fixed",
       },
@@ -780,16 +781,16 @@ export const scenarios: Scenario[] = [
         symbol: "F_t",
         name: "Objective feasible state of reality",
         definition:
-          "The objective feasible state of reality at time t, including all conditions and constraints that determine what can occur.",
+          "The objectively realized conditions and constraints relevant when the selected action(s) at decision point t are realized. Not agent specific, and not an input to the decision process.",
         mapping:
-          "The scenario's permission data lists the permitted actions for each producer: hold or produce 60 for the accurate and mistaken producers, hold only for the severely mismatched producer. This data represents the relevant constraint (a production ceiling) in this implementation; it is not F_t itself.",
-        testTreatment: "Varied across producers",
+          "The scenario's permission data lists the permitted actions for each producer: hold or produce 60 for the accurate and mistaken producers, hold only for the severely mismatched producer. This data represents the relevant constraint (a production ceiling) in this implementation; it is not F_t itself. It is indexed by producer for convenience, but F_t is not agent specific, and only the reality rule reads it.",
+        testTreatment: "Fixed; permission data differs by producer",
       },
       {
         key: "F_hat",
         symbol: "F̂",
         name: "Perceived feasible set",
-        definition: "The possibilities the agent perceives as available.",
+        definition: "Actions the agent perceives as available to attempt.",
         mapping:
           "The accurate producer perceives exactly the permitted actions: hold or produce 60. The mistaken producer additionally perceives produce 100, which the scenario does not permit. The severely mismatched producer perceives hold, produce 60, and produce 100 even though the scenario permits only hold.",
         testTreatment: "Varied — the central distinction in this scenario",
@@ -807,7 +808,7 @@ export const scenarios: Scenario[] = [
         key: "H",
         symbol: "H",
         name: "Time horizon",
-        definition: "Time horizon considered relevant to the decision.",
+        definition: "Which future consequences the agent considers relevant to valuation.",
         mapping: "\"current production decision\"",
         testTreatment: "Fixed",
       },
@@ -816,7 +817,7 @@ export const scenarios: Scenario[] = [
         symbol: "D",
         name: "Decision process",
         definition:
-          "Decision process used to evaluate and select among perceived feasible actions.",
+          "Process through which the agent selects among perceived feasible actions. It may condition directly on the model of reality and may use valuation when applicable.",
         mapping:
           "Each producer compares its perceived feasible actions and selects the highest-valued one. This comparison only ever considers F̂ — it never checks F_t.",
         testTreatment: "Fixed",

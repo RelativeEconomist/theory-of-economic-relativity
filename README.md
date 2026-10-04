@@ -184,7 +184,7 @@ You can explore TER directly on GitHub, or clone the repository locally to run t
 
 1. Clone the repository.
 2. Open it in your preferred code editor.
-3. Make sure Python 3 is installed.
+3. Make sure Python 3.10 or newer is installed.
 4. Run the research suite:
 
 ```bash
