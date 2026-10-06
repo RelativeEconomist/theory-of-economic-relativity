@@ -54,7 +54,7 @@ At a high level:
 ```text
 Agent
   ↓
-Objectives + perceived reality + perceived feasible actions
+Perceived reality + perceived feasible actions + valuation relative to objectives and time horizon (when used)
   ↓
 Decision process
   ↓
@@ -76,10 +76,10 @@ This architecture can be applied from a single decision to interacting agents an
 TER represents the selected action of agent $i$ at time $t$ as:
 
 $$
-C_{i,t} = D_{i,t}(\hat{F}_{i,t}, G_{i,t}, M_{i,t}, V_{i,t}, H_{i,t})
+C_{i,t} = D_{i,t}(\hat{F}_{i,t}, M_{i,t}, V_{i,t}(\cdot \mid G_{i,t}, M_{i,t}, H_{i,t}))
 $$
 
-In plain language, an agent selects an action through a decision process shaped by:
+TER's core variables are:
 
 | Symbol | Meaning |
 | --- | --- |
@@ -91,6 +91,7 @@ In plain language, an agent selects an action through a decision process shaped 
 | $H$ | Time horizon |
 | $D$ | Decision process used to select among perceived feasible actions |
 | $C$ | Selected action |
+| $R$ | Reality function: maps selected action(s) and $F_t$ to realized outcomes |
 | $O$ | Realized outcome |
 
 > **Quick reference:** the canonical definitions, with full notation and time indices, are in [`theory/academic.md`](theory/academic.md#3-core-definitions). Detailed variable placement and modeling boundaries are in [`research/ter-methodology-notes.md`](research/ter-methodology-notes.md).
@@ -105,22 +106,22 @@ $$
 O_{i,t} = R(C_{i,t}, F_t)
 $$
 
-Outcomes depend on the selected action encountering the objective feasible state of reality, which includes actual constraints, prevailing conditions, and external shocks. Other agents and external effects also shape outcomes. Those outcomes can then change future information, beliefs, feasible actions, valuations, time horizons, decision processes, and subsequent actions.
+Outcomes depend on selected actions encountering the objective feasible state of reality. Where interactions are explicitly modeled, one joint $R$ produces the system outcome; external effects are part of realized outcomes. Those outcomes can then change future information, beliefs, feasible actions, valuations, time horizons, decision processes, and subsequent actions.
 
 For the formal definitions, axioms, and equations, see [`theory/academic.md`](theory/academic.md).
 
 ## From Decisions to Economic Systems
 
-TER develops this architecture through three core models, a state persistence constraint, a dynamic feedback model, and optional analytical methods for studying feedback and stability.
+TER develops this architecture through five components and optional analytical methods.
 
 1. **Agent Decision** — how an agent selects an action.
 2. **Action to Outcome** — how the selected action encounters actual conditions.
 3. **Multi Agent** — how interacting decisions produce system outcomes.
 4. **State Persistence Constraint** — the boundary condition for when an existing state can no longer persist unchanged under reality's constraints.
 5. **Dynamic Feedback** — how outcomes alter the subsequent conditions shaping later decisions.
-6. **Feedback Analysis and Stability** — how feedback may amplify, damp, propagate, persist, oscillate, or change across regimes.
+6. **Feedback Analysis and Stability** (optional) — how feedback may amplify, damp, propagate, persist, oscillate, or change across regimes.
 
-These are not six separate theories. They describe different layers of the same framework.
+These are layers of one framework, not separate theories.
 
 The complete formal treatment is in [`theory/academic.md`](theory/academic.md#5-formal-architecture).
 

@@ -38,7 +38,7 @@ This does not mean every possible specification someone writes is automatically 
 
 ## Is TER predictive?
 
-Only conditionally, and only at the level of a particular specification. A specification that fixes `G`, `M`, `F̂`, `V`, `H`, and `D` from independent evidence can generate a conditional prediction — given this specification, this action or outcome should follow — that can then be checked against evidence.
+Only conditionally, and only at the level of a particular specification. A specification that fixes its components from independent evidence, including `F_t` and `R` when predicting outcomes, can generate a conditional prediction — given this specification, this action or outcome should follow — that can then be checked against evidence.
 
 TER itself is not an omniscient prediction system: it does not assume an observer can know every agent's objectives, beliefs, constraints, interactions, or the shocks that will occur. The presence of imbalance, feedback, or amplification does not by itself predict when or how a system state will change. See [§7.9](../theory/academic.md#79-ter-is-a-framework-for-analysis-not-an-omniscient-prediction-system).
 
@@ -52,9 +52,9 @@ A poor decision remains a poor decision if the evidence supports that interpreta
 
 ## Why distinguish `F_t` from `F̂`?
 
-`F_t` is the objective feasible state of reality: the objective state of reality relevant when the selected action is realized. `F̂` is what the agent perceives as available to attempt. TER keeps these separate on purpose.
+`F_t` represents the objectively realized conditions and constraints relevant when the selected action is realized; it is not agent specific. `F̂` is what the agent perceives as available to attempt. TER keeps these separate on purpose.
 
-The distinction lets TER represent overlooked opportunities, mistaken beliefs about what is possible, hidden constraints, misinformation, discovery, and learning — all without treating perceived possibility as if it were actual feasibility. An agent can select an action that later turns out infeasible; the selection itself doesn't change, only the realized outcome does.
+The distinction lets TER represent overlooked opportunities, mistaken beliefs about what is possible, hidden constraints, misinformation, discovery, and learning — all without treating perceived possibility as if it were actual feasibility. An agent can select an action that reality does not allow to be fully realized; the shortfall is part of `O`, not a different `C`.
 
 See the [Objective Feasible State of Reality](../theory/academic.md#objective-feasible-state-of-reality) and [Perceived Feasible Set](../theory/academic.md#perceived-feasible-set) definitions, and [§7.4](../theory/academic.md#74-the-perceived-feasible-set-and-the-objective-feasible-state-of-reality-are-distinct).
 
@@ -76,9 +76,7 @@ As the previous answer notes, TER does not claim to have invented the establishe
 
 Its contribution is the way those mechanisms are organized and separated within a common agent centered architecture. That includes distinctions TER treats as structurally important, such as actual versus perceived feasibility, decision versus realization, and the separation of objectives, beliefs, valuation, time horizon, decision process, and realized outcomes.
 
-Some of these components have clear prior literature. What remains to be established is whether TER’s particular configuration of them, together with its open, versioned methodology, executable framework, and replication tests, is itself distinctive and useful.
-
-That is the claim TER puts forward for testing. See the [Central Research Claim](../theory/academic.md#central-research-claim) and [§7.10](../theory/academic.md#710-ter-is-an-open-and-testable-framework).
+What remains open is whether TER’s particular configuration is distinctive and useful. That claim, the [Central Research Claim](../theory/academic.md#central-research-claim), remains subject to theoretical, empirical, and comparative testing ([§7.10](../theory/academic.md#710-ter-is-an-open-and-testable-framework)).
 
 ## Was AI used to develop TER?
 
