@@ -1,11 +1,11 @@
 <section class="section-sm why-ter">
   <div class="shell">
-    <h2 class="doc-heading" data-reveal>A shared architecture for economics</h2>
+    <h2 class="doc-heading" data-reveal>Built on established economics</h2>
 
     <div class="interaction-row">
       <div class="interaction-copy">
         <p class="lede" data-reveal>
-          TER builds on established economic theories and concepts by organizing their mechanisms within a shared agent centered architecture. The same architecture can be used to study individuals and large organizations.
+          TER asks whether many economic phenomena can be understood as different configurations of the same agent-centered architecture.
         </p>
 
         <p class="lede" data-reveal>
@@ -33,13 +33,6 @@
         <h3>Institutions and dynamics</h3>
         <p>Institutions, technological change, feedback, collective action, and adjustment can be studied through how they alter information, incentives, constraints, feasible actions, outcomes, and subsequent decisions.</p>
       </article>
-    </div>
-
-    <div class="closing-row" data-reveal>
-      <span class="closing-marker" aria-hidden="true"></span>
-      <p class="closing-note lede">
-        TER's central research claim is that many economic phenomena traditionally described through separate models and theories can be understood as different configurations and dynamics of a common agent-centered economic architecture.
-      </p>
     </div>
   </div>
 </section>
@@ -69,24 +62,6 @@
   article:last-child { padding-right: 0; }
   article h3 { margin: 0 0 .5rem; }
   article p { margin: 0; color: var(--muted); }
-  .closing-row {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    align-items: start;
-    gap: 1rem;
-    margin-top: clamp(2.5rem, 5vw, 3.5rem);
-    padding-top: 2rem;
-    border-top: 1px solid var(--line);
-  }
-  .closing-marker {
-    width: .6rem;
-    height: .6rem;
-    margin-top: .5rem;
-    border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 20%, transparent);
-  }
-  .closing-note { margin: 0; color: var(--ink); font-weight: 620; }
   @media (max-width: 800px) {
     .interaction-row { grid-template-columns: 1fr; text-align: center; }
     .mesh-visual { width: min(70vw, 19rem); margin-top: 1.5rem; }

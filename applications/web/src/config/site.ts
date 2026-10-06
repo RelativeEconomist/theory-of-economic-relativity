@@ -1,9 +1,8 @@
 export const siteConfig = {
   name: "Theory of Economic Relativity",
   company: "Theory of Economic Relativity",
-  title: "Theory of Economic Relativity — A proposed framework for economic decision-making",
-  description:
-    "Theory of Economic Relativity (TER) is an open, testable architecture for economic decision-making, interaction, and outcomes, supported by a versioned research framework and executable replication tests.",
+  title: "Theory of Economic Relativity",
+  description: "An open, testable framework for economic decision-making, interaction, and outcomes.",
   url: "https://www.theoryofeconomicrelativity.com",
   author: "Relative Economist",
   bookingUrl: "/contact/",

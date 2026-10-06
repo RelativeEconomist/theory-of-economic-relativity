@@ -3,6 +3,8 @@ from copy import deepcopy
 from dataclasses import dataclass, field, fields
 from typing import Any, Callable
 
+from research.ter.decision import _valuation_view
+
 
 @dataclass
 class AgentSpec:
@@ -227,10 +229,11 @@ class AgentResult:
         """
         The agent's own final valuation (V) of an action, using the same
         value function the agent's decision process used to select among
-        F_hat. This calls the agent's value function directly; it is not
-        reality data and does not require a reality rule.
+        F_hat. This calls the agent's value function directly, against
+        the same ValuationView (G, M, H) it receives at decision time; it
+        is not reality data and does not require a reality rule.
         """
-        return self.state.value(action, self.state)
+        return self.state.value(action, _valuation_view(self.state))
 
     def outcome_for(self, action: Any) -> "AgentResult":
         """
