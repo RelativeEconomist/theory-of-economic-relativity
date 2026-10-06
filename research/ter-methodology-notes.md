@@ -31,7 +31,7 @@ The most common way to misuse TER is placing a fact in the wrong component. This
 | `R` vs `O` | `R` is the mechanism — a modeling choice; `O` is its realized output at the relevant decision point or time: `O_{i,t}` at the agent level (Model 5.2), `O_t` where interactions are explicitly modeled (Model 5.3). Don't describe `R` as just a restatement of one `O`. When an agent-level outcome depends on explicitly modeled interaction, derive it from the same joint `R`; TER does not define `O_t` as an aggregation of the `O_{i,t}`. | "Withdrawals capped at liquidity" is `R`; "60 units realized" is one `O`. |
 | `F_t` (residual use) | The conditions and constraints in `F_t` must be defined explicitly, not used to catch unexplained outcome variation. | "Market conditions" as a vague catch-all is not a valid specification of `F_t`. |
 
-## TER Variable Placement and Boundaries
+## Variable Definitions
 
 | Variable | Definition | Put it here when… | Do not put it here when… |
 |---|---|---|---|
@@ -54,7 +54,7 @@ The most common way to misuse TER is placing a fact in the wrong component. This
 |---|---|
 | **Model state / stocks** | Wealth, inventory, capital, location, technology, balance sheets, physical stocks, and similar objects may be declared as model-specific state. They may be aspects of `F_t` when objectively realized and relevant to realization, be represented imperfectly in `M`, and evolve through model-specific laws of motion. |
 | **System state** | The economically relevant properties of the modeled system at a given time may be collected as a specification-level system state. This is not a TER primitive and is not interchangeable with `F_t`; only the objectively realized conditions and constraints relevant to realization belong in `F_t`. |
-| **Feedback / update rules** | Dynamic specifications should declare the mechanisms by which realized outcomes (`O_{i,t}` or `O_t`) may change `G, M, F̂, V, H, D` and `F` at `t+1`; external shocks may change `F` independently. Outcomes may affect `M` only through information available to the agent; do not update beliefs from an unobserved system outcome as if it were directly known. Other components may change through explicitly modeled mechanisms that do not require a belief update: for example, resource depletion may change `F`, while habituation or learned routines may change `V` or `D` if the specification defines that mechanism. These are specification-specific update mechanisms, not a universal `U` primitive and not part of within-period `D`. |
+| **Feedback / update rules** | Dynamic specifications should declare the mechanisms by which realized outcomes (`O_{i,t}` or `O_t`) may change `G, M, F̂, V, H, D` and `F` at `t+1`; external shocks may change `F` independently. Outcomes may affect `M` only through information available to the agent; do not update beliefs from an unobserved system outcome as if it were directly known. Other components may change through explicitly modeled mechanisms that do not require a belief update: for example, resource depletion may change `F`, while habituation or learned routines may change `V` or `D` if the specification defines that mechanism. These are specification-specific update mechanisms, not TER primitives and not part of within-period `D`. |
 
 > **Every economically relevant fact should have one primary TER location. If the same fact appears in multiple components, the specification must explain why that duplication is necessary rather than silently double counting it.**
 
@@ -63,7 +63,7 @@ The most common way to misuse TER is placing a fact in the wrong component. This
 Practices that keep a TER specification testable instead of merely descriptive.
 
 - **Representation is not validation.** Being able to represent an observed outcome in TER is not evidence that a specification is correct — constrain assumptions with evidence you can check independently.
-- **Don't infer components from `C` alone, and don't fit after the fact.** Observed action `C` doesn't uniquely identify `G`, `M`, `F̂`, `V`, `H`, or `D` — treat rival explanations as competing specifications, not post hoc adjustments. Constrain `G`, `M`, `F_t`, `F̂`, `V`, `H`, and `D` with independent evidence — observed constraints, elicited beliefs, experiments, or structural estimation — not by reverse-engineering them from the result you want.
+- **Don't infer components from `C` alone, and don't fit after the fact.** Observed `C` does not uniquely identify `G`, `M`, `F̂`, `V`, `H`, or `D`. Constrain those components, and `F_t`, with independent evidence, and treat rival explanations as competing specifications rather than post hoc fits.
 - **Avoid double counting.** The same mechanism shouldn't be encoded across multiple components unless each has a genuinely distinct causal role.
 - **Preserve established economic mechanisms.** Map utility functions, beliefs, heuristics, and solution concepts into TER; don't rewrite their substance to fit.
 - **`D` may be deterministic or stochastic, but must be substantive.** Its flexibility isn't an explanation unless it's specified precisely enough to generate testable implications.
