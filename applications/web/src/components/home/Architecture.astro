@@ -22,17 +22,19 @@ import FHat from "../ui/FHat.astro";
           <span>
             D<sub>i,t</sub> (
             <FHat /><sub>i,t</sub><span class="eq-comma">, </span>
-            G<sub>i,t</sub><span class="eq-comma">, </span>
             M<sub>i,t</sub><span class="eq-comma">, </span>
-            V<sub>i,t</sub><span class="eq-comma">, </span>
-            H<sub>i,t</sub>
+            V<sub>i,t</sub>(· | G<sub>i,t</sub><span class="eq-comma">, </span>
+            M<sub>i,t</sub><span class="eq-comma">, </span>
+            H<sub>i,t</sub>)
             )
           </span>
         </div>
 
         <p class="equation-note">
-          An agent selects an action from what it perceives as feasible using its
-          objective, model of reality, valuations, time horizon, and decision process.
+          An agent's decision process selects an action from what it perceives as
+          feasible. It may condition directly on the agent's model of reality and
+          may use valuation, which evaluates actions relative to the objective,
+          given the model of reality and time horizon.
         </p>
       </div>
 
@@ -51,8 +53,9 @@ import FHat from "../ui/FHat.astro";
         </div>
 
         <p class="equation-note">
-          The agent selects an action, which then encounters the objective feasible
-          state of reality at time t and produces the realized outcome.
+          The selected action then encounters the objective feasible state of
+          reality relevant when it is realized, producing the realized outcome.
+          The agent does not need to know F<sub>t</sub> when it decides.
         </p>
       </div>
     </div>
@@ -67,7 +70,7 @@ import FHat from "../ui/FHat.astro";
         <dl>
           <div class="variable-row">
             <dt>G</dt>
-            <dd>Objective relevant to the agent's decision</dd>
+            <dd>Objective that provides the reference for valuation when valuation is used</dd>
           </div>
 
           <div class="variable-row">
@@ -76,13 +79,13 @@ import FHat from "../ui/FHat.astro";
           </div>
 
           <div class="variable-row">
-            <dt>F</dt>
-            <dd>Objective feasible state of reality, including all conditions and constraints that determine what can occur</dd>
+            <dt>F<sub>t</sub></dt>
+            <dd>Objective feasible state of reality, the objectively realized conditions and constraints relevant when selected actions are realized; not agent specific</dd>
           </div>
 
           <div class="variable-row">
             <dt><FHat /></dt>
-            <dd>Possibilities the agent perceives as available</dd>
+            <dd>Perceived feasible set, the actions the agent perceives as available to attempt</dd>
           </div>
 
           <div class="variable-row">
@@ -92,12 +95,12 @@ import FHat from "../ui/FHat.astro";
 
           <div class="variable-row">
             <dt>H</dt>
-            <dd>Time horizon considered relevant to the decision</dd>
+            <dd>Time horizon, the future consequences the agent considers relevant to valuation</dd>
           </div>
 
           <div class="variable-row">
             <dt>D</dt>
-            <dd>Decision process used to evaluate and select among perceived feasible actions</dd>
+            <dd>Decision process through which the agent selects among perceived feasible actions</dd>
           </div>
 
           <div class="variable-row">
@@ -139,7 +142,7 @@ import FHat from "../ui/FHat.astro";
         <div class="notation mt-5">
           <span class="notation-label">Notation</span>
           <p>i — Agent</p>
-          <p>t — Time period</p>
+          <p>t — Decision point (a period, stage, round, or event)</p>
         </div>
       </section>
     </div>

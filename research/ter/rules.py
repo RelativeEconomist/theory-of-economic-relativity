@@ -1,6 +1,7 @@
 from typing import Any
 
 from research.ter.agent import AgentState
+from research.ter.decision import ValuationView
 from research.ter.reality import RealityResult
 
 
@@ -186,7 +187,7 @@ def first_feasible(agent: AgentState):
 # ---------------------------------------------------------------------------
 
 
-def mapped_value(action: Any, agent: AgentState) -> float:
+def mapped_value(action: Any, agent: ValuationView) -> float:
     """
     Read an action's value from a declarative value map.
 
@@ -200,7 +201,7 @@ def mapped_value(action: Any, agent: AgentState) -> float:
     return agent.valuation["values"][action]
 
 
-def net_value(action: Any, agent: AgentState) -> float:
+def net_value(action: Any, agent: ValuationView) -> float:
     """
     Read an action's benefit and cost from declarative maps.
 
@@ -219,7 +220,7 @@ def net_value(action: Any, agent: AgentState) -> float:
     return benefit - cost
 
 
-def expected_return(action: Any, agent: AgentState) -> float:
+def expected_return(action: Any, agent: ValuationView) -> float:
     """
     Value an investment action using expected appreciation.
 
@@ -255,7 +256,7 @@ def expected_return(action: Any, agent: AgentState) -> float:
     )
 
 
-def bank_depositor_value(action: Any, agent: AgentState) -> float:
+def bank_depositor_value(action: Any, agent: ValuationView) -> float:
     """
     Depositor valuation under perceived bank failure risk.
 
@@ -297,7 +298,7 @@ def bank_depositor_value(action: Any, agent: AgentState) -> float:
 # ---------------------------------------------------------------------------
 
 
-def private_value(action: Any, agent: AgentState) -> float:
+def private_value(action: Any, agent: ValuationView) -> float:
     """
     Value an action using only its underlying private value, ignoring any
     external effect.
@@ -311,7 +312,7 @@ def private_value(action: Any, agent: AgentState) -> float:
     return agent.valuation["private_values"][action]
 
 
-def internalized_value(action: Any, agent: AgentState) -> float:
+def internalized_value(action: Any, agent: ValuationView) -> float:
     """
     Value an action as private value plus the agent's own *perceived*
     external effect, as if that belief were fully internalized into the
@@ -343,7 +344,7 @@ def internalized_value(action: Any, agent: AgentState) -> float:
 # ---------------------------------------------------------------------------
 
 
-def payoff_matrix_value(action: Any, agent: AgentState) -> float:
+def payoff_matrix_value(action: Any, agent: ValuationView) -> float:
     """
     Value an action by looking up a payoff matrix against the agent's
     expected counterpart action.
@@ -373,7 +374,7 @@ def payoff_matrix_value(action: Any, agent: AgentState) -> float:
 # ---------------------------------------------------------------------------
 
 
-def price_taking_value(action: Any, agent: AgentState) -> float:
+def price_taking_value(action: Any, agent: ValuationView) -> float:
     """
     Value an action using net_value's benefit-minus-cost logic, except
     the action named by valuation["price_taking_action"] reads its

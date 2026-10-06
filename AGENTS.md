@@ -119,3 +119,29 @@ After code work, report only:
 5. current git state if relevant
 
 Keep the report concise.
+
+## Writing and simplicity standard
+
+TER should be lean, simple, and easy to learn without sacrificing correctness.
+
+For all public-facing or instructional content outside the canonical academic paper, including website copy, README files, guides, replication tests, release notes, examples, and educational material:
+
+- Prefer the shortest wording that preserves canonical TER meaning.
+- Every sentence should add new information.
+- Remove duplicated ideas, repeated definitions, unnecessary qualifications, academic filler, and restatements of obvious points.
+- Do not repeat theory text when a shorter explanation or link to the canonical theory is sufficient.
+- Use plain language by default while preserving TER terminology where precision matters.
+- Structure explanations progressively: simple baseline first, deeper detail only when needed.
+- Match complexity to the intended audience without changing the underlying TER architecture.
+- Treat unnecessary verbosity, repetitive content, and avoidable complexity as defects to fix before PR review.
+
+Before finalizing public-facing or instructional changes, perform a dedicated simplicity pass and check:
+
+1. Can anything be removed without losing meaning?
+2. Can any sentences be combined?
+3. Is any idea stated more than once?
+4. Is any wording more academic or verbose than necessary?
+5. Is the baseline explanation understandable to the intended audience?
+6. Does the wording remain faithful to canonical TER?
+
+Do not modify `theory/academic.md` as part of this simplification pass unless explicitly authorized.

@@ -1,5 +1,8 @@
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
+
+if TYPE_CHECKING:
+    from research.ter.decision import ValuationView
 
 
 @dataclass
@@ -41,7 +44,7 @@ class AgentState:
     objective: Any
     model_of_reality: Any
     perceived_feasible_set: list[Any]
-    value: Callable[[Any, "AgentState"], float]
+    value: Callable[[Any, "ValuationView"], float]
     horizon: Any
     decision_process: Callable[["AgentState"], Any]
     name: str

@@ -144,49 +144,42 @@ See [`test_scheduled_engine_contract.py`](tests/test_scheduled_engine_contract.p
 
 ## Standard Test Structure
 
-Organize a test file in this order, using section comments, and keep the docstring to these parts:
+Follow the layout of [`templates/ter_test_template.py`](templates/ter_test_template.py): a short docstring, then three code sections.
 
 ```python
 """
 TER Replication Test NN: <Title>
-Canonical TER: theory/academic.md, <the models the test actually exercises>
+Canonical TER: theory/academic.md, <the models the test actually uses>
 
-Economic question
-------------------
-1-3 sentences, phrased as a question.
+Purpose
+-------
+What happens and why, in a few plain sentences.
 
-Scenario
---------
-What the agents/actions/setup actually are, in plain language.
-
-TER instantiation
------------------
-A table of the components this test instantiates -- G, M, F̂, V, H, D, C,
-plus R, O and feedback only where used -- each marked fixed, varied, or
-observed. A Model 5.1-only test states that F_t and outcome realization
-are outside its scope.
-
-Economic mechanism
--------------------
-The economic story that produces the hypothesis, in plain language.
+TER mapping
+-----------
+One row per component the test uses, marked fixed, varied, or observed,
+with its value in this example. A test without R says that F_t and
+outcomes are outside its scope.
 
 Assumptions
 -----------
-Test-specific choices that are not part of TER itself.
+Test-specific choices that are not part of TER.
 
 Hypothesis
 ----------
-Numbered claims, scoped to the configured specification.
+Numbered claims that the tests check.
 """
 
-# Actions
-# Economic assumptions
-# Agents
-# Scenarios
+# Agent
+# Reality / Scenario
 # Tests
 ```
 
-Not every test needs every section at length — a one-agent test's "Scenarios" section can be a single `Scenario(...)`. Keep the order even when a section is short.
+- **Agent** — action names, the agent's key numbers as named constants, and the `AgentSpec`. A one-line comment on a field can say which TER component it is.
+- **Reality / Scenario** — `F_t`, a local `R` only if no shared rule fits, the `Scenario`, and any variants.
+- **Tests** — one `unittest.TestCase`; run the scenarios once in `setUpClass`, then one test method per hypothesis claim.
+
+Existing tests in `tests/` use a longer docstring and separate `# Actions` and `# Economic assumptions` sections. That still works; new tests can follow the shorter template.
 
 ## Naming Constants vs. Inline Values
 
@@ -252,6 +245,13 @@ A useful test answers one clear economic question:
 > Can feedback amplify an initial change under these conditions?
 
 > Can bounded search produce a different action than exhaustive search?
+
+## Test Template and Verification Checklist
+
+- [`templates/ter_test_template.py`](templates/ter_test_template.py) — a small, runnable example: one buyer chooses using an expected price and pays the actual price. Copy it to `tests/test_NN_your_topic.py` and replace the example with your own economics.
+- [`templates/TEST_VERIFICATION.md`](templates/TEST_VERIFICATION.md) — the checklist to complete before submitting a new or changed test.
+
+The template is outside `tests/`, so `run_tests.py` does not discover it; run it with `python3 -m unittest research.templates.ter_test_template -v`.
 
 ## Framework Internals (Advanced)
 
