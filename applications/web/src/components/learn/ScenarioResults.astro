@@ -9,13 +9,8 @@ interface Props {
 
 const { results, table } = Astro.props;
 ---
-<section class="scenario-results doc-section">
-  <p class="eyebrow">Test result</p>
-  <h2 class="doc-heading">Observed behavior.</h2>
-  <p class="lede">
-    Results from the executable test, with explanation of the economic
-    mechanism where useful.
-  </p>
+<div class="scenario-results">
+  <h3>Test result</h3>
 
   {results && (
     <dl class="results-grid">
@@ -42,13 +37,17 @@ const { results, table } = Astro.props;
       </table>
     </div>
   )}
-</section>
+</div>
 
 <style>
+  h3 {
+    margin-top: 2.5rem;
+  }
+
   /* Reuses the same table treatment as .prose table in global.css, so a
      comparison table here matches the Theory doc's Markdown tables. */
   .results-table-wrap {
-    margin: 2.5rem 0 0;
+    margin: 1.5rem 0 0;
     overflow-x: auto;
   }
 
@@ -79,7 +78,7 @@ const { results, table } = Astro.props;
   .results-grid {
     display: grid;
     gap: 0;
-    margin: 2.5rem 0 0;
+    margin: 1.5rem 0 0;
   }
 
   .results-grid > div {

@@ -36,6 +36,10 @@ Prefer direct and understandable implementations over speculative flexibility or
 
 An abstraction should solve a repeated current problem, not a hypothetical future one.
 
+## Coding guidelines
+
+Follow `CODING_GUIDELINES.md` for readability, documentation, naming, and abstraction decisions.
+
 ## Core execution boundaries
 
 Preserve these boundaries unless the canonical theory changes:

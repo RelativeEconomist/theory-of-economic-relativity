@@ -21,7 +21,7 @@
     "@astrojs/sitemap": "latest",
     "@tailwindcss/vite": "latest",
     "animejs": "latest",
-    "astro": "7.1.4",
+    "astro": "7.3.8",
     "gsap": "latest",
     "katex": "latest",
     "lenis": "latest",

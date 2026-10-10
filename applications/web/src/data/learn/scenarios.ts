@@ -2,10 +2,12 @@
  * Presentation metadata for the Learn hub.
  *
  * This file does not define or reinterpret TER. It only describes, for the
- * website, how a given executable replication test maps onto the existing
- * TER architecture. The canonical theory is theory/academic.md; the
- * canonical behavior of each scenario is its executable test under
- * research/tests/. If this file and the test ever disagree, the test wins.
+ * website, how a given executable scenario maps onto the existing TER
+ * architecture. The canonical theory is theory/academic.md; the canonical
+ * behavior of each scenario lives in its executable scenario module under
+ * research/scenarios/ (e.g. basic_agent_choice.py) and/or its replication
+ * test under research/tests/. If this file and that executable code ever
+ * disagree, the executable code wins.
  */
 
 export type ScenarioStatus = "active" | "coming-soon";
@@ -13,7 +15,7 @@ export type ScenarioStatus = "active" | "coming-soon";
 /** One row of the core TER decision architecture, as it applies to a scenario. */
 export interface TerComponentMapping {
   /** Stable identifier for the variable, independent of display formatting. */
-  key: "G" | "M" | "F" | "F_hat" | "V" | "H" | "D" | "C" | "O";
+  key: "G" | "M" | "F" | "F_hat" | "V" | "H" | "D" | "C" | "R" | "O";
   /** Display form of the symbol, e.g. "F̂" or "F_t" (rendered with a subscript). */
   symbol: string;
   /** Short name of the variable, e.g. "Perceived feasible set". */
@@ -22,8 +24,9 @@ export interface TerComponentMapping {
   definition: string;
   /** How this specific test configures, exercises, or holds this variable. */
   mapping: string;
-  /** Short label for how this test treats the variable, e.g. "Fixed across agents". */
-  testTreatment: string;
+  /** How the test treats this variable, e.g. "Fixed across agents". In the
+   *  compact model view, "Not modeled" rows are listed after the variables. */
+  testTreatment?: string;
 }
 
 export interface ScenarioField {
@@ -42,20 +45,28 @@ export interface Scenario {
    *  Rendered as-is; not assumed to be a numbered test. */
   sourceLabel?: string;
   economicQuestion?: string;
+  /** One or two sentences for the page's Scenario section. Falls back to `summary`. */
+  context?: string;
   /** Concrete description of how this test's market/agents are set up. */
   economicSetup?: string;
   /** Short statement of what varies across this test's cases vs. what is held fixed. */
   whatChanges?: string;
+  /** Short TER-terms restatement of `whatChanges`, shown below it in Interpretation. */
+  terNote?: string;
   terComponents?: TerComponentMapping[];
+  /** One-sentence scope statement, shown in the page's Scenario section. */
+  scope?: string;
   assumptions?: string[];
   hypotheses?: string[];
   configuration?: ScenarioField[];
+  /** Python fields (label) and the TER variable each one specifies (value). */
+  implementationMapping?: ScenarioField[];
   /** Simple label/value results. Use for tests with a single outcome to report. */
   results?: ScenarioField[];
   /** Comparison table across multiple cases. Use instead of `results` when a test's
    *  point is how the outcome differs across cases (e.g. different decision rules). */
   resultsTable?: { columns: string[]; rows: string[][] };
-  /** Path to the executable test, relative to the repository root. */
+  /** Path to the executable test or scenario, relative to the repository root. */
   sourcePath?: string;
 }
 
@@ -69,18 +80,16 @@ export const scenarios: Scenario[] = [
       "A single agent chooses its highest-valued action among three coffees it perceives as available.",
     sourceLabel: "Test 1",
     economicQuestion:
-      "Can an agent choose its highest-valued perceived feasible action using a specified decision process?",
-    economicSetup:
-      "A single agent, a coffee buyer, chooses among three coffees — Coffee A, Coffee B, and Coffee C — with hand-assigned values of 4, 7, and 10. The agent perceives all three coffees as available, so its decision process alone determines the selected action.",
-    whatChanges:
-      "Nothing is varied across cases. This baseline test verifies that when the decision process evaluates every perceived option, the highest-valued action is selected.",
+      "Can an agent choose the highest-valued action from the options it perceives as available?",
+    context:
+      "One agent chooses among three coffees. Each coffee has a value, and the decision process selects the highest-valued option.",
     terComponents: [
       {
         key: "G",
         symbol: "G",
         name: "Objective",
         definition: "Result or condition that provides the reference for valuation when valuation is used.",
-        mapping: "The agent's objective is \"choose coffee.\"",
+        mapping: "Choose coffee.",
         testTreatment: "Fixed",
       },
       {
@@ -89,8 +98,7 @@ export const scenarios: Scenario[] = [
         name: "Model of reality",
         definition:
           "The agent's model of reality, including information, beliefs, assumptions, expectations, and interpretations.",
-        mapping:
-          "No distinct information, belief, or expectation is varied in this test.",
+        mapping: "Left empty: neither V nor D uses information or beliefs.",
         testTreatment: "Fixed",
       },
       {
@@ -99,17 +107,15 @@ export const scenarios: Scenario[] = [
         name: "Objective feasible state of reality",
         definition:
           "The objectively realized conditions and constraints relevant when the selected action(s) at decision point t are realized. Not agent specific, and not an input to the decision process.",
-        mapping:
-          "F_t and outcome realization are outside this scenario's scope.",
-        testTreatment: "Outside scope",
+        mapping: "Not modeled: no action is realized.",
+        testTreatment: "Not modeled",
       },
       {
         key: "F_hat",
         symbol: "F̂",
         name: "Perceived feasible set",
         definition: "Actions the agent perceives as available to attempt.",
-        mapping:
-          "The agent perceives all three coffees as available.",
+        mapping: "All three coffees.",
         testTreatment: "Fixed",
       },
       {
@@ -117,16 +123,15 @@ export const scenarios: Scenario[] = [
         symbol: "V",
         name: "Valuation",
         definition: "Valuation of actions relative to the agent's objective.",
-        mapping:
-          "Each coffee is assigned a fixed value: Coffee A = 4, Coffee B = 7, Coffee C = 10. These values are held constant for the test.",
-        testTreatment: "Fixed per action",
+        mapping: "A value for each coffee, set in the simulator.",
+        testTreatment: "Editable",
       },
       {
         key: "H",
         symbol: "H",
         name: "Time horizon",
         definition: "Which future consequences the agent considers relevant to valuation.",
-        mapping: "\"current decision\"",
+        mapping: "Current decision.",
         testTreatment: "Fixed",
       },
       {
@@ -135,8 +140,7 @@ export const scenarios: Scenario[] = [
         name: "Decision process",
         definition:
           "Process through which the agent selects among perceived feasible actions. It may condition directly on the model of reality and may use valuation when applicable.",
-        mapping:
-          "The agent compares all perceived feasible coffees and selects the one with the highest assigned value.",
+        mapping: "Select the coffee with the highest value.",
         testTreatment: "Fixed",
       },
       {
@@ -144,42 +148,49 @@ export const scenarios: Scenario[] = [
         symbol: "C",
         name: "Selected action",
         definition: "Action selected by the agent.",
-        mapping: "The agent selects the highest-valued coffee: Coffee C.",
-        testTreatment: "Endogenously selected",
+        mapping: "The coffee D selects, returned by the simulator.",
+        testTreatment: "Output",
+      },
+      {
+        key: "R",
+        symbol: "R",
+        name: "Reality function",
+        definition:
+          "Maps the selected action(s) and the relevant objectively realized state F_t to the realized outcome; its arguments depend on model scope.",
+        mapping: "Not modeled: no action is realized.",
+        testTreatment: "Not modeled",
       },
       {
         key: "O",
         symbol: "O",
         name: "Realized outcome",
         definition: "Realized outcome associated with the selected action.",
-        mapping:
-          "Outside this scenario's scope. This scenario ends with the selected action.",
-        testTreatment: "Not tested",
+        mapping: "Not modeled: the scenario ends at the selected action.",
+        testTreatment: "Not modeled",
       },
     ],
+    scope: "One agent, one decision. This illustrates TER Model 5.1, not real coffee demand.",
     assumptions: [
-      "Values are a static, hand-assigned map, not derived from any utility function.",
+      "Values are hand-assigned for each run, not derived from any utility function.",
+      "Ties go to the first tied coffee in F̂ order: Coffee A, Coffee C, Coffee B.",
     ],
+    whatChanges:
+      "The simulator changes only the coffee values. Everything else stays fixed, so a different selected action comes from a different valuation.",
+    terNote:
+      "In TER terms, only V changes; G, M, F̂, H, and D remain fixed. Selecting the highest value is one D specification; TER does not require optimization.",
     hypotheses: [
       "The agent selects the highest-valued action in its perceived feasible set.",
     ],
-    configuration: [
-      { label: "Actions", value: "Coffee A, Coffee B, Coffee C" },
-      { label: "Values", value: "Coffee A = 4, Coffee B = 7, Coffee C = 10" },
-      { label: "Perceived feasible set", value: "Coffee A, Coffee B, Coffee C" },
-      {
-        label: "Valuation method",
-        value: "Fixed values assigned to each coffee",
-      },
-      {
-        label: "Decision process",
-        value:
-          "Compare all perceived feasible options and choose the highest-valued one",
-      },
-      { label: "Time horizon", value: "Current decision" },
+    implementationMapping: [
+      { label: "objective", value: "G" },
+      { label: "model_of_reality", value: "M (empty)" },
+      { label: "perceived_feasible_set", value: "F̂" },
+      { label: "valuation, read by mapped_value", value: "V" },
+      { label: "horizon", value: "H" },
+      { label: "decision_process = maximize_value", value: "D" },
+      { label: "selected_action", value: "C" },
     ],
-    results: [{ label: "Selected action", value: "Coffee C (10)" }],
-    sourcePath: "research/tests/test_01_basic_agent_choice.py",
+    sourcePath: "research/scenarios/basic_agent_choice.py",
   },
   {
     slug: "bounded-rationality",

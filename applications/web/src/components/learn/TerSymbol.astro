@@ -1,0 +1,9 @@
+---
+/** Renders a TER symbol stored as plain text, e.g. "F_t", with its index as a subscript. */
+interface Props {
+  symbol: string;
+}
+
+const [base, index] = Astro.props.symbol.split("_");
+---
+{base}{index && <sub>{index}</sub>}

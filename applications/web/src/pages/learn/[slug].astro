@@ -6,7 +6,8 @@ import TerArchitecture from "../../components/learn/TerArchitecture.astro";
 import ScenarioAssumptions from "../../components/learn/ScenarioAssumptions.astro";
 import ScenarioHypotheses from "../../components/learn/ScenarioHypotheses.astro";
 import ScenarioResults from "../../components/learn/ScenarioResults.astro";
-import ScenarioSource from "../../components/learn/ScenarioSource.astro";
+import ScenarioReference from "../../components/learn/ScenarioReference.astro";
+import BasicAgentChoiceRunner from "../../components/learn/BasicAgentChoiceRunner.astro";
 import { getActiveScenarios } from "../../data/learn/scenarios";
 import type { Scenario } from "../../data/learn/scenarios";
 
@@ -29,6 +30,9 @@ const nextScenario =
   scenarioIndex >= 0 && scenarioIndex < activeScenarios.length - 1
     ? activeScenarios[scenarioIndex + 1]
     : undefined;
+
+// The interactive scenario pairs the simulator with the compact model view.
+const isInteractive = scenario.slug === "basic-agent-choice";
 ---
 <BaseLayout
   title={`${scenario.title} — Learn TER`}
@@ -39,56 +43,48 @@ const nextScenario =
       <ScenarioSelector slot="selector" currentSlug={scenario.slug} />
     </ScenarioHeader>
 
-    {scenario.economicSetup && (
-      <section class="economic-setup doc-section">
-        <p class="eyebrow">Economic setup</p>
-        <h2 class="doc-heading">How the scenario works.</h2>
-        <p class="lede">{scenario.economicSetup}</p>
-      </section>
-    )}
-
-    {scenario.whatChanges && (
-      <section class="what-changes doc-section">
-        <p class="eyebrow">What this test changes</p>
-        <h2 class="doc-heading">What stays fixed, what varies.</h2>
-        <p class="lede">{scenario.whatChanges}</p>
-      </section>
-    )}
-
-    {scenario.terComponents && <TerArchitecture components={scenario.terComponents} />}
-
-    {/* Reserved position for a future simulator block, between the TER
-        architecture section and the hypotheses below. Intentionally empty
-        for now — no simulator controls yet. */}
+    <section class="scenario-overview doc-section">
+      <h2 class="doc-heading">Scenario</h2>
+      <dl class="overview-list">
+        {scenario.economicQuestion && (
+          <div>
+            <dt>Question</dt>
+            <dd>{scenario.economicQuestion}</dd>
+          </div>
+        )}
+        <div>
+          <dt>Scenario</dt>
+          <dd>{scenario.context ?? scenario.summary}</dd>
+        </div>
+        {scenario.scope && (
+          <div>
+            <dt>Scope</dt>
+            <dd>{scenario.scope}</dd>
+          </div>
+        )}
+      </dl>
+    </section>
 
     {scenario.assumptions && <ScenarioAssumptions assumptions={scenario.assumptions} />}
-    {scenario.hypotheses && <ScenarioHypotheses hypotheses={scenario.hypotheses} />}
 
-    {scenario.configuration && (
-      <section class="scenario-configuration doc-section">
-        <p class="eyebrow">Test configuration</p>
-        <h2 class="doc-heading">How the test is set up.</h2>
-        <dl class="configuration-grid hairline-grid hairline-grid-cols-2">
-          {scenario.configuration.map((field) => (
-            <div>
-              <dt>{field.label}</dt>
-              <dd>{field.value}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
+    {scenario.terComponents && (
+      <TerArchitecture components={scenario.terComponents} compact={isInteractive} />
     )}
 
-    {(scenario.results || scenario.resultsTable) && (
-      <ScenarioResults results={scenario.results} table={scenario.resultsTable} />
-    )}
+    {isInteractive && <BasicAgentChoiceRunner />}
 
-    {scenario.sourcePath && (
-      <section class="scenario-source-section doc-section">
-        <p class="eyebrow">Executable test</p>
-        <ScenarioSource sourcePath={scenario.sourcePath} />
-      </section>
-    )}
+    <section class="scenario-interpretation doc-section">
+      <h2 class="doc-heading">Interpretation</h2>
+      {scenario.economicSetup && <p class="lede">{scenario.economicSetup}</p>}
+      {scenario.whatChanges && <p class="lede">{scenario.whatChanges}</p>}
+      {scenario.terNote && <p class="ter-note">{scenario.terNote}</p>}
+      {scenario.hypotheses && <ScenarioHypotheses hypotheses={scenario.hypotheses} />}
+      {(scenario.results || scenario.resultsTable) && (
+        <ScenarioResults results={scenario.results} table={scenario.resultsTable} />
+      )}
+    </section>
+
+    <ScenarioReference scenario={scenario} />
 
     <section class="section-sm scenario-nav doc-section">
       <div class="scenario-nav-links hairline-grid">
@@ -125,37 +121,47 @@ const nextScenario =
 </BaseLayout>
 
 <style>
-  .economic-setup .lede,
-  .what-changes .lede {
+  .overview-list {
+    margin: 2rem 0 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .overview-list > div {
+    display: grid;
+    grid-template-columns: 7rem 1fr;
+    align-items: baseline;
+    gap: 1rem;
+    padding: 0.9rem 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .overview-list dt {
+    color: var(--muted);
+    font-size: 0.68rem;
+    font-weight: 650;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .overview-list dd {
+    max-width: 960px;
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.55;
+    text-wrap: pretty;
+  }
+
+  .scenario-interpretation .lede {
     max-width: 960px;
     margin-top: 1rem;
   }
 
-  .configuration-grid {
-    grid-template-columns: repeat(2, 1fr);
-    margin: 2.5rem 0 0;
-    border: 1px solid var(--line);
-  }
-
-  .configuration-grid > div {
-    padding: 1.1rem 1.5rem;
-  }
-
-  .configuration-grid dt {
+  .ter-note {
+    max-width: 960px;
+    margin: 1rem 0 0;
     color: var(--muted);
-    font-size: 0.72rem;
-    font-weight: 650;
-    letter-spacing: 0.04em;
-  }
-
-  .configuration-grid dd {
-    margin: 0.4rem 0 0;
-    color: var(--ink);
     font-size: 0.95rem;
-  }
-
-  .scenario-source-section .eyebrow {
-    margin-bottom: 1rem;
+    line-height: 1.55;
   }
 
   .scenario-nav {
@@ -210,8 +216,9 @@ const nextScenario =
   }
 
   @media (max-width: 640px) {
-    .configuration-grid {
+    .overview-list > div {
       grid-template-columns: 1fr;
+      gap: 0.35rem;
     }
 
     .scenario-nav-links {

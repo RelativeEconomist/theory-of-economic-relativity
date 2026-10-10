@@ -1,53 +1,80 @@
 ---
+/**
+ * Scenario mapping onto Model 5.1: the decision equation and, per variable,
+ * its symbol, plain name, role in this test, and treatment. The compact view
+ * shows treatments as status badges and lists "Not modeled" variables after
+ * the rows. Full definitions live in the deeper reference.
+ */
 import type { TerComponentMapping } from "../../data/learn/scenarios";
+import TerSymbol from "./TerSymbol.astro";
 
 interface Props {
   components: TerComponentMapping[];
+  compact?: boolean;
 }
 
-const { components } = Astro.props;
-
-// Symbols such as "F_t" are stored as plain text; render the time index as a subscript.
-const renderSymbol = (symbol: string) => symbol.replace(/_(\w+)/, "<sub>$1</sub>");
+const { components, compact = false } = Astro.props;
+const NOT_MODELED = "Not modeled";
+const notModeled = compact ? components.filter((component) => component.testTreatment === NOT_MODELED) : [];
+const rows = compact ? components.filter((component) => component.testTreatment !== NOT_MODELED) : components;
 ---
 <section class="ter-architecture doc-section">
-  <p class="eyebrow">TER architecture</p>
-  <h2 class="doc-heading">How this test uses the TER framework.</h2>
-  <p class="lede">
-    TER describes agent decisions and their outcomes through a common
-    architecture. The decision process selects from the perceived feasible
-    set; the objective and time horizon condition valuation when valuation
-    is used; and F<sub>t</sub> enters only when the selected action is
-    realized, never as an input to the decision. The table below shows what
-    each component means, how it is instantiated in this test, and whether
-    this test fixes it, varies it, selects it, or produces it as a result.
-  </p>
+  <h2 class="doc-heading">TER model</h2>
+  {compact ? (
+    <p class="lede">
+      The agent selects an action through{" "}
+      <a href="/theory/#51-agent-decision-model">Model 5.1, the Agent Decision Model</a>:
+    </p>
+  ) : (
+    <p class="lede">
+      The decision process selects from the perceived feasible set; the
+      objective and time horizon condition valuation when valuation is used;
+      and F<sub>t</sub> enters only when the selected action is realized, never
+      as an input to the decision. The equation is{" "}
+      <a href="/theory/#51-agent-decision-model">Model 5.1, the Agent Decision Model</a>.
+      Each row shows how this test instantiates a component and how the test
+      treats it; full definitions are in the deeper reference below.
+    </p>
+  )}
 
+  {/* Model 5.1 exactly as written in theory/academic.md. */}
   <div class="equation card" role="img" aria-label="C sub i,t equals D sub i,t of F-hat sub i,t, M sub i,t, and V sub i,t given G sub i,t, M sub i,t, H sub i,t">
     <code>C<sub>i,t</sub> = D<sub>i,t</sub>(F̂<sub>i,t</sub>, M<sub>i,t</sub>, V<sub>i,t</sub>(· | G<sub>i,t</sub>, M<sub>i,t</sub>, H<sub>i,t</sub>))</code>
   </div>
 
-  <div class="architecture-table" role="table">
-    <div class="architecture-row architecture-head" role="row">
-      <span role="columnheader">Component</span>
-      <span role="columnheader">Meaning</span>
-      <span role="columnheader">In this test</span>
-      <span role="columnheader">Test treatment</span>
-    </div>
-    {components.map((component) => (
-      <div class="architecture-row" role="row">
-        <span class="component-name" role="cell">
-          <b set:html={renderSymbol(component.symbol)} /> {component.name}
-        </span>
-        <span class="component-meaning" role="cell">{component.definition}</span>
-        <span class="component-mapping" role="cell">{component.mapping}</span>
-        <span class="component-treatment" role="cell">{component.testTreatment}</span>
-      </div>
+  <ul class:list={["mapping-list", { compact }]} role="list">
+    {rows.map((component) => (
+      <li class="mapping-row">
+        <span class="symbol"><TerSymbol symbol={component.symbol} /></span>
+        <span class="name">{component.name}</span>
+        <span class="mapping">{component.mapping}</span>
+        {compact ? (
+          <span class:list={["status", `status-${component.testTreatment?.toLowerCase()}`]}>{component.testTreatment}</span>
+        ) : (
+          <span class="treatment">{component.testTreatment}</span>
+        )}
+      </li>
     ))}
-  </div>
+  </ul>
+
+  {notModeled.length > 0 && (
+    <p class="not-modeled">
+      <strong>Not modeled:</strong>{" "}
+      {notModeled.map((component, index) => (
+        <>{index > 0 && ", "}<TerSymbol symbol={component.symbol} /></>
+      ))}.
+    </p>
+  )}
 </section>
 
 <style>
+  .lede a {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 3px;
+    text-underline-offset: 3px;
+  }
+
   .equation {
     display: flex;
     overflow-x: auto;
@@ -62,80 +89,104 @@ const renderSymbol = (symbol: string) => symbol.replace(/_(\w+)/, "<sub>$1</sub>
     white-space: nowrap;
   }
 
-  .architecture-table {
-    margin-top: 2.5rem;
-    border: 1px solid var(--line);
-    border-radius: var(--radius-md);
-    overflow: hidden;
+  .mapping-list {
+    margin: 2rem 0 0;
+    padding: 0;
+    list-style: none;
+    border-bottom: 1px solid var(--line);
   }
 
-  .architecture-row {
+  .mapping-row {
     display: grid;
-    grid-template-columns: 11rem 1fr 1.2fr 12rem;
-    gap: 1.5rem;
-    padding: 1.25rem 1.5rem;
+    grid-template-columns: 2.5rem 12rem 1fr 11rem;
+    align-items: baseline;
+    gap: 1rem;
+    padding: 0.9rem 0;
     border-top: 1px solid var(--line);
   }
 
-  .architecture-row:first-child {
-    border-top: none;
+  .compact .mapping-row {
+    grid-template-columns: 2.5rem 12rem 1fr auto;
   }
 
-  .architecture-head {
-    color: var(--muted);
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-    background: var(--surface-2);
-  }
-
-  .component-name {
+  .symbol {
+    font-family: ui-monospace, "SF Mono", "Menlo", monospace;
+    font-size: 1.05rem;
     font-weight: 650;
   }
 
-  .component-name b {
-    display: inline-block;
-    min-width: 1.6rem;
-    color: var(--muted);
-    font-family: ui-monospace, "SF Mono", "Menlo", monospace;
+  .name {
+    font-weight: 650;
   }
 
-  .component-meaning,
-  .component-mapping {
+  .mapping {
     color: var(--muted);
-    font-size: 0.9rem;
-    line-height: 1.55;
+    font-size: 0.95rem;
+    line-height: 1.5;
   }
 
-  .component-treatment {
+  .treatment {
     color: var(--muted);
     font-size: 0.8rem;
   }
 
-  @media (max-width: 900px) {
-    .architecture-row {
-      grid-template-columns: 1fr;
-      gap: 0.4rem;
+  /* Text carries the status; color only reinforces it. */
+  .status {
+    padding: 0.2rem 0.6rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .status-editable {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  .status-output {
+    border-color: var(--ink);
+    background: var(--ink);
+    color: var(--bg);
+  }
+
+  .not-modeled {
+    margin: 1rem 0 0;
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+
+  .not-modeled strong {
+    color: var(--ink);
+  }
+
+  @media (max-width: 640px) {
+    .mapping-row {
+      grid-template-columns: 2.5rem 1fr;
+      gap: 0.3rem 1rem;
     }
 
-    .architecture-head {
-      display: none;
+    .mapping,
+    .treatment {
+      grid-column: 2;
     }
 
-    .component-meaning::before {
-      content: "Meaning: ";
-      color: var(--ink);
+    .compact .mapping-row {
+      grid-template-columns: 2.5rem 1fr auto;
+      gap: 1rem;
     }
 
-    .component-mapping::before {
-      content: "In this test: ";
-      color: var(--ink);
+    .compact .mapping {
+      grid-row: 2;
+      grid-column: 2 / -1;
     }
 
-    .component-treatment::before {
-      content: "Test treatment: ";
-      color: var(--ink);
+    .status {
+      grid-row: 1;
+      grid-column: 3;
     }
   }
 </style>
