@@ -144,6 +144,23 @@ def limited_search(agent: AgentState):
                        perceived_feasible_set -- it can reorder what is
                        perceived, not add to it.
     """
+    considered = limited_search_considered_actions(agent)
+
+    if not considered:
+        raise ValueError("Limited search considered no actions.")
+
+    return max(
+        considered,
+        key=lambda action: agent.value(action, agent),
+    )
+
+
+def limited_search_considered_actions(agent: AgentState):
+    """
+    Return the actions limited_search considers: the first search_limit
+    actions of its search sequence, in search order. Reads the same
+    decision_parameters as limited_search.
+    """
     search_limit = agent.decision_parameters["search_limit"]
     search_order = agent.decision_parameters.get(
         "search_order",
@@ -162,15 +179,7 @@ def limited_search(agent: AgentState):
             f"feasible set: {unavailable}"
         )
 
-    considered = search_order[:search_limit]
-
-    if not considered:
-        raise ValueError("Limited search considered no actions.")
-
-    return max(
-        considered,
-        key=lambda action: agent.value(action, agent),
-    )
+    return search_order[:search_limit]
 
 
 def first_feasible(agent: AgentState):

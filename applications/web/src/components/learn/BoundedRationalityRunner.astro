@@ -1,0 +1,248 @@
+---
+/**
+ * Runs the Bounded Rationality scenario through the Python simulation
+ * endpoint (research/http/simulation.py). Python owns the defaults, selects
+ * the action, and reports which coffees the decision process considered;
+ * this component only collects inputs and shows what Python returns.
+ */
+import "./runner.css";
+
+const actions = [
+  { id: "nearby_coffee", label: "Nearby Coffee" },
+  { id: "office_coffee", label: "Office Coffee" },
+  { id: "best_coffee", label: "Best Coffee" },
+];
+const searchPositions = ["1st", "2nd", "3rd"];
+---
+<section class="bounded-runner doc-section" data-bounded-runner>
+  <h2 class="doc-heading">Simulator</h2>
+  <p class="lede">
+    Same G, M, F̂, V, and H. Different D → potentially different C. Set the
+    values, choose D, and run the scenario in Python.
+  </p>
+
+  <div class="runner-card">
+    <form class="runner-form">
+      <fieldset class="runner-values">
+        <legend><span class="runner-symbol">V</span> Valuation: value of each coffee</legend>
+        {actions.map((action) => (
+          <div class="runner-field">
+            <label for={`value-${action.id}`}>V({action.label})</label>
+            <input id={`value-${action.id}`} name={action.id} data-value type="number" step="any" />
+          </div>
+        ))}
+      </fieldset>
+
+      <fieldset class="runner-values">
+        <legend><span class="runner-symbol">D</span> Decision process</legend>
+        <div class="runner-field">
+          <label for="decision-process">Decision process</label>
+          <select id="decision-process" data-decision-process>
+            <option value="maximize_value">Maximize value</option>
+            <option value="limited_search">Limited search</option>
+          </select>
+        </div>
+        <div class="runner-field" data-limited-only hidden>
+          <label for="search-limit">Search limit: coffees checked</label>
+          <input id="search-limit" data-search-limit type="number" min="1" max={actions.length} step="1" />
+        </div>
+        <fieldset class="runner-order" data-limited-only hidden>
+          <legend>Search order</legend>
+          {searchPositions.map((position, index) => (
+            <div class="runner-field">
+              <label for={`search-order-${index}`}>{position}</label>
+              <select id={`search-order-${index}`} data-search-order>
+                {actions.map((action) => <option value={action.id}>{action.label}</option>)}
+              </select>
+            </div>
+          ))}
+        </fieldset>
+      </fieldset>
+
+      <div class="runner-buttons">
+        <button class="button button-primary" type="submit" disabled>Run</button>
+        <button class="button button-ghost" type="button" data-reset disabled>Reset to defaults</button>
+      </div>
+    </form>
+
+    <div class="runner-result" role="status" aria-live="polite" aria-atomic="true">
+      <p class="runner-status" data-status>
+        Not run yet. The simulator needs JavaScript and the Python endpoint.
+      </p>
+      <dl class="runner-output" data-output hidden>
+        <div>
+          <dt>Selected action</dt>
+          <dd class="runner-selected" data-selected-action></dd>
+        </div>
+        <div>
+          <dt>Considered</dt>
+          <dd data-considered></dd>
+        </div>
+        <div>
+          <dt>Not considered</dt>
+          <dd data-not-considered></dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { runScenario } from "./run-scenario";
+
+  const SCENARIO_ID = "bounded-rationality";
+  const LIMITED_SEARCH = "limited_search";
+
+  type RunResponse = {
+    decision_process: string;
+    selected_action: string;
+    selected_value: number;
+    considered_actions: string[];
+    not_considered_actions: string[];
+    action_values: Record<string, number>;
+    // Returned for limited_search only.
+    search_limit?: number;
+    search_order?: string[];
+  };
+
+  const initRunner = async () => {
+    const root = document.querySelector<HTMLElement>("[data-bounded-runner]");
+    if (!root || root.dataset.bound) return;
+    root.dataset.bound = "true";
+
+    const form = root.querySelector("form")!;
+    const valueInputs = [...form.querySelectorAll<HTMLInputElement>("[data-value]")];
+    const processSelect = form.querySelector<HTMLSelectElement>("[data-decision-process]")!;
+    const limitInput = form.querySelector<HTMLInputElement>("[data-search-limit]")!;
+    const orderSelects = [...form.querySelectorAll<HTMLSelectElement>("[data-search-order]")];
+    const limitedOnly = [...form.querySelectorAll<HTMLElement>("[data-limited-only]")];
+    const buttons = [...form.querySelectorAll<HTMLButtonElement>("button")];
+    const resetButton = form.querySelector<HTMLButtonElement>("[data-reset]")!;
+    const status = root.querySelector<HTMLElement>("[data-status]")!;
+    const output = root.querySelector<HTMLElement>("[data-output]")!;
+    const selected = root.querySelector<HTMLElement>("[data-selected-action]")!;
+    const considered = root.querySelector<HTMLElement>("[data-considered]")!;
+    const notConsidered = root.querySelector<HTMLElement>("[data-not-considered]")!;
+
+    const labelFor = (action: string) =>
+      orderSelects[0].querySelector<HTMLOptionElement>(`option[value="${action}"]`)?.text ?? action;
+    const listLabels = (actions: string[]) =>
+      actions.length ? actions.map(labelFor).join(", ") : "None";
+
+    // Search limit and order configure limited search only.
+    const showSearchControls = () => {
+      for (const element of limitedOnly) {
+        element.hidden = processSelect.value !== LIMITED_SEARCH;
+      }
+    };
+
+    // Inputs stay editable throughout; only the buttons wait for Python.
+    const show = async (scenarioInputs: object, pendingMessage: string) => {
+      for (const button of buttons) button.disabled = true;
+      output.hidden = true;
+      status.hidden = false;
+      status.textContent = pendingMessage;
+      try {
+        const result = await runScenario<RunResponse>(SCENARIO_ID, scenarioInputs);
+        for (const input of valueInputs) input.value = String(result.action_values[input.name]);
+        processSelect.value = result.decision_process;
+        if (result.search_limit !== undefined && result.search_order) {
+          limitInput.value = String(result.search_limit);
+          result.search_order.forEach((action, index) => (orderSelects[index].value = action));
+        }
+        showSearchControls();
+        selected.textContent = `${labelFor(result.selected_action)} · V = ${result.selected_value}`;
+        considered.textContent = listLabels(result.considered_actions);
+        notConsidered.textContent = listLabels(result.not_considered_actions);
+        status.hidden = true;
+        output.hidden = false;
+      } catch (error) {
+        status.textContent = `Error: ${(error as Error).message}`;
+      } finally {
+        for (const button of buttons) button.disabled = false;
+      }
+    };
+
+    processSelect.addEventListener("change", showSearchControls);
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      // Empty or invalid numbers become null; Python reports the error.
+      const scenarioInputs: Record<string, unknown> = {
+        decision_process: processSelect.value,
+        action_values: Object.fromEntries(
+          valueInputs.map((input) => [input.name, input.valueAsNumber]),
+        ),
+      };
+      if (processSelect.value === LIMITED_SEARCH) {
+        scenarioInputs.search_limit = limitInput.valueAsNumber;
+        scenarioInputs.search_order = orderSelects.map((select) => select.value);
+      }
+      show(scenarioInputs, "Running in Python…");
+    });
+
+    // With empty inputs, Python runs its own defaults.
+    resetButton.addEventListener("click", () =>
+      show({}, "Resetting to Python defaults…"),
+    );
+
+    await show({}, "Loading Python defaults…");
+  };
+  initRunner();
+  document.addEventListener("astro:page-load", initRunner);
+</script>
+
+<style>
+  .runner-order {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .runner-order legend {
+    margin-bottom: 0.5rem;
+    padding: 0;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 650;
+  }
+
+  /* Author display rules would otherwise override the hidden attribute. */
+  [data-limited-only][hidden] {
+    display: none;
+  }
+
+  .runner-output {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    margin: 0;
+  }
+
+  .runner-output[hidden] {
+    display: none;
+  }
+
+  .runner-output dt {
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 650;
+  }
+
+  .runner-output dd {
+    margin: 0.2rem 0 0;
+    overflow-wrap: anywhere;
+  }
+
+  @media (max-width: 720px) {
+    .runner-order,
+    .runner-output {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

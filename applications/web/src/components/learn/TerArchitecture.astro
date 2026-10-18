@@ -5,6 +5,8 @@
  * shows treatments as status badges and lists "Not modeled" variables after
  * the rows. Full definitions live in the deeper reference.
  */
+import katex from "katex";
+import "katex/dist/katex.min.css";
 import type { TerComponentMapping } from "../../data/learn/scenarios";
 import TerSymbol from "./TerSymbol.astro";
 
@@ -17,6 +19,12 @@ const { components, compact = false } = Astro.props;
 const NOT_MODELED = "Not modeled";
 const notModeled = compact ? components.filter((component) => component.testTreatment === NOT_MODELED) : [];
 const rows = compact ? components.filter((component) => component.testTreatment !== NOT_MODELED) : components;
+// Model 5.1 as written in theory/academic.md, rendered at build time. Outer
+// parentheses stay at text size so they do not dominate the inline formula.
+const decisionEquation = katex.renderToString(
+  String.raw`C_{i,t} = D_{i,t}(\hat{F}_{i,t}, M_{i,t}, V_{i,t}(\cdot \mid G_{i,t}, M_{i,t}, H_{i,t}))`,
+  { throwOnError: true },
+);
 ---
 <section class="ter-architecture doc-section">
   <h2 class="doc-heading">TER model</h2>
@@ -37,9 +45,8 @@ const rows = compact ? components.filter((component) => component.testTreatment 
     </p>
   )}
 
-  {/* Model 5.1 exactly as written in theory/academic.md. */}
   <div class="equation card" role="img" aria-label="C sub i,t equals D sub i,t of F-hat sub i,t, M sub i,t, and V sub i,t given G sub i,t, M sub i,t, H sub i,t">
-    <code>C<sub>i,t</sub> = D<sub>i,t</sub>(F̂<sub>i,t</sub>, M<sub>i,t</sub>, V<sub>i,t</sub>(· | G<sub>i,t</sub>, M<sub>i,t</sub>, H<sub>i,t</sub>))</code>
+    <span class="formula" set:html={decisionEquation} />
   </div>
 
   <ul class:list={["mapping-list", { compact }]} role="list">
@@ -83,8 +90,7 @@ const rows = compact ? components.filter((component) => component.testTreatment 
     padding: 1.75rem 2rem;
   }
 
-  .equation code {
-    font-family: ui-monospace, "SF Mono", "Menlo", monospace;
+  .formula {
     font-size: clamp(1rem, 2.4vw, 1.35rem);
     white-space: nowrap;
   }

@@ -66,6 +66,7 @@ Practices that keep a TER specification testable instead of merely descriptive.
 - **Don't infer components from `C` alone, and don't fit after the fact.** Observed `C` does not uniquely identify `G`, `M`, `F̂`, `V`, `H`, or `D`. Constrain those components, and `F_t`, with independent evidence, and treat rival explanations as competing specifications rather than post hoc fits.
 - **Avoid double counting.** The same mechanism shouldn't be encoded across multiple components unless each has a genuinely distinct causal role.
 - **Preserve established economic mechanisms.** Map utility functions, beliefs, heuristics, and solution concepts into TER; don't rewrite their substance to fit.
+- **Treat established models as configurations, not TER assumptions.** When reproducing an established economic model, first identify which elements are source-model assumptions, agent behaviors, mechanisms, derived results, and equilibrium conditions. Map those elements into TER without promoting them into general TER claims. The TER specification should preserve the source model’s configuration and then test whether the resulting actions and outcomes reproduce its predicted results.
 - **`D` may be deterministic or stochastic, but must be substantive.** Its flexibility isn't an explanation unless it's specified precisely enough to generate testable implications.
 - **Specify `R` substantively, and never use `R` or `F_t` as a residual.** Both must be defined enough to generate testable implications, not absorb whatever's left unexplained.
 - **Define the agent/system boundary explicitly.** A coordinated group may be one agent or many depending on the question — but don't double-count a collective action as also an independent constituent action, and don't assume an institution's objective is automatically each member's `G`.
@@ -80,7 +81,29 @@ Practices that keep a TER specification testable instead of merely descriptive.
 - **External effects belong in realized consequences.** When the mechanism produces effects on other agents, represent them in `O`; they do not require a separate TER primitive. Specifications making welfare claims should distinguish price-mediated pecuniary effects from technological or other non-price external effects when that distinction matters to the economic conclusion.
 - **Treat commitments as selected objects, not future actions already taken.** A commitment, contract, policy, or contingent strategy may be `C` at one decision point. Later realized actions remain separate `C` values at later decision points. Enforceable commitments may alter later objective conditions in `F`; nonbinding, self-enforcing, or perceived commitments may instead shape `M`, `F̂`, `V`, or `D`, depending on the specification.
 - **Specify interaction timing explicitly.** Multi-agent specifications may be contemporaneous, sequential, staged, asynchronous, or repeated. At each indexed decision point, apply `R` to the action or actions relevant to the outcome being realized; a specification need not assign a new `C` to an agent that does not act at that point.
-- **State the equilibrium concept and how it enters the specification.** TER does not impose one universal equilibrium concept. Specify the relevant consistency conditions, including the applicable feasibility and belief requirements, and state whether equilibrium is embedded in `R` as a clearing mechanism, emerges from repeated agent decisions, or is verified afterward as a consistency check. Equilibrium does not by itself imply static behavior, dynamic stability, optimality, permanence, or desirability.
+- **State the equilibrium concept and how it enters the specification.** TER does not impose one universal equilibrium concept. Specify the relevant consistency conditions, including applicable feasibility and belief requirements, and state whether equilibrium is embedded in R as a clearing mechanism, emerges from repeated agent decisions, or is verified afterward as a consistency check. When reproducing an established model, treat its equilibrium relationships as configuration-specific hypotheses or consistency conditions unless the source model explicitly uses them as inputs. Do not assume the predicted equilibrium merely to reproduce it. Equilibrium does not by itself imply static behavior, dynamic stability, optimality, permanence, or desirability.
+
+### Established Model Replication
+
+When mapping an established economic model into TER:
+
+1. Define the source-model configuration before mapping it into TER.
+2. Classify each economically relevant element as:
+   - configuration input or assumption
+   - agent behavior
+   - interaction or realization mechanism
+   - derived result
+   - equilibrium hypothesis or consistency condition
+3. Map the configuration into TER without changing the source model or TER definitions.
+4. Generate or derive the resulting actions and outcomes.
+5. Compare those outcomes against the source model's predicted results.
+6. Compare competing configurations by changing assumptions or mechanisms explicitly rather than fitting the original configuration after observing the result.
+
+A useful structure is:
+
+> Configuration → selected actions → realized outcomes → compare against source-model hypotheses → compare against competing configurations
+
+The ability to reproduce one result does not by itself validate TER or the source model. The value of replication comes from preserving the original assumptions and mechanisms, reproducing their implications, and making competing configurations explicit.
 
 ## Common Mistakes
 
@@ -106,5 +129,6 @@ Anti-patterns worth a second look before you trust a result — see Variable Pla
 3. Avoid encoding the same mechanism twice.
 4. Prefer the simplest specification that preserves the economics being studied.
 5. If two placements remain plausible, treat them as competing specifications and test which better fits the evidence.
+6. For established-model replications, classify each source element before mapping it: assumption, agent behavior, mechanism, derived result, or equilibrium condition.
 
 A TER specification should make its assumptions visible enough that another researcher can reproduce, challenge, or replace them.

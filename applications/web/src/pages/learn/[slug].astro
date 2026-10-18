@@ -8,6 +8,7 @@ import ScenarioHypotheses from "../../components/learn/ScenarioHypotheses.astro"
 import ScenarioResults from "../../components/learn/ScenarioResults.astro";
 import ScenarioReference from "../../components/learn/ScenarioReference.astro";
 import BasicAgentChoiceRunner from "../../components/learn/BasicAgentChoiceRunner.astro";
+import BoundedRationalityRunner from "../../components/learn/BoundedRationalityRunner.astro";
 import { getActiveScenarios } from "../../data/learn/scenarios";
 import type { Scenario } from "../../data/learn/scenarios";
 
@@ -31,8 +32,9 @@ const nextScenario =
     ? activeScenarios[scenarioIndex + 1]
     : undefined;
 
-// The interactive scenario pairs the simulator with the compact model view.
-const isInteractive = scenario.slug === "basic-agent-choice";
+// Interactive scenarios pair a simulator with the compact model view.
+const isInteractive =
+  scenario.slug === "basic-agent-choice" || scenario.slug === "bounded-rationality";
 ---
 <BaseLayout
   title={`${scenario.title} — Learn TER`}
@@ -71,7 +73,8 @@ const isInteractive = scenario.slug === "basic-agent-choice";
       <TerArchitecture components={scenario.terComponents} compact={isInteractive} />
     )}
 
-    {isInteractive && <BasicAgentChoiceRunner />}
+    {scenario.slug === "basic-agent-choice" && <BasicAgentChoiceRunner />}
+    {scenario.slug === "bounded-rationality" && <BoundedRationalityRunner />}
 
     <section class="scenario-interpretation doc-section">
       <h2 class="doc-heading">Interpretation</h2>

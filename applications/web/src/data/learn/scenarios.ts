@@ -202,17 +202,15 @@ export const scenarios: Scenario[] = [
     sourceLabel: "Test 3",
     economicQuestion:
       "Can TER represent a nonoptimal choice produced by limited search rather than universal optimization?",
-    economicSetup:
-      "The same single agent, a coffee buyer, chooses among three coffees — Nearby Coffee, Office Coffee, and Best Coffee — with hand-assigned values of 6, 7, and 10. The agent perceives all three coffees as available in every case. Only the agent's decision process, how many of those perceived feasible actions it searches, and the order it searches them in are varied.",
-    whatChanges:
-      "The objective, perceived feasible set, valuations, and time horizon stay fixed. Only the decision process's configuration changes — the decision process, search depth, and search order — to see whether the selected action changes.",
+    context:
+      "One agent chooses among three coffees it perceives as available. Its decision process either checks every coffee or stops after the first few in its search order.",
     terComponents: [
       {
         key: "G",
         symbol: "G",
         name: "Objective",
         definition: "Result or condition that provides the reference for valuation when valuation is used.",
-        mapping: "The agent's objective is \"choose preferred coffee.\"",
+        mapping: "Choose preferred coffee.",
         testTreatment: "Fixed",
       },
       {
@@ -221,8 +219,7 @@ export const scenarios: Scenario[] = [
         name: "Model of reality",
         definition:
           "The agent's model of reality, including information, beliefs, assumptions, expectations, and interpretations.",
-        mapping:
-          "No distinct information, belief, or expectation is varied in this test.",
+        mapping: "Left empty: neither V nor D uses information or beliefs.",
         testTreatment: "Fixed",
       },
       {
@@ -231,17 +228,15 @@ export const scenarios: Scenario[] = [
         name: "Objective feasible state of reality",
         definition:
           "The objectively realized conditions and constraints relevant when the selected action(s) at decision point t are realized. Not agent specific, and not an input to the decision process.",
-        mapping:
-          "F_t and outcome realization are outside this scenario's scope.",
-        testTreatment: "Outside scope",
+        mapping: "Not modeled: no action is realized.",
+        testTreatment: "Not modeled",
       },
       {
         key: "F_hat",
         symbol: "F̂",
         name: "Perceived feasible set",
         definition: "Actions the agent perceives as available to attempt.",
-        mapping:
-          "The same three coffees, in the same order, in every case. Only the decision process's search configuration changes across cases — not which coffees the agent perceives as feasible.",
+        mapping: "All three coffees, in the same order, under both decision processes.",
         testTreatment: "Fixed",
       },
       {
@@ -249,16 +244,15 @@ export const scenarios: Scenario[] = [
         symbol: "V",
         name: "Valuation",
         definition: "Valuation of actions relative to the agent's objective.",
-        mapping:
-          "Each coffee has a fixed value, read directly from a declared value map, as in Test 1: Nearby Coffee = 6, Office Coffee = 7, Best Coffee = 10.",
-        testTreatment: "Fixed per action",
+        mapping: "A value for each coffee, set in the simulator.",
+        testTreatment: "Editable",
       },
       {
         key: "H",
         symbol: "H",
         name: "Time horizon",
         definition: "Which future consequences the agent considers relevant to valuation.",
-        mapping: "\"current purchase\"",
+        mapping: "Current purchase.",
         testTreatment: "Fixed",
       },
       {
@@ -268,50 +262,59 @@ export const scenarios: Scenario[] = [
         definition:
           "Process through which the agent selects among perceived feasible actions. It may condition directly on the model of reality and may use valuation when applicable.",
         mapping:
-          "The agent either checks every perceived feasible coffee before deciding (exhaustive search), or stops after checking only the first few, in its search order (limited search).",
-        testTreatment: "Varied across cases",
+          "Maximize value checks every coffee; limited search checks only the first few in its search order. Each selects the highest value among the coffees it checks.",
+        testTreatment: "Editable",
       },
       {
         key: "C",
         symbol: "C",
         name: "Selected action",
         definition: "Action selected by the agent.",
-        mapping:
-          "Best Coffee under exhaustive search; Office Coffee under limited search (depth 2); Best Coffee under broader search (depth 3); Best Coffee under limited search once the order is changed.",
-        testTreatment: "Endogenously selected; differs by decision process, search depth, and search order",
+        mapping: "The coffee D selects, returned by the simulator.",
+        testTreatment: "Output",
+      },
+      {
+        key: "R",
+        symbol: "R",
+        name: "Reality function",
+        definition:
+          "Maps the selected action(s) and the relevant objectively realized state F_t to the realized outcome; its arguments depend on model scope.",
+        mapping: "Not modeled: no action is realized.",
+        testTreatment: "Not modeled",
       },
       {
         key: "O",
         symbol: "O",
         name: "Realized outcome",
         definition: "Realized outcome associated with the selected action.",
-        mapping:
-          "Outside this scenario's scope. This scenario ends with the selected action.",
-        testTreatment: "Not tested",
+        mapping: "Not modeled: the scenario ends at the selected action.",
+        testTreatment: "Not modeled",
       },
     ],
+    scope: "One agent, one decision. This illustrates TER Model 5.1, not real coffee demand.",
     assumptions: [
-      "search_limit is a test-specific decision-rule parameter, not a TER primitive; it controls how many perceived feasible actions the limited search considers.",
-      "Search order is a decision-process parameter (search_order), not a reordering of the perceived feasible set, which is identical, in the same order, in every case.",
+      "Values are hand-assigned for each run, not derived from any utility function.",
+      "Search limit and search order configure limited search. They are not TER primitives and do not change F̂.",
+      "Ties go to the first tied coffee checked: in F̂ order (Nearby, Office, Best) under maximize value, in search order under limited search.",
     ],
+    whatChanges:
+      "Limited search can stop before it reaches the highest-valued coffee. Checking more coffees, or checking them in a different order, can change the selected coffee.",
+    terNote: "Limited search is one D specification; TER does not require optimization.",
     hypotheses: [
       "Exhaustive search selects the highest-valued action.",
       "Limited search can select a lower-valued action.",
       "Increasing search depth can change the selected action.",
       "Search order can matter under incomplete search.",
     ],
-    configuration: [
-      { label: "Actions", value: "Nearby Coffee, Office Coffee, Best Coffee" },
-      { label: "Values", value: "Nearby Coffee = 6, Office Coffee = 7, Best Coffee = 10" },
-      {
-        label: "Perceived feasible set",
-        value: "Nearby Coffee, Office Coffee, Best Coffee (identical, in the same order, in every case)",
-      },
-      {
-        label: "Valuation method",
-        value: "Fixed values assigned to each coffee",
-      },
-      { label: "Time horizon", value: "Current purchase" },
+    implementationMapping: [
+      { label: "objective", value: "G" },
+      { label: "model_of_reality", value: "M (empty)" },
+      { label: "perceived_feasible_set", value: "F̂" },
+      { label: "valuation, read by mapped_value", value: "V" },
+      { label: "horizon", value: "H" },
+      { label: "decision_process = maximize_value or limited_search", value: "D" },
+      { label: "decision_parameters: search_limit, search_order", value: "D configuration" },
+      { label: "selected_action", value: "C" },
     ],
     resultsTable: {
       columns: ["Case", "How much is searched", "Selected action"],
@@ -322,7 +325,7 @@ export const scenarios: Scenario[] = [
         ["Reordered limited search", "First 2 in new order", "Best Coffee (10)"],
       ],
     },
-    sourcePath: "research/tests/test_03_bounded_rationality.py",
+    sourcePath: "research/scenarios/bounded_rationality.py",
   },
   {
     slug: "supply-and-demand",

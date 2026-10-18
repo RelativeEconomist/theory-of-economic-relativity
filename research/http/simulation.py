@@ -25,23 +25,14 @@ TER_ALLOWED_ORIGIN to one exact HTTPS origin to also allow a production site.
 
 import json
 import os
-import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from research.adapters import basic_agent_choice
+from research.http.endpoint import MAX_BODY_BYTES, PATH, exact_https_origin, simulate
 
-PATH = "/simulate"
 HOST = "127.0.0.1"
 PORT = 8000
 LOCAL_ORIGINS = frozenset({"http://localhost:4321", "http://127.0.0.1:4321"})
-MAX_BODY_BYTES = 64 * 1024
 REQUEST_TIMEOUT_SECONDS = 10
-
-ENVELOPE_KEYS = frozenset({"scenario", "inputs"})
-
-# Lowercase https://host[:port] only: no wildcard, credentials, path, query,
-# or fragment. Browsers send Origin in this form.
-HTTPS_ORIGIN = re.compile(r"https://[a-z0-9-]+(\.[a-z0-9-]+)*(:(?P<port>[0-9]{1,5}))?")
 
 
 def allowed_origins(production_origin: str | None) -> frozenset:
@@ -52,50 +43,7 @@ def allowed_origins(production_origin: str | None) -> frozenset:
     if production_origin is None:
         return LOCAL_ORIGINS
 
-    match = HTTPS_ORIGIN.fullmatch(production_origin)
-
-    if not match or not 0 < int(match["port"] or 443) <= 65535:
-        raise ValueError(
-            "TER_ALLOWED_ORIGIN must be one exact lowercase HTTPS origin such as "
-            "https://example.org (optional port; no path, query, fragment, "
-            f"credentials, or wildcard); got {production_origin!r}."
-        )
-
-    return LOCAL_ORIGINS | {production_origin}
-
-
-def simulate(request: dict) -> dict:
-    """
-    Validate a {"scenario", "inputs"} envelope and return the scenario
-    adapter's result for {"scenario": ..., **inputs}.
-    """
-    if not isinstance(request, dict):
-        raise TypeError("Request must be a JSON object with 'scenario' and 'inputs'.")
-
-    missing = sorted(ENVELOPE_KEYS - set(request))
-    unknown = sorted(set(request) - ENVELOPE_KEYS)
-
-    if missing:
-        raise ValueError(f"Missing request key(s): {missing}")
-
-    if unknown:
-        raise ValueError(f"Unknown request key(s): {unknown}")
-
-    scenario, inputs = request["scenario"], request["inputs"]
-
-    if scenario != basic_agent_choice.SCENARIO_ID:
-        raise ValueError(
-            f"Unsupported scenario {scenario!r}; "
-            f"expected one of {[basic_agent_choice.SCENARIO_ID]}."
-        )
-
-    if not isinstance(inputs, dict):
-        raise TypeError("inputs must be a JSON object.")
-
-    if "scenario" in inputs:
-        raise ValueError("inputs must not contain 'scenario'; set it at the top level.")
-
-    return basic_agent_choice.run({"scenario": scenario, **inputs})
+    return LOCAL_ORIGINS | {exact_https_origin(production_origin)}
 
 
 class SimulationHandler(BaseHTTPRequestHandler):

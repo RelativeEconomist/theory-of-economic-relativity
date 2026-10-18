@@ -2,3 +2,6 @@ __pycache__/
 *.pyc
 .venv/
 .DS_Store
+.wrangler/
+.dev.vars
+python_modules/

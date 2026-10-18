@@ -17,6 +17,7 @@ from http.server import ThreadingHTTPServer
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
+from research.adapters import bounded_rationality
 from research.adapters.basic_agent_choice import SCENARIO_ID, run
 from research.http.simulation import PATH, SimulationHandler, allowed_origins
 
@@ -25,6 +26,7 @@ ALLOWED_ORIGINS = (DEV_ORIGIN, "http://127.0.0.1:4321")
 PRODUCTION_ORIGIN = "https://ter.example.org"
 BODY_LIMIT = 64 * 1024
 CONFIGURED_VALUES = {"coffee_a": 9, "coffee_b": 7.5, "coffee_c": 1}
+BOUNDED_VALUES = {"nearby_coffee": 6, "office_coffee": 7, "best_coffee": 10}
 
 
 class QuietHandler(SimulationHandler):
@@ -117,6 +119,36 @@ class TestSimulationHttp(unittest.TestCase):
                 self.assertEqual(status, 200)
                 self.assertEqual(headers["Content-Type"], "application/json")
                 self.assertEqual(body, run({"scenario": SCENARIO_ID, **inputs}))
+
+    def test_bounded_rationality_envelopes_reach_its_adapter(self):
+        for inputs in (
+            {},
+            {"decision_process": "maximize_value"},
+            {
+                "decision_process": "limited_search",
+                "action_values": BOUNDED_VALUES,
+                "search_limit": 2,
+                "search_order": ["nearby_coffee", "best_coffee", "office_coffee"],
+            },
+        ):
+            with self.subTest(inputs=inputs):
+                status, _, body = self.post_json(
+                    {"scenario": bounded_rationality.SCENARIO_ID, "inputs": inputs}
+                )
+
+                self.assertEqual(status, 200)
+                self.assertEqual(
+                    body,
+                    bounded_rationality.run(
+                        {"scenario": bounded_rationality.SCENARIO_ID, **inputs}
+                    ),
+                )
+
+        status, _, body = self.post_json(
+            {"scenario": bounded_rationality.SCENARIO_ID, "inputs": {"search_limit": 0}}
+        )
+        self.assertEqual(status, 400)
+        self.assertIn("search_limit", body["error"])
 
     def test_invalid_envelopes_are_rejected(self):
         for request, expected in (

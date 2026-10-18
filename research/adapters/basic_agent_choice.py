@@ -20,8 +20,7 @@ Response:
     }
 """
 
-import math
-
+from research.adapters.action_values import validate_action_values
 from research.scenarios.basic_agent_choice import BASE_AGENT, SCENARIO
 from research.ter import Scenario, run_scenario
 
@@ -29,9 +28,6 @@ SCENARIO_ID = "basic-agent-choice"
 
 ACTIONS = frozenset(BASE_AGENT.valuation["values"])
 REQUEST_KEYS = frozenset({"scenario", "action_values"})
-
-# Generous for a pedagogical scenario; keeps request values to a sane size.
-MAX_ABS_ACTION_VALUE = 1_000_000_000_000
 
 
 def build_scenario(request: dict) -> Scenario:
@@ -57,29 +53,7 @@ def build_scenario(request: dict) -> Scenario:
         return SCENARIO
 
     action_values = request["action_values"]
-
-    if not isinstance(action_values, dict):
-        raise TypeError("action_values must be a dict of action -> value.")
-
-    if set(action_values) != ACTIONS:
-        raise ValueError(
-            f"action_values must give exactly these actions: {sorted(ACTIONS)}"
-        )
-
-    for action, value in action_values.items():
-        if isinstance(value, bool) or not isinstance(value, (int, float)):
-            raise TypeError(f"Value for {action!r} must be a number.")
-
-        # Only floats can be non-finite; math.isfinite would overflow on huge ints.
-        if isinstance(value, float) and not math.isfinite(value):
-            raise ValueError(f"Value for {action!r} must be finite.")
-
-        # abs() and int/float comparison are exact, so huge ints never become floats.
-        if abs(value) > MAX_ABS_ACTION_VALUE:
-            raise ValueError(
-                f"Value for {action!r} is out of range; "
-                f"it must be between -{MAX_ABS_ACTION_VALUE} and {MAX_ABS_ACTION_VALUE}."
-            )
+    validate_action_values(action_values, ACTIONS)
 
     agent = BASE_AGENT.variant(valuation={"values": dict(action_values)})
 

@@ -112,6 +112,18 @@ Do not commit, push, rebase, reset, discard changes, or alter the index unless e
 
 Never overwrite unrelated staged or unstaged user work.
 
+## Autonomous implementation and review
+
+After implementation is approved:
+
+- Implement within the approved scope.
+- Run relevant checks, fix failures, and repeat until verified or blocked.
+- Do not weaken checks or change expected behavior merely to make tests pass.
+- Review the final diff for defects, unnecessary complexity, and missing requirements. Rerun affected checks after corrections.
+- Stop for scope changes, theory conflicts, consequential unresolved decisions, or repeated failures without progress.
+- Provide verification evidence and remaining risks for human review.
+- Match review depth to risk: focused inspection for routine changes; detailed implementation and failure-case review for consequential changes.
+
 ## Implementation report
 
 After code work, report only:

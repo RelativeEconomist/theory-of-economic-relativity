@@ -58,11 +58,27 @@ The page posts `{"scenario": "basic-agent-choice", "inputs": {...}}` to
 
 ## Production
 
-The static deployment does not host the Python simulator, so interactive
-scenarios do not work in production. A production `/simulate` Python
-deployment is still required. Set `PUBLIC_TER_API_URL` (build time) to its HTTPS
-endpoint and `TER_ALLOWED_ORIGIN` (on the simulator) to the exact HTTPS site
-origin, such as `https://example.org`.
+Two Cloudflare Workers, each with its own Wrangler config:
+
+| Worker | Config | Serves |
+| --- | --- | --- |
+| `theory-of-economic-relativity` | `applications/web/wrangler.jsonc` | `dist/` at `https://www.theoryofeconomicrelativity.com` |
+| `theory-of-economic-relativity-api` | `wrangler.api.jsonc` | `POST /simulate` at `https://api.theoryofeconomicrelativity.com` |
+
+```bash
+# Website, from applications/web
+npm run build && npx wrangler deploy
+
+# Simulator, from the repository root
+npx wrangler deploy --config wrangler.api.jsonc
+```
+
+- `.env.production` sets `PUBLIC_TER_API_URL` for production builds.
+- The simulator allows browser calls only from `TER_ALLOWED_ORIGIN` in
+  `wrangler.api.jsonc`, accepts 30 requests a minute per IP, and rejects
+  bodies over 64 KiB.
+- `TER_ALLOWED_ORIGIN` is the `www` origin, so before release the Cloudflare
+  account must redirect `theoryofeconomicrelativity.com` to `www`.
 
 ## Project map
 
@@ -71,14 +87,18 @@ src/pages/learn/                                   Learn index and scenario page
 src/data/learn/scenarios.ts                        Learn scenario content
 src/components/learn/                              Learn page components
 src/components/learn/BasicAgentChoiceRunner.astro  Basic Agent Choice UI
+src/components/learn/BoundedRationalityRunner.astro  Bounded Rationality UI
 src/pages/                                         Other site routes
 src/styles/global.css                              Global styles
 
 # Repository root
 scripts/dev-simulator.sh                           Runs simulator and website
-research/http/simulation.py                        POST /simulate server
-research/adapters/basic_agent_choice.py            JSON adapter
-research/scenarios/basic_agent_choice.py           Scenario definition
+wrangler.api.jsonc                                 Simulator Worker config
+research/http/endpoint.py                          Rules shared by both servers
+research/http/simulation.py                        Local POST /simulate server
+research/http/worker.py                            Production POST /simulate Worker
+research/adapters/                                 JSON adapter per scenario
+research/scenarios/                                Scenario definitions
 research/ter/                                      TER core
 ```
 
