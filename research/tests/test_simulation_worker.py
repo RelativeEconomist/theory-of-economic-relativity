@@ -20,7 +20,7 @@ import unittest
 from http.client import HTTPMessage
 from unittest.mock import patch
 
-from research.adapters import bounded_rationality
+from research.adapters import asymmetric_information, bounded_rationality
 from research.adapters.basic_agent_choice import SCENARIO_ID, run
 from research.http.endpoint import MAX_BODY_BYTES, PATH
 
@@ -169,12 +169,33 @@ class TestSimulationWorker(unittest.TestCase):
                     ),
                 )
 
+    def test_asymmetric_information_envelopes_reach_its_adapter(self):
+        for inputs in ({}, {"pricing": "verified"}, {"believed_share_high": 0.75}):
+            with self.subTest(inputs=inputs):
+                body = json.dumps(
+                    {"scenario": asymmetric_information.SCENARIO_ID, "inputs": inputs}
+                ).encode()
+
+                response = fetch(FakeRequest(body))
+
+                self.assertEqual(response.status, 200)
+                self.assertEqual(
+                    response.json(),
+                    asymmetric_information.run(
+                        {"scenario": asymmetric_information.SCENARIO_ID, **inputs}
+                    ),
+                )
+
     def test_rejected_requests_return_the_endpoint_or_adapter_error(self):
         for request, expected in (
             (["basic-agent-choice"], "JSON object"),
             ({"scenario": SCENARIO_ID}, "'inputs'"),
             ({"scenario": "other-scenario", "inputs": {}}, "Unsupported scenario"),
             ({"scenario": SCENARIO_ID, "inputs": {"action_values": {"coffee_a": 1}}}, "action_values"),
+            (
+                {"scenario": asymmetric_information.SCENARIO_ID, "inputs": {"pricing": "other"}},
+                "pricing",
+            ),
         ):
             with self.subTest(request=request):
                 response = fetch(FakeRequest(json.dumps(request).encode()))

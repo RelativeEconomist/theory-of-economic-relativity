@@ -9,6 +9,7 @@ import ScenarioResults from "../../components/learn/ScenarioResults.astro";
 import ScenarioReference from "../../components/learn/ScenarioReference.astro";
 import BasicAgentChoiceRunner from "../../components/learn/BasicAgentChoiceRunner.astro";
 import BoundedRationalityRunner from "../../components/learn/BoundedRationalityRunner.astro";
+import AsymmetricInformationRunner from "../../components/learn/AsymmetricInformationRunner.astro";
 import { getActiveScenarios } from "../../data/learn/scenarios";
 import type { Scenario } from "../../data/learn/scenarios";
 
@@ -34,7 +35,11 @@ const nextScenario =
 
 // Interactive scenarios pair a simulator with the compact model view.
 const isInteractive =
-  scenario.slug === "basic-agent-choice" || scenario.slug === "bounded-rationality";
+  scenario.slug === "basic-agent-choice" ||
+  scenario.slug === "bounded-rationality" ||
+  scenario.slug === "asymmetric-information";
+// Multi-agent scenarios also show the Model 5.3 system outcome equation.
+const isMultiAgent = scenario.slug === "asymmetric-information";
 ---
 <BaseLayout
   title={`${scenario.title} — Learn TER`}
@@ -70,11 +75,16 @@ const isInteractive =
     {scenario.assumptions && <ScenarioAssumptions assumptions={scenario.assumptions} />}
 
     {scenario.terComponents && (
-      <TerArchitecture components={scenario.terComponents} compact={isInteractive} />
+      <TerArchitecture
+        components={scenario.terComponents}
+        compact={isInteractive}
+        multiAgent={isMultiAgent}
+      />
     )}
 
     {scenario.slug === "basic-agent-choice" && <BasicAgentChoiceRunner />}
     {scenario.slug === "bounded-rationality" && <BoundedRationalityRunner />}
+    {scenario.slug === "asymmetric-information" && <AsymmetricInformationRunner />}
 
     <section class="scenario-interpretation doc-section">
       <h2 class="doc-heading">Interpretation</h2>

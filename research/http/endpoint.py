@@ -8,10 +8,12 @@ size, production origin form, and request envelope.
 
 import re
 
-from research.adapters import basic_agent_choice, bounded_rationality
+from research.adapters import asymmetric_information, basic_agent_choice, bounded_rationality
 
 PATH = "/simulate"
 MAX_BODY_BYTES = 64 * 1024
+
+ADAPTERS = (basic_agent_choice, bounded_rationality, asymmetric_information)
 
 ENVELOPE_KEYS = frozenset({"scenario", "inputs"})
 
@@ -58,14 +60,12 @@ def simulate(request: dict) -> dict:
 
     # Compare with ==, not a dict lookup, so unhashable values are rejected
     # as unsupported rather than raising.
-    if scenario == basic_agent_choice.SCENARIO_ID:
-        adapter = basic_agent_choice
-    elif scenario == bounded_rationality.SCENARIO_ID:
-        adapter = bounded_rationality
-    else:
+    adapter = next((a for a in ADAPTERS if scenario == a.SCENARIO_ID), None)
+
+    if adapter is None:
+        supported = [a.SCENARIO_ID for a in ADAPTERS]
         raise ValueError(
-            f"Unsupported scenario {scenario!r}; expected one of "
-            f"{[basic_agent_choice.SCENARIO_ID, bounded_rationality.SCENARIO_ID]}."
+            f"Unsupported scenario {scenario!r}; expected one of {supported}."
         )
 
     if not isinstance(inputs, dict):

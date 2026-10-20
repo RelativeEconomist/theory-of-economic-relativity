@@ -1,7 +1,8 @@
 ---
 /**
  * Scenario mapping onto Model 5.1: the decision equation and, per variable,
- * its symbol, plain name, role in this test, and treatment. The compact view
+ * its symbol, plain name, role in this test, and treatment. Multi-agent
+ * scenarios add the Model 5.3 system outcome equation. The compact view
  * shows treatments as status badges and lists "Not modeled" variables after
  * the rows. Full definitions live in the deeper reference.
  */
@@ -13,9 +14,11 @@ import TerSymbol from "./TerSymbol.astro";
 interface Props {
   components: TerComponentMapping[];
   compact?: boolean;
+  /** Interacting agents' actions meet one F_t through one joint R (Model 5.3). */
+  multiAgent?: boolean;
 }
 
-const { components, compact = false } = Astro.props;
+const { components, compact = false, multiAgent = false } = Astro.props;
 const NOT_MODELED = "Not modeled";
 const notModeled = compact ? components.filter((component) => component.testTreatment === NOT_MODELED) : [];
 const rows = compact ? components.filter((component) => component.testTreatment !== NOT_MODELED) : components;
@@ -25,10 +28,22 @@ const decisionEquation = katex.renderToString(
   String.raw`C_{i,t} = D_{i,t}(\hat{F}_{i,t}, M_{i,t}, V_{i,t}(\cdot \mid G_{i,t}, M_{i,t}, H_{i,t}))`,
   { throwOnError: true },
 );
+// Model 5.3 as written in theory/academic.md.
+const systemOutcomeEquation = katex.renderToString(
+  String.raw`O_t = R(C_{1,t}, C_{2,t}, \ldots, C_{n,t}, F_t)`,
+  { throwOnError: true },
+);
 ---
 <section class="ter-architecture doc-section">
   <h2 class="doc-heading">TER model</h2>
-  {compact ? (
+  {compact && multiAgent ? (
+    <p class="lede">
+      Each agent selects an action through{" "}
+      <a href="/theory/#51-agent-decision-model">Model 5.1</a>. Their actions
+      then meet the same F<sub>t</sub> through one joint R, producing one system
+      outcome (<a href="/theory/#53-multi-agent-model">Model 5.3</a>):
+    </p>
+  ) : compact ? (
     <p class="lede">
       The agent selects an action through{" "}
       <a href="/theory/#51-agent-decision-model">Model 5.1, the Agent Decision Model</a>:
@@ -48,6 +63,12 @@ const decisionEquation = katex.renderToString(
   <div class="equation card" role="img" aria-label="C sub i,t equals D sub i,t of F-hat sub i,t, M sub i,t, and V sub i,t given G sub i,t, M sub i,t, H sub i,t">
     <span class="formula" set:html={decisionEquation} />
   </div>
+
+  {multiAgent && (
+    <div class="equation equation-system card" role="img" aria-label="O sub t equals R of C sub 1,t, C sub 2,t, through C sub n,t, and F sub t">
+      <span class="formula" set:html={systemOutcomeEquation} />
+    </div>
+  )}
 
   <ul class:list={["mapping-list", { compact }]} role="list">
     {rows.map((component) => (
@@ -88,6 +109,10 @@ const decisionEquation = katex.renderToString(
     align-items: center;
     margin-top: 2.5rem;
     padding: 1.75rem 2rem;
+  }
+
+  .equation-system {
+    margin-top: 1rem;
   }
 
   .formula {

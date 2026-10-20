@@ -216,6 +216,8 @@ If no existing rule fits, define a **local** rule — one that's genuinely speci
 
 The trigger to move a local rule into `research.ter.rules` is simple: a **second** test wants the same mechanism. (`social_value_reality`, `private_value`, and `internalized_value` all started this way.)
 
+Whole scenarios follow the same rule. When a real second consumer, such as a web simulator adapter, needs a test's scenario, move it to [`scenarios/`](scenarios/) and import it back into the numbered test, which remains the source of truth for the hypotheses. Adapters in [`adapters/`](adapters/) import scenarios and contain no economic mechanisms; a scenario and its adapter share a filename where practical.
+
 ## Modify an Existing Test
 
 Changing a test is encouraged. You can experiment with:

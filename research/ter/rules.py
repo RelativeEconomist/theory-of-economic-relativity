@@ -535,8 +535,8 @@ def quality_market_reality(actions, objective_state, parameters):
     Pooled/true quality pricing is not modeled here as feedback: both
     prices are fixed functions of scenario parameters (and, for the true
     price, actual seller quality), never of a realized outcome, so they
-    belong in each seller's initial valuation (V_0) instead. See
-    test_04_asymmetric_information.py.
+    belong in each seller's initial model of reality (M_0) as the offered
+    price it observes. See research/scenarios/asymmetric_information.py.
 
     Actual quality is a fact about reality, not any seller's belief --
     read from parameters, never from any agent's model_of_reality.

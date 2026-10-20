@@ -479,10 +479,16 @@ export const scenarios: Scenario[] = [
     sourceLabel: "Test 4",
     economicQuestion:
       "Can TER represent the adverse-selection mechanism in Akerlof's \"market for lemons,\" where high-quality sellers withdraw when individual quality is unobservable and goods are priced using pooled expected quality?",
+    context:
+      "Six used-car sellers each know their own car's quality and choose to sell or hold at the price they are offered. When buyers cannot see quality, every car is offered the same pooled price.",
+    scope:
+      "One decision point, six interacting sellers. This illustrates TER Models 5.1 and 5.3, not real used-car markets.",
     economicSetup:
       "The market contains three high-quality sellers and three low-quality sellers. High-quality goods are worth 10, and their sellers have a reservation value of 8. Low-quality goods are worth 4, and their sellers have a reservation value of 2. The market initially believes that 50% of the goods for sale are high quality. Every seller chooses between selling at the offered price and holding onto the good.",
     whatChanges:
       "The sellers, reservation values, perceived feasible sets, and decision process stay the same. The test changes what quality information the offered price reflects, and so the price each seller observes. Under pooled pricing, individual quality is unobservable. Under verified pricing, each seller's quality can be used directly.",
+    terNote:
+      "In TER terms, only each seller's M (the price it observes) changes; G, F̂, V, H, D, and F_t stay fixed. All six selected actions meet the same F_t through one joint R, which produces the system outcome O_t. No seller-level outcome is defined, so O_t is not a sum of individual outcomes.",
     terComponents: [
       {
         key: "G",
@@ -499,8 +505,8 @@ export const scenarios: Scenario[] = [
         definition:
           "The agent's model of reality, including information, beliefs, assumptions, expectations, and interpretations.",
         mapping:
-          "Each seller's model holds the offered price it observes and its belief about its own car's quality. The reality rule reads neither. The observed price is what changes between the two cases: the pooled price under asymmetric information, or the seller's own true-quality price under verified pricing.",
-        testTreatment: "Observed price varies across cases",
+          "Each seller's model holds the offered price it observes and its belief about its own car's quality. The reality rule reads neither. The observed price is what changes between the two cases: the pooled price under asymmetric information, or the seller's own true-quality price under verified pricing. Set in the simulator.",
+        testTreatment: "Editable",
       },
       {
         key: "F",
@@ -528,7 +534,7 @@ export const scenarios: Scenario[] = [
         definition: "Valuation of actions relative to the agent's objective.",
         mapping:
           "A seller values selling as the offered price it observes (from its model of reality) minus its reservation value, which represents the opportunity cost of giving up the good.",
-        testTreatment: "Varies with the price offered and each seller's reservation value",
+        testTreatment: "Fixed",
       },
       {
         key: "H",
@@ -553,22 +559,32 @@ export const scenarios: Scenario[] = [
         symbol: "C",
         name: "Selected action",
         definition: "Action selected by the agent.",
-        mapping: "Each seller selects either sell or hold.",
-        testTreatment: "Endogenously selected",
+        mapping: "Each seller selects either sell or hold, returned by the simulator.",
+        testTreatment: "Output",
+      },
+      {
+        key: "R",
+        symbol: "R",
+        name: "Reality function",
+        definition:
+          "Maps the selected action(s) and the relevant objectively realized state F_t to the realized outcome; its arguments depend on model scope.",
+        mapping:
+          "One joint rule takes every seller's selected action together, with each car's actual quality, and counts the cars sold by actual quality. It never reads a seller's model of reality.",
+        testTreatment: "Fixed",
       },
       {
         key: "O",
-        symbol: "O",
-        name: "Realized outcome",
-        definition: "Realized outcome associated with the selected action.",
+        symbol: "O_t",
+        name: "System outcome",
+        definition: "Realized system outcome produced by interacting selected actions encountering F_t.",
         mapping:
-          "The reality rule takes all sellers' selected actions together, with each car's actual quality, and produces the system outcome O_t: how many high-quality and low-quality goods are sold, and the total. This is a multi-agent specification; no individual outcomes O_{i,t} are defined.",
-        testTreatment: "Result",
+          "How many high-quality and low-quality cars are sold, and the total, returned by the simulator. No seller-level outcomes O_{i,t} are defined.",
+        testTreatment: "Output",
       },
     ],
     assumptions: [
       "Buyers are not represented as individual TER agents in this test. The price each seller is offered is information the seller observes when deciding, so it is held in the seller's model of reality (M), not computed by a separate buyer agent or rule. Each seller is assumed to observe its offered price correctly.",
-      "Under pooled pricing, every seller observes the same population-level price (based on the believed share of high-quality goods) — the same price regardless of the seller's own quality.",
+      "Under pooled pricing, every seller observes the same population-level price (based on the believed share of high-quality goods) — the same price regardless of the seller's own quality. The simulator can change that believed share; actual quality stays 3 high, 3 low, and R never reads the believed share.",
       "Under verified pricing, each seller instead observes its own true price, so a seller's quality determines the price it faces.",
       "Both prices are fixed scenario data, set directly in each seller's initial model of reality — not TER feedback, since neither price depends on a realized outcome.",
       "Sellers are assumed to know their own quality perfectly. TER does not require this.",
@@ -590,6 +606,18 @@ export const scenarios: Scenario[] = [
       { label: "Actions", value: "Sell, hold" },
       { label: "Valuation method", value: "Offered price minus reservation value" },
       { label: "Time horizon", value: "Current sale decision" },
+    ],
+    implementationMapping: [
+      { label: "objective", value: "G" },
+      { label: "model_of_reality: known_quality, price", value: "M" },
+      { label: "parameters[\"actual_quality_by_seller\"]", value: "Aspect of F_t, read only by R" },
+      { label: "perceived_feasible_set", value: "F̂" },
+      { label: "valuation, read by price_taking_value", value: "V" },
+      { label: "horizon", value: "H" },
+      { label: "decision_process = maximize_value", value: "D" },
+      { label: "selected_action", value: "C" },
+      { label: "reality = quality_market_reality", value: "R" },
+      { label: "trace[t].reality.system", value: "O_t" },
     ],
     results: [
       {
@@ -614,7 +642,7 @@ export const scenarios: Scenario[] = [
         ["Total sold", "3", "6"],
       ],
     },
-    sourcePath: "research/tests/test_04_asymmetric_information.py",
+    sourcePath: "research/scenarios/asymmetric_information.py",
   },
   {
     slug: "externalities",

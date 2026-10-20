@@ -88,6 +88,7 @@ src/data/learn/scenarios.ts                        Learn scenario content
 src/components/learn/                              Learn page components
 src/components/learn/BasicAgentChoiceRunner.astro  Basic Agent Choice UI
 src/components/learn/BoundedRationalityRunner.astro  Bounded Rationality UI
+src/components/learn/AsymmetricInformationRunner.astro  Asymmetric Information UI
 src/pages/                                         Other site routes
 src/styles/global.css                              Global styles
 

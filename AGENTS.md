@@ -161,3 +161,13 @@ Before finalizing public-facing or instructional changes, perform a dedicated si
 6. Does the wording remain faithful to canonical TER?
 
 Do not modify `theory/academic.md` as part of this simplification pass unless explicitly authorized.
+
+## Engineering Principles
+
+- **Prefer simplicity.** Choose the simplest solution that satisfies the requirements. Avoid speculative abstractions and unnecessary infrastructure.
+- **Separate responsibilities.** Keep API endpoints thin. Delegate business logic to services and domain functions.
+- **Use abstractions deliberately.** Favor composition and clear boundaries. Introduce abstractions when they solve a real problem, not merely to anticipate reuse.
+- **Keep data models straightforward.** Favor clear schemas and explicit relationships. Use transactions when operations must succeed or fail together.
+- **Follow existing conventions.** Extend established patterns unless there is a justified reason to change them.
+- **Optimize for maintainability.** Code should be easy to understand, test, debug, and modify.
+- **Explain complexity.** When a more complex solution is necessary, explain why a simpler alternative is insufficient.
