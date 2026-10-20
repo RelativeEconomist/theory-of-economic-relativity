@@ -212,7 +212,7 @@ agent.outcome_for(DO_NOT_PRODUCE).outcome["social_value"]
 
 Import shared rule functions directly from `research.ter.rules`. Rule fields accept callables only; symbolic strings such as `"maximize_value"` are not supported.
 
-If no existing rule fits, define a **local** rule — one that's genuinely specific to the test's economics — in the same file, before its first use, with a short docstring saying what it computes and why it isn't shared. Pass the function directly to `AgentSpec` or `Scenario`; see `test_22_feasible_set_learning.py` and `test_26_sequential_entry.py`.
+If no existing rule fits, define a **local** rule — one that's genuinely specific to the test's economics — in the same file, before its first use, with a short docstring saying what it computes and why it isn't shared. Pass the function directly to `AgentSpec` or `Scenario`; see `test_26_sequential_entry.py`.
 
 The trigger to move a local rule into `research.ter.rules` is simple: a **second** test wants the same mechanism. (`social_value_reality`, `private_value`, and `internalized_value` all started this way.)
 

@@ -10,6 +10,7 @@ import ScenarioReference from "../../components/learn/ScenarioReference.astro";
 import BasicAgentChoiceRunner from "../../components/learn/BasicAgentChoiceRunner.astro";
 import BoundedRationalityRunner from "../../components/learn/BoundedRationalityRunner.astro";
 import AsymmetricInformationRunner from "../../components/learn/AsymmetricInformationRunner.astro";
+import FeasibleSetLearningRunner from "../../components/learn/FeasibleSetLearningRunner.astro";
 import { getActiveScenarios } from "../../data/learn/scenarios";
 import type { Scenario } from "../../data/learn/scenarios";
 
@@ -37,7 +38,8 @@ const nextScenario =
 const isInteractive =
   scenario.slug === "basic-agent-choice" ||
   scenario.slug === "bounded-rationality" ||
-  scenario.slug === "asymmetric-information";
+  scenario.slug === "asymmetric-information" ||
+  scenario.slug === "feasible-set-learning";
 // Multi-agent scenarios also show the Model 5.3 system outcome equation.
 const isMultiAgent = scenario.slug === "asymmetric-information";
 ---
@@ -85,6 +87,7 @@ const isMultiAgent = scenario.slug === "asymmetric-information";
     {scenario.slug === "basic-agent-choice" && <BasicAgentChoiceRunner />}
     {scenario.slug === "bounded-rationality" && <BoundedRationalityRunner />}
     {scenario.slug === "asymmetric-information" && <AsymmetricInformationRunner />}
+    {scenario.slug === "feasible-set-learning" && <FeasibleSetLearningRunner />}
 
     <section class="scenario-interpretation doc-section">
       <h2 class="doc-heading">Interpretation</h2>

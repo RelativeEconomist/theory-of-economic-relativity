@@ -20,7 +20,7 @@ import unittest
 from http.client import HTTPMessage
 from unittest.mock import patch
 
-from research.adapters import asymmetric_information, bounded_rationality
+from research.adapters import asymmetric_information, bounded_rationality, feasible_set_learning
 from research.adapters.basic_agent_choice import SCENARIO_ID, run
 from research.http.endpoint import MAX_BODY_BYTES, PATH
 
@@ -186,6 +186,19 @@ class TestSimulationWorker(unittest.TestCase):
                     ),
                 )
 
+    def test_feasible_set_learning_envelopes_reach_its_adapter(self):
+        body = json.dumps(
+            {"scenario": feasible_set_learning.SCENARIO_ID, "inputs": {}}
+        ).encode()
+
+        response = fetch(FakeRequest(body))
+
+        self.assertEqual(response.status, 200)
+        self.assertEqual(
+            response.json(),
+            feasible_set_learning.run({"scenario": feasible_set_learning.SCENARIO_ID}),
+        )
+
     def test_rejected_requests_return_the_endpoint_or_adapter_error(self):
         for request, expected in (
             (["basic-agent-choice"], "JSON object"),
@@ -195,6 +208,10 @@ class TestSimulationWorker(unittest.TestCase):
             (
                 {"scenario": asymmetric_information.SCENARIO_ID, "inputs": {"pricing": "other"}},
                 "pricing",
+            ),
+            (
+                {"scenario": feasible_set_learning.SCENARIO_ID, "inputs": {"periods": 3}},
+                "'periods'",
             ),
         ):
             with self.subTest(request=request):

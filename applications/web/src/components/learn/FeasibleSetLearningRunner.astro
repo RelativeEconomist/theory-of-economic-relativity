@@ -1,0 +1,335 @@
+---
+/**
+ * Runs the Feasible Set Learning scenario through the Python `/simulate`
+ * endpoint (research/http/endpoint.py). The scenario has no inputs: Python
+ * runs both decision points and returns each one as its trace recorded it;
+ * this component only lays those periods out as a timeline.
+ */
+import "./runner.css";
+---
+<section class="learning-runner doc-section" data-learning-runner>
+  <h2 class="doc-heading">Simulator</h2>
+  <p class="lede">
+    Python runs both decision points and returns each step as recorded. Follow
+    the feedback path: the realized outcome O<sub>i,t</sub>, what the agent
+    observes of it, the update, the changed F̂ at t + 1, and the new selected
+    action C<sub>i,t+1</sub>.
+  </p>
+
+  <div class="runner-card">
+    <form class="runner-form">
+      <p class="learning-fixed">
+        No adjustable inputs. Each run replays the specification of Test 22.
+      </p>
+      <div class="runner-buttons">
+        <button class="button button-primary" type="submit" disabled>Run</button>
+        <button class="button button-ghost" type="button" data-reset disabled>Reset to defaults</button>
+      </div>
+    </form>
+
+    <div class="runner-result" role="status" aria-live="polite" aria-atomic="true">
+      <p class="runner-status" data-status>
+        Not run yet. The simulator needs JavaScript and the Python endpoint.
+      </p>
+      <div class="learning-output" data-output hidden>
+        <ol class="learning-timeline" data-periods></ol>
+        <ul class="learning-notes">
+          <li>
+            With one agent, R produces the agent-level outcome O<sub>i,t</sub>
+            (Model 5.2), not a system outcome O<sub>t</sub>.
+          </li>
+          <li>
+            The permission data is a fixed premise of the scenario. R does not
+            check it, and D never sees it.
+          </li>
+          <li>
+            Not every outcome updates every component. This scenario's update
+            rule changes only F̂, and only after the agent observes that it
+            experienced the ordinary action.
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { runScenario } from "./run-scenario";
+
+  const SCENARIO_ID = "feasible-set-learning";
+
+  type AgentSideState = {
+    model_of_reality: Record<string, unknown>;
+    perceived_feasible_set: string[];
+  };
+
+  type Period = {
+    decision_point: number;
+    decision_state: AgentSideState;
+    objective_conditions: { permitted_actions: string[] };
+    selected_action: string;
+    realized_outcome: { experienced_action: string };
+    observation: { experienced_action: string };
+    updated_agent_state: AgentSideState;
+    added_actions: string[];
+  };
+
+  type RunResponse = { periods: Period[] };
+
+  // "better_alternative_action" -> "Better alternative action"
+  const actionLabel = (action: string) => {
+    const words = action.replaceAll("_", " ");
+    return words.charAt(0).toUpperCase() + words.slice(1);
+  };
+  const actionList = (actions: string[]) => actions.map(actionLabel).join(", ");
+  const describeModel = (model: Record<string, unknown>) =>
+    Object.keys(model).length === 0 ? "empty" : JSON.stringify(model);
+
+  /** A label from text and [symbol, subscript] parts, e.g. "Selects ", ["C", "i,0"]. */
+  const term = (...parts: (string | [string, string])[]) => {
+    const dt = document.createElement("dt");
+    for (const part of parts) {
+      if (typeof part === "string") {
+        dt.append(part);
+        continue;
+      }
+      const sub = document.createElement("sub");
+      sub.textContent = part[1];
+      dt.append(part[0], sub);
+    }
+    return dt;
+  };
+
+  const step = (dt: HTMLElement, value: string, note?: string, className?: string) => {
+    const row = document.createElement("div");
+    const dd = document.createElement("dd");
+    dd.textContent = value;
+    if (className) dd.className = className;
+    if (note) {
+      const aside = document.createElement("span");
+      aside.className = "learning-aside";
+      aside.textContent = note;
+      dd.append(aside);
+    }
+    row.append(dt, dd);
+    return row;
+  };
+
+  const describeUpdate = (period: Period, isLast: boolean) => {
+    const t = period.decision_point;
+    const unchanged =
+      JSON.stringify(period.updated_agent_state) === JSON.stringify(period.decision_state);
+    const after = actionList(period.updated_agent_state.perceived_feasible_set);
+    if (unchanged) {
+      return isLast ? "No change. No later decision in this run." : `No change. F̂ at t = ${t + 1}: ${after}`;
+    }
+    const added = period.added_actions.length ? `Adds ${actionList(period.added_actions)}. ` : "";
+    return isLast ? `${added}F̂ after: ${after}` : `${added}F̂ at t = ${t + 1}: ${after}`;
+  };
+
+  const periodItem = (period: Period, index: number, periods: Period[]) => {
+    const t = String(period.decision_point);
+    const isLast = index === periods.length - 1;
+    const item = document.createElement("li");
+    item.className = "learning-period";
+
+    const title = document.createElement("h3");
+    title.className = "learning-period-title";
+    title.textContent = `Decision point ${index + 1}`;
+    const time = document.createElement("span");
+    time.textContent = `t = ${t}`;
+    title.append(time);
+
+    const steps = document.createElement("dl");
+    steps.className = "learning-steps";
+    steps.append(
+      step(
+        term("Perceives F̂ when deciding"),
+        actionList(period.decision_state.perceived_feasible_set),
+        `M: ${describeModel(period.decision_state.model_of_reality)}`,
+      ),
+      step(
+        term("Permitted (aspect of ", ["F", "t"], ")"),
+        actionList(period.objective_conditions.permitted_actions),
+        "Not an input to D",
+      ),
+      step(term("Selects ", ["C", `i,${t}`]), actionLabel(period.selected_action), undefined, "learning-selected"),
+      step(
+        term("Realized outcome ", ["O", `i,${t}`]),
+        `Experienced: ${actionLabel(period.realized_outcome.experienced_action)}`,
+      ),
+      step(
+        term("Observes own outcome"),
+        `Experienced: ${actionLabel(period.observation.experienced_action)}`,
+      ),
+      step(
+        term("Update after observing"),
+        describeUpdate(period, isLast),
+        `M: ${describeModel(period.updated_agent_state.model_of_reality)}`,
+        period.added_actions.length ? "learning-changed" : undefined,
+      ),
+    );
+
+    item.append(title, steps);
+    return item;
+  };
+
+  const initRunner = async () => {
+    const root = document.querySelector<HTMLElement>("[data-learning-runner]");
+    if (!root || root.dataset.bound) return;
+    root.dataset.bound = "true";
+
+    const form = root.querySelector("form")!;
+    const buttons = [...form.querySelectorAll<HTMLButtonElement>("button")];
+    const resetButton = form.querySelector<HTMLButtonElement>("[data-reset]")!;
+    const status = root.querySelector<HTMLElement>("[data-status]")!;
+    const output = root.querySelector<HTMLElement>("[data-output]")!;
+    const periods = root.querySelector<HTMLElement>("[data-periods]")!;
+
+    const show = async (pendingMessage: string) => {
+      for (const button of buttons) button.disabled = true;
+      output.hidden = true;
+      status.hidden = false;
+      status.textContent = pendingMessage;
+      try {
+        // The scenario takes no inputs, so Run and Reset send the same request.
+        const result = await runScenario<RunResponse>(SCENARIO_ID, {});
+        periods.replaceChildren(...result.periods.map(periodItem));
+        status.hidden = true;
+        output.hidden = false;
+      } catch (error) {
+        status.textContent = `Error: ${(error as Error).message}`;
+      } finally {
+        for (const button of buttons) button.disabled = false;
+      }
+    };
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      show("Running in Python…");
+    });
+
+    resetButton.addEventListener("click", () => show("Resetting to Python defaults…"));
+
+    await show("Loading Python defaults…");
+  };
+  initRunner();
+  document.addEventListener("astro:page-load", initRunner);
+</script>
+
+<style>
+  /* Author display rules would otherwise override the hidden attribute. */
+  .learning-output[hidden] {
+    display: none;
+  }
+
+  .learning-fixed {
+    margin: 0;
+    color: var(--muted);
+  }
+
+  .learning-timeline {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* Periods are built by the script, so they need :global() to match. */
+  .learning-timeline :global(.learning-period) {
+    position: relative;
+    padding: 0 0 1.75rem 1.5rem;
+    border-left: 2px solid var(--line);
+  }
+
+  .learning-timeline :global(.learning-period:last-child) {
+    padding-bottom: 0;
+  }
+
+  .learning-timeline :global(.learning-period)::before {
+    content: "";
+    position: absolute;
+    top: 0.3rem;
+    left: calc(-0.4rem - 1px);
+    width: 0.8rem;
+    height: 0.8rem;
+    border-radius: 999px;
+    background: var(--accent);
+    box-shadow: 0 0 0 1px var(--ink);
+  }
+
+  .learning-timeline :global(.learning-period-title) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.75rem;
+    margin: 0;
+    font-size: 1.05rem;
+  }
+
+  .learning-timeline :global(.learning-period-title span) {
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", "Menlo", monospace;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  .learning-timeline :global(.learning-steps) {
+    margin: 0.75rem 0 0;
+  }
+
+  .learning-timeline :global(.learning-steps > div) {
+    display: grid;
+    grid-template-columns: 13rem minmax(0, 1fr);
+    align-items: baseline;
+    gap: 1rem;
+    padding: 0.55rem 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .learning-timeline :global(dt) {
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 650;
+  }
+
+  .learning-timeline :global(dd) {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .learning-timeline :global(.learning-selected),
+  .learning-timeline :global(.learning-changed) {
+    font-weight: 650;
+  }
+
+  .learning-timeline :global(.learning-aside) {
+    display: block;
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-weight: 400;
+  }
+
+  .learning-notes {
+    margin: 1.5rem 0 0;
+    padding: 1rem 0 0 1.1rem;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .learning-notes li + li {
+    margin-top: 0.35rem;
+  }
+
+  @media (max-width: 640px) {
+    .learning-timeline :global(.learning-period) {
+      padding-left: 1.1rem;
+    }
+
+    .learning-timeline :global(.learning-steps > div) {
+      grid-template-columns: 1fr;
+      gap: 0.2rem;
+    }
+  }
+</style>

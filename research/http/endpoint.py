@@ -8,12 +8,22 @@ size, production origin form, and request envelope.
 
 import re
 
-from research.adapters import asymmetric_information, basic_agent_choice, bounded_rationality
+from research.adapters import (
+    asymmetric_information,
+    basic_agent_choice,
+    bounded_rationality,
+    feasible_set_learning,
+)
 
 PATH = "/simulate"
 MAX_BODY_BYTES = 64 * 1024
 
-ADAPTERS = (basic_agent_choice, bounded_rationality, asymmetric_information)
+ADAPTERS = (
+    basic_agent_choice,
+    bounded_rationality,
+    asymmetric_information,
+    feasible_set_learning,
+)
 
 ENVELOPE_KEYS = frozenset({"scenario", "inputs"})
 

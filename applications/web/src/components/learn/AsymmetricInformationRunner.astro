@@ -47,14 +47,21 @@ import "./runner.css";
       <div class="market-output" data-output hidden>
         <p class="market-information" data-information></p>
 
+        <p class="seller-explanation">
+          Offered price is what buyers offer. Reservation value is the minimum
+          price at which selling is worthwhile relative to holding. Python returns
+          the gain from selling: the seller sells when it is zero or positive
+          (including ties), otherwise holds.
+        </p>
         <table class="seller-table">
           <thead>
             <tr>
               <th scope="col">Seller</th>
-              <th scope="col">M<sub>i</sub>: knows · sees price</th>
-              <th scope="col">V<sub>i</sub>: sell vs hold</th>
-              <th scope="col">C<sub>i</sub></th>
-              <th scope="col">F<sub>t</sub>: actual quality</th>
+              <th scope="col">Quality</th>
+              <th scope="col">Offered price</th>
+              <th scope="col">Reservation value</th>
+              <th scope="col">Gain from selling</th>
+              <th scope="col">Decision</th>
             </tr>
           </thead>
           <tbody data-sellers></tbody>
@@ -62,12 +69,22 @@ import "./runner.css";
 
         <dl class="system-outcome">
           <dt>R(C<sub>1</sub>, …, C<sub>6</sub>, F<sub>t</sub>) → O<sub>t</sub></dt>
-          <dd class="runner-selected" data-system-outcome></dd>
+          <dd class="outcome-summaries">
+            <div>
+              <strong>Sold</strong>
+              <p data-sold></p>
+            </div>
+            <div>
+              <strong>Held</strong>
+              <p data-held></p>
+            </div>
+          </dd>
         </dl>
         <p class="market-note">
           O<sub>t</sub> comes from all six actions together. The scenario
           defines no seller-level O<sub>i,t</sub>.
         </p>
+        <p class="market-interpretation" data-interpretation></p>
       </div>
     </div>
   </div>
@@ -98,7 +115,7 @@ import "./runner.css";
   };
 
   const numberFormat = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
-  // A true minus sign, matching the one in "price − reservation value".
+  // Use a true minus sign for negative gains.
   const number = { format: (value: number) => numberFormat.format(value).replace("-", "−") };
   const percent = new Intl.NumberFormat("en-US", { style: "percent", maximumFractionDigits: 1 });
   const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
@@ -126,7 +143,9 @@ import "./runner.css";
     const output = root.querySelector<HTMLElement>("[data-output]")!;
     const information = root.querySelector<HTMLElement>("[data-information]")!;
     const sellerRows = root.querySelector<HTMLElement>("[data-sellers]")!;
-    const systemOutcome = root.querySelector<HTMLElement>("[data-system-outcome]")!;
+    const soldSummary = root.querySelector<HTMLElement>("[data-sold]")!;
+    const heldSummary = root.querySelector<HTMLElement>("[data-held]")!;
+    const interpretation = root.querySelector<HTMLElement>("[data-interpretation]")!;
 
     // The believed share sets the pooled price only.
     const showShareControl = () => {
@@ -149,16 +168,33 @@ import "./runner.css";
     const sellerRow = (seller: Seller, index: number) => {
       const price = number.format(seller.observed_price);
       const sell = number.format(seller.action_values.sell);
-      const hold = number.format(seller.action_values.hold);
       const row = document.createElement("tr");
       row.append(
         cell("Seller", `Seller ${index + 1}`),
-        cell("Mᵢ: knows · sees price", `${capitalize(seller.known_quality)} · ${price}`),
-        cell("Vᵢ: sell vs hold", `${price} − ${number.format(seller.reservation_value)} = ${sell} vs ${hold}`),
-        cell("Cᵢ", capitalize(seller.selected_action), "seller-action"),
-        cell("Fₜ: actual quality", capitalize(seller.actual_quality)),
+        cell("Quality", capitalize(seller.actual_quality)),
+        cell("Offered price", price),
+        cell("Reservation value", number.format(seller.reservation_value)),
+        cell("Gain from selling", sell),
+        cell("Decision", capitalize(seller.selected_action), "seller-action"),
       );
       return row;
+    };
+
+    const describeParticipation = (result: RunResponse) => {
+      const selling = result.sellers.filter((seller) => seller.selected_action === "sell");
+      const holding = result.sellers.filter((seller) => seller.selected_action === "hold");
+      const reasons = [];
+      if (selling.length > 0 && selling.every(
+        (seller) => seller.observed_price >= seller.reservation_value,
+      )) {
+        reasons.push("Sellers sell because the offered price meets or exceeds their reservation value.");
+      }
+      if (holding.length > 0 && holding.every(
+        (seller) => seller.observed_price < seller.reservation_value,
+      )) {
+        reasons.push("Sellers hold because the offered price is below their reservation value.");
+      }
+      return reasons.join(" ");
     };
 
     // Inputs stay editable throughout; only the buttons wait for Python.
@@ -177,8 +213,13 @@ import "./runner.css";
         information.textContent = describeInformation(result);
         sellerRows.replaceChildren(...result.sellers.map(sellerRow));
         const { sold_high, sold_low, total_sold } = result.system_outcome;
-        systemOutcome.textContent =
-          `Sold: ${sold_high} high-quality, ${sold_low} low-quality · ${total_sold} of ${result.sellers.length} total`;
+        const held = result.sellers.filter((seller) => seller.selected_action === "hold");
+        soldSummary.textContent =
+          `Total: ${total_sold} · High-quality: ${sold_high} · Low-quality: ${sold_low}`;
+        heldSummary.textContent =
+          `Total: ${held.length} · High-quality: ${held.filter((seller) => seller.actual_quality === "high").length}` +
+          ` · Low-quality: ${held.filter((seller) => seller.actual_quality === "low").length}`;
+        interpretation.textContent = describeParticipation(result);
         status.hidden = true;
         output.hidden = false;
       } catch (error) {
@@ -188,7 +229,12 @@ import "./runner.css";
       }
     };
 
-    pricingSelect.addEventListener("change", showShareControl);
+    pricingSelect.addEventListener("change", () => {
+      showShareControl();
+      output.hidden = true;
+      status.hidden = false;
+      status.textContent = "Pricing changed. Run to see results.";
+    });
 
     form.addEventListener("submit", (event) => {
       event.preventDefault();
@@ -227,7 +273,8 @@ import "./runner.css";
 
   .seller-table {
     width: 100%;
-    margin-top: 1.25rem;
+    margin-top: 0.75rem;
+    table-layout: fixed;
     border-collapse: collapse;
     font-size: 0.95rem;
   }
@@ -238,6 +285,14 @@ import "./runner.css";
     font-size: 0.78rem;
     font-weight: 650;
     text-align: left;
+    overflow-wrap: anywhere;
+  }
+
+  .seller-explanation,
+  .market-interpretation {
+    margin: 1rem 0 0;
+    font-size: 0.95rem;
+    line-height: 1.55;
   }
 
   /* Rows are built by the script, so they need :global() to match. */
@@ -268,6 +323,24 @@ import "./runner.css";
     overflow-wrap: anywhere;
   }
 
+  .outcome-summaries {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .outcome-summaries p {
+    margin: 0.25rem 0 0;
+    font-size: 0.95rem;
+    line-height: 1.55;
+  }
+
+  @media (max-width: 480px) {
+    .outcome-summaries {
+      grid-template-columns: 1fr;
+    }
+  }
+
   .market-note {
     margin: 0.4rem 0 0;
     color: var(--muted);
@@ -276,6 +349,11 @@ import "./runner.css";
 
   /* Each seller becomes a labeled block instead of a wide row. */
   @media (max-width: 720px) {
+    .seller-table,
+    .seller-table :global(tbody) {
+      display: block;
+    }
+
     .seller-table thead {
       position: absolute;
       width: 1px;

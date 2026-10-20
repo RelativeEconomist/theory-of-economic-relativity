@@ -931,6 +931,161 @@ export const scenarios: Scenario[] = [
     },
     sourcePath: "research/tests/test_feasibility_contract.py",
   },
+  {
+    slug: "feasible-set-learning",
+    status: "active",
+    title: "Learning: Feasible Set Discovery",
+    category: "Learning",
+    summary:
+      "An agent at first perceives only one of two permitted actions. Observing its own outcome adds the other to its perceived feasible set, and its next decision selects it.",
+    sourceLabel: "Test 22",
+    economicQuestion:
+      "Can a realized outcome lead an agent to add to its perceived feasible set an action the scenario already permits, so that a later decision selects it?",
+    context:
+      "One agent decides twice between an ordinary action and a better one. Both are permitted throughout, but at first the agent perceives only the ordinary action.",
+    scope:
+      "One agent, two decision points. This illustrates TER Models 5.1, 5.2, and 5.5, not a general process of learning.",
+    terComponents: [
+      {
+        key: "G",
+        symbol: "G",
+        name: "Objective",
+        definition: "Result or condition that provides the reference for valuation when valuation is used.",
+        mapping: "Obtain the highest payoff from its choice of action.",
+        testTreatment: "Fixed",
+      },
+      {
+        key: "M",
+        symbol: "M",
+        name: "Model of reality",
+        definition:
+          "The agent's model of reality, including information, beliefs, assumptions, expectations, and interpretations.",
+        mapping: "Left empty, and never updated.",
+        testTreatment: "Fixed",
+      },
+      {
+        key: "F",
+        symbol: "F_t",
+        name: "Objective feasible state of reality",
+        definition:
+          "The objectively realized conditions and constraints relevant when the selected action(s) at decision point t are realized. Not agent specific, and not an input to the decision process.",
+        mapping:
+          "The scenario's permission data lists both actions as permitted at both decision points. It represents one relevant aspect of F_t, not all of it, and nothing changes it.",
+        testTreatment: "Fixed",
+      },
+      {
+        key: "F_hat",
+        symbol: "F̂",
+        name: "Perceived feasible set",
+        definition: "Actions the agent perceives as available to attempt.",
+        mapping:
+          "Only the ordinary action at the first decision; the update adds the better action before the second.",
+        testTreatment: "Updated",
+      },
+      {
+        key: "V",
+        symbol: "V",
+        name: "Valuation",
+        definition: "Valuation of actions relative to the agent's objective.",
+        mapping: "Ordinary action 4, better alternative action 9.",
+        testTreatment: "Fixed",
+      },
+      {
+        key: "H",
+        symbol: "H",
+        name: "Time horizon",
+        definition: "Which future consequences the agent considers relevant to valuation.",
+        mapping: "Ongoing decision.",
+        testTreatment: "Fixed",
+      },
+      {
+        key: "D",
+        symbol: "D",
+        name: "Decision process",
+        definition:
+          "Process through which the agent selects among perceived feasible actions. It may condition directly on the model of reality and may use valuation when applicable.",
+        mapping: "Select the highest-valued action in F̂.",
+        testTreatment: "Fixed",
+      },
+      {
+        key: "C",
+        symbol: "C",
+        name: "Selected action",
+        definition: "Action selected by the agent.",
+        mapping: "The action D selects at each decision point, returned by the simulator.",
+        testTreatment: "Output",
+      },
+      {
+        key: "R",
+        symbol: "R",
+        name: "Reality function",
+        definition:
+          "Maps the selected action(s) and the relevant objectively realized state F_t to the realized outcome; its arguments depend on model scope.",
+        mapping:
+          "Records the selected action as the action the agent experienced. It does not check permission or add other consequences.",
+        testTreatment: "Fixed",
+      },
+      {
+        key: "O",
+        symbol: "O_i,t",
+        name: "Realized outcome",
+        definition: "Realized outcome associated with the selected action.",
+        mapping:
+          "The action the agent experienced, returned by the simulator. This is a single-agent specification (Model 5.2), so no system outcome O_t is defined.",
+        testTreatment: "Output",
+      },
+    ],
+    assumptions: [
+      "Values are scenario-specific assumptions, not TER primitives.",
+      "The agent observes its own realized outcome exactly, and nothing else.",
+      "The update rule is specific to this scenario: once the agent observes that it experienced the ordinary action, it adds the better action to F̂. It reads only the agent's own state and observation, never the permission data.",
+      "TER does not claim experience always improves perception, and the test does not model why the agent first missed the better action.",
+    ],
+    economicSetup:
+      "At the first decision the agent perceives only the ordinary action, so it selects it. R records that the agent experienced the ordinary action; the agent observes this, and its update rule adds the better action to F̂. At the second decision the agent selects the better action, valued 9 against 4.",
+    whatChanges:
+      "Only what the agent perceives changes, and only through the update that follows its observation. The permission data, values, and decision process stay the same.",
+    terNote:
+      "Model 5.5 is written from the system outcome O_t; in this single-agent specification, feedback starts from O_{i,t}. Its arrows mark possible influence, not change in every component: here the one update rule changes only F̂.",
+    hypotheses: [
+      "Premise check: the better action is permitted but not initially perceived.",
+      "The first decision is restricted to the ordinary action.",
+      "The observed outcome of that decision leads the update to add the better action to F̂ for the next decision.",
+      "The next decision selects the better action, now perceived and more highly valued.",
+      "The permission data does not change during the run; only perception does.",
+    ],
+    configuration: [
+      { label: "Agent", value: "1" },
+      { label: "Decision points", value: "2" },
+      { label: "Actions and values", value: "Ordinary action = 4, better alternative action = 9" },
+      { label: "Initial perceived feasible set", value: "Ordinary action" },
+      { label: "Permission data", value: "Both actions, at both decision points" },
+      { label: "Decision process", value: "Choose the highest-valued perceived feasible action" },
+      { label: "Time horizon", value: "Ongoing decision" },
+    ],
+    implementationMapping: [
+      { label: "objective", value: "G" },
+      { label: "model_of_reality", value: "M (empty)" },
+      { label: "perceived_feasible_set", value: "F̂" },
+      { label: "valuation, read by mapped_value", value: "V" },
+      { label: "horizon", value: "H" },
+      { label: "decision_process = maximize_value", value: "D" },
+      { label: "initial_state[\"permitted_actions\"]", value: "Aspect of F_t (permission data)" },
+      { label: "trace[t].actions", value: "C_{i,t}" },
+      { label: "reality = record_experienced_action", value: "R" },
+      { label: "trace[t].reality.agents", value: "O_{i,t}" },
+      { label: "observation = observe_own_outcome", value: "What the agent observes of O_{i,t}" },
+      { label: "update_rule = learn_from_experience", value: "Model 5.5 update of F̂" },
+    ],
+    resultsTable: {
+      columns: ["Decision point", "F̂ when deciding", "Selected action", "Update after observing O_{i,t}"],
+      rows: [
+        ["t = 0", "Ordinary", "Ordinary action (4)", "Adds the better action to F̂"],
+        ["t = 1", "Ordinary, better", "Better alternative action (9)", "No change"],
+      ],
+    },
+    sourcePath: "research/scenarios/feasible_set_learning.py",
+  },
 ];
 
 export function getScenario(slug: string): Scenario | undefined {

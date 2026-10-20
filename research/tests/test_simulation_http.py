@@ -17,7 +17,7 @@ from http.server import ThreadingHTTPServer
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
-from research.adapters import asymmetric_information, bounded_rationality
+from research.adapters import asymmetric_information, bounded_rationality, feasible_set_learning
 from research.adapters.basic_agent_choice import SCENARIO_ID, run
 from research.http.simulation import PATH, SimulationHandler, allowed_origins
 
@@ -177,6 +177,22 @@ class TestSimulationHttp(unittest.TestCase):
         )
         self.assertEqual(status, 400)
         self.assertIn("believed_share_high", body["error"])
+
+    def test_feasible_set_learning_envelopes_reach_its_adapter(self):
+        status, _, body = self.post_json(
+            {"scenario": feasible_set_learning.SCENARIO_ID, "inputs": {}}
+        )
+
+        self.assertEqual(status, 200)
+        self.assertEqual(
+            body, feasible_set_learning.run({"scenario": feasible_set_learning.SCENARIO_ID})
+        )
+
+        status, _, body = self.post_json(
+            {"scenario": feasible_set_learning.SCENARIO_ID, "inputs": {"periods": 3}}
+        )
+        self.assertEqual(status, 400)
+        self.assertIn("'periods'", body["error"])
 
     def test_invalid_envelopes_are_rejected(self):
         for request, expected in (
