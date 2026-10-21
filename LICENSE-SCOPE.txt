@@ -11,7 +11,8 @@ See LICENSE and the official legal code referenced there.
 
 MIT
 Executable software, including TER Core, supporting software, test code, and
-other source code under research/ is licensed under the MIT License.
+other source code under research/ and applications/api/ is licensed under the
+MIT License.
 
 See LICENSE-SOFTWARE.
 

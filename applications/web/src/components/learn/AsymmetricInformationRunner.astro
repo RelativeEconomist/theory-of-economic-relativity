@@ -1,0 +1,388 @@
+---
+/**
+ * Runs the Asymmetric Information scenario through the Python `/simulate`
+ * endpoint (applications/api/endpoint.py). Python owns the defaults, sets the
+ * price each seller observes, selects every seller's action, and realizes
+ * the system outcome through one joint R; this component only collects
+ * inputs and shows what Python returns.
+ */
+import "./runner.css";
+---
+<section class="asymmetric-runner doc-section" data-asymmetric-runner>
+  <h2 class="doc-heading">Simulator</h2>
+  <p class="lede">
+    Sellers know their own car's quality; buyers may not. Choose what the
+    offered price reflects and run the market in Python. Each seller weighs
+    the price in its M<sub>i</sub> against its reservation value, and all six
+    selected actions meet the same F<sub>t</sub> through one R.
+  </p>
+
+  <div class="runner-card">
+    <form class="runner-form">
+      <fieldset class="runner-values">
+        <legend><span class="runner-symbol">M</span> Information in the offered price</legend>
+        <div class="runner-field">
+          <label for="pricing">Pricing</label>
+          <select id="pricing" data-pricing>
+            <option value="pooled">Pooled: buyers cannot see quality</option>
+            <option value="verified">Verified: buyers can see quality</option>
+          </select>
+        </div>
+        <div class="runner-field" data-pooled-only>
+          <label for="believed-share">Believed high-quality share (0–1)</label>
+          <input id="believed-share" data-believed-share type="number" min="0" max="1" step="any" />
+        </div>
+      </fieldset>
+
+      <div class="runner-buttons">
+        <button class="button button-primary" type="submit" disabled>Run</button>
+        <button class="button button-ghost" type="button" data-reset disabled>Reset to defaults</button>
+      </div>
+    </form>
+
+    <div class="runner-result" role="status" aria-live="polite" aria-atomic="true">
+      <p class="runner-status" data-status>
+        Not run yet. The simulator needs JavaScript and the Python endpoint.
+      </p>
+      <div class="market-output" data-output hidden>
+        <p class="market-information" data-information></p>
+
+        <p class="seller-explanation">
+          Offered price is what buyers offer. Reservation value is the minimum
+          price at which selling is worthwhile relative to holding. Python returns
+          the gain from selling: the seller sells when it is zero or positive
+          (including ties), otherwise holds.
+        </p>
+        <table class="seller-table">
+          <thead>
+            <tr>
+              <th scope="col">Seller</th>
+              <th scope="col">Quality</th>
+              <th scope="col">Offered price</th>
+              <th scope="col">Reservation value</th>
+              <th scope="col">Gain from selling</th>
+              <th scope="col">Decision</th>
+            </tr>
+          </thead>
+          <tbody data-sellers></tbody>
+        </table>
+
+        <dl class="system-outcome">
+          <dt>R(C<sub>1</sub>, …, C<sub>6</sub>, F<sub>t</sub>) → O<sub>t</sub></dt>
+          <dd class="outcome-summaries">
+            <div>
+              <strong>Sold</strong>
+              <p data-sold></p>
+            </div>
+            <div>
+              <strong>Held</strong>
+              <p data-held></p>
+            </div>
+          </dd>
+        </dl>
+        <p class="market-note">
+          O<sub>t</sub> comes from all six actions together. The scenario
+          defines no seller-level O<sub>i,t</sub>.
+        </p>
+        <p class="market-interpretation" data-interpretation></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { runScenario } from "./run-scenario";
+
+  const SCENARIO_ID = "asymmetric-information";
+  const POOLED = "pooled";
+
+  type Seller = {
+    name: string;
+    actual_quality: string;
+    known_quality: string;
+    observed_price: number;
+    reservation_value: number;
+    action_values: Record<string, number>;
+    selected_action: string;
+  };
+
+  type RunResponse = {
+    pricing: string;
+    sellers: Seller[];
+    system_outcome: { sold_high: number; sold_low: number; total_sold: number };
+    // Returned for pooled pricing only.
+    believed_share_high?: number;
+  };
+
+  const numberFormat = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
+  // Use a true minus sign for negative gains.
+  const number = { format: (value: number) => numberFormat.format(value).replace("-", "−") };
+  const percent = new Intl.NumberFormat("en-US", { style: "percent", maximumFractionDigits: 1 });
+  const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+
+  const cell = (label: string, text: string, className?: string) => {
+    const td = document.createElement("td");
+    td.dataset.label = label;
+    td.textContent = text;
+    if (className) td.className = className;
+    return td;
+  };
+
+  const initRunner = async () => {
+    const root = document.querySelector<HTMLElement>("[data-asymmetric-runner]");
+    if (!root || root.dataset.bound) return;
+    root.dataset.bound = "true";
+
+    const form = root.querySelector("form")!;
+    const pricingSelect = form.querySelector<HTMLSelectElement>("[data-pricing]")!;
+    const shareInput = form.querySelector<HTMLInputElement>("[data-believed-share]")!;
+    const pooledOnly = form.querySelector<HTMLElement>("[data-pooled-only]")!;
+    const buttons = [...form.querySelectorAll<HTMLButtonElement>("button")];
+    const resetButton = form.querySelector<HTMLButtonElement>("[data-reset]")!;
+    const status = root.querySelector<HTMLElement>("[data-status]")!;
+    const output = root.querySelector<HTMLElement>("[data-output]")!;
+    const information = root.querySelector<HTMLElement>("[data-information]")!;
+    const sellerRows = root.querySelector<HTMLElement>("[data-sellers]")!;
+    const soldSummary = root.querySelector<HTMLElement>("[data-sold]")!;
+    const heldSummary = root.querySelector<HTMLElement>("[data-held]")!;
+    const interpretation = root.querySelector<HTMLElement>("[data-interpretation]")!;
+
+    // The believed share sets the pooled price only.
+    const showShareControl = () => {
+      pooledOnly.hidden = pricingSelect.value !== POOLED;
+    };
+
+    const describeInformation = (result: RunResponse) => {
+      const highCount = result.sellers.filter((seller) => seller.actual_quality === "high").length;
+      const actual = `Actually, ${highCount} of ${result.sellers.length} cars are high quality.`;
+      if (result.believed_share_high === undefined) {
+        return `Quality is verified, so each seller sees its own car's value. ${actual}`;
+      }
+      const price = number.format(result.sellers[0].observed_price);
+      return (
+        `Buyers cannot see quality, so every seller sees the same price, ${price}, ` +
+        `set from a believed ${percent.format(result.believed_share_high)} high-quality share. ${actual}`
+      );
+    };
+
+    const sellerRow = (seller: Seller, index: number) => {
+      const price = number.format(seller.observed_price);
+      const sell = number.format(seller.action_values.sell);
+      const row = document.createElement("tr");
+      row.append(
+        cell("Seller", `Seller ${index + 1}`),
+        cell("Quality", capitalize(seller.actual_quality)),
+        cell("Offered price", price),
+        cell("Reservation value", number.format(seller.reservation_value)),
+        cell("Gain from selling", sell),
+        cell("Decision", capitalize(seller.selected_action), "seller-action"),
+      );
+      return row;
+    };
+
+    const describeParticipation = (result: RunResponse) => {
+      const selling = result.sellers.filter((seller) => seller.selected_action === "sell");
+      const holding = result.sellers.filter((seller) => seller.selected_action === "hold");
+      const reasons = [];
+      if (selling.length > 0 && selling.every(
+        (seller) => seller.observed_price >= seller.reservation_value,
+      )) {
+        reasons.push("Sellers sell because the offered price meets or exceeds their reservation value.");
+      }
+      if (holding.length > 0 && holding.every(
+        (seller) => seller.observed_price < seller.reservation_value,
+      )) {
+        reasons.push("Sellers hold because the offered price is below their reservation value.");
+      }
+      return reasons.join(" ");
+    };
+
+    // Inputs stay editable throughout; only the buttons wait for Python.
+    const show = async (scenarioInputs: object, pendingMessage: string) => {
+      for (const button of buttons) button.disabled = true;
+      output.hidden = true;
+      status.hidden = false;
+      status.textContent = pendingMessage;
+      try {
+        const result = await runScenario<RunResponse>(SCENARIO_ID, scenarioInputs);
+        pricingSelect.value = result.pricing;
+        if (result.believed_share_high !== undefined) {
+          shareInput.value = String(result.believed_share_high);
+        }
+        showShareControl();
+        information.textContent = describeInformation(result);
+        sellerRows.replaceChildren(...result.sellers.map(sellerRow));
+        const { sold_high, sold_low, total_sold } = result.system_outcome;
+        const held = result.sellers.filter((seller) => seller.selected_action === "hold");
+        soldSummary.textContent =
+          `Total: ${total_sold} · High-quality: ${sold_high} · Low-quality: ${sold_low}`;
+        heldSummary.textContent =
+          `Total: ${held.length} · High-quality: ${held.filter((seller) => seller.actual_quality === "high").length}` +
+          ` · Low-quality: ${held.filter((seller) => seller.actual_quality === "low").length}`;
+        interpretation.textContent = describeParticipation(result);
+        status.hidden = true;
+        output.hidden = false;
+      } catch (error) {
+        status.textContent = `Error: ${(error as Error).message}`;
+      } finally {
+        for (const button of buttons) button.disabled = false;
+      }
+    };
+
+    pricingSelect.addEventListener("change", () => {
+      showShareControl();
+      output.hidden = true;
+      status.hidden = false;
+      status.textContent = "Pricing changed. Run to see results.";
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      // An empty or invalid share becomes null; Python reports the error.
+      const scenarioInputs: Record<string, unknown> = { pricing: pricingSelect.value };
+      if (pricingSelect.value === POOLED) {
+        scenarioInputs.believed_share_high = shareInput.valueAsNumber;
+      }
+      show(scenarioInputs, "Running in Python…");
+    });
+
+    // With empty inputs, Python runs its own defaults.
+    resetButton.addEventListener("click", () =>
+      show({}, "Resetting to Python defaults…"),
+    );
+
+    await show({}, "Loading Python defaults…");
+  };
+  initRunner();
+  document.addEventListener("astro:page-load", initRunner);
+</script>
+
+<style>
+  /* Author display rules would otherwise override the hidden attribute. */
+  [data-pooled-only][hidden],
+  .market-output[hidden] {
+    display: none;
+  }
+
+  .market-information {
+    max-width: 960px;
+    margin: 0;
+    font-size: 0.98rem;
+    line-height: 1.55;
+  }
+
+  .seller-table {
+    width: 100%;
+    margin-top: 0.75rem;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+  }
+
+  .seller-table th {
+    padding: 0 0.75rem 0.5rem 0;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 650;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+
+  .seller-explanation,
+  .market-interpretation {
+    margin: 1rem 0 0;
+    font-size: 0.95rem;
+    line-height: 1.55;
+  }
+
+  /* Rows are built by the script, so they need :global() to match. */
+  .seller-table :global(td) {
+    padding: 0.55rem 0.75rem 0.55rem 0;
+    border-top: 1px solid var(--line);
+    overflow-wrap: anywhere;
+  }
+
+  .seller-table :global(.seller-action) {
+    font-weight: 650;
+  }
+
+  .system-outcome {
+    margin: 1.25rem 0 0;
+    padding-top: 1rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .system-outcome dt {
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 650;
+  }
+
+  .system-outcome dd {
+    margin: 0.2rem 0 0;
+    overflow-wrap: anywhere;
+  }
+
+  .outcome-summaries {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .outcome-summaries p {
+    margin: 0.25rem 0 0;
+    font-size: 0.95rem;
+    line-height: 1.55;
+  }
+
+  @media (max-width: 480px) {
+    .outcome-summaries {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .market-note {
+    margin: 0.4rem 0 0;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  /* Each seller becomes a labeled block instead of a wide row. */
+  @media (max-width: 720px) {
+    .seller-table,
+    .seller-table :global(tbody) {
+      display: block;
+    }
+
+    .seller-table thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    .seller-table :global(tr) {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 0.5rem 1rem;
+      padding: 0.75rem 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .seller-table :global(td) {
+      display: block;
+      padding: 0;
+      border: 0;
+    }
+
+    .seller-table :global(td)::before {
+      content: attr(data-label);
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 650;
+    }
+  }
+</style>

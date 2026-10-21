@@ -21,7 +21,7 @@
     "@astrojs/sitemap": "latest",
     "@tailwindcss/vite": "latest",
     "animejs": "latest",
-    "astro": "7.1.4",
+    "astro": "7.3.8",
     "gsap": "latest",
     "katex": "latest",
     "lenis": "latest",
@@ -36,7 +36,7 @@
     "@types/node": "latest",
     "@types/three": "latest",
     "typescript": "latest",
-    "vite": "8.1.5"
+    "vite": "8.3.4"
   },
   "engines": {
     "node": ">=22.12.0"

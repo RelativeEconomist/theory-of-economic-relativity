@@ -1,0 +1,125 @@
+---
+/**
+ * Runs the Basic Agent Choice scenario through the Python `/simulate` endpoint
+ * (applications/api/endpoint.py). Python owns the default values and
+ * selects the action; this component only collects values and shows what
+ * Python returns.
+ */
+import "./runner.css";
+
+const actions = [
+  { id: "coffee_a", label: "Coffee A" },
+  { id: "coffee_b", label: "Coffee B" },
+  { id: "coffee_c", label: "Coffee C" },
+];
+---
+<section class="agent-choice-runner doc-section" data-agent-choice-runner>
+  <h2 class="doc-heading">Simulator</h2>
+  <p class="lede">Set V, the value of each coffee, and run the scenario in Python.</p>
+
+  <div class="runner-card">
+    <form class="runner-form">
+      <fieldset class="runner-values">
+        <legend><span class="runner-symbol">V</span> Valuation: value of each coffee</legend>
+        {actions.map((action) => (
+          <div class="runner-field">
+            <label for={`value-${action.id}`}>V({action.label})</label>
+            <input id={`value-${action.id}`} name={action.id} data-label={action.label} type="number" step="any" />
+          </div>
+        ))}
+      </fieldset>
+      <div class="runner-buttons">
+        <button class="button button-primary" type="submit" disabled>Run</button>
+        <button class="button button-ghost" type="button" data-reset disabled>Reset to defaults</button>
+      </div>
+    </form>
+
+    <div class="runner-result">
+      <p class="runner-label">Selected action</p>
+      <p class="runner-outcome" role="status" aria-live="polite" aria-atomic="true">
+        <span class="runner-selected" data-selected-action hidden></span>
+        <span class="runner-status" data-status>
+          Not run yet. The simulator needs JavaScript and the Python endpoint.
+        </span>
+      </p>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { runScenario } from "./run-scenario";
+
+  const SCENARIO_ID = "basic-agent-choice";
+
+  type RunResponse = {
+    selected_action: string;
+    action_values: Record<string, number>;
+  };
+
+  const initRunner = async () => {
+    const root = document.querySelector<HTMLElement>("[data-agent-choice-runner]");
+    if (!root || root.dataset.bound) return;
+    root.dataset.bound = "true";
+
+    const form = root.querySelector("form")!;
+    const inputs = [...form.querySelectorAll<HTMLInputElement>("input")];
+    const buttons = [...form.querySelectorAll<HTMLButtonElement>("button")];
+    const resetButton = form.querySelector<HTMLButtonElement>("[data-reset]")!;
+    const selected = root.querySelector<HTMLElement>("[data-selected-action]")!;
+    const status = root.querySelector<HTMLElement>("[data-status]")!;
+    const labelFor = (action: string) =>
+      inputs.find((input) => input.name === action)?.dataset.label ?? action;
+
+    // Inputs stay editable throughout; only the buttons wait for Python.
+    const show = async (scenarioInputs: object, pendingMessage: string) => {
+      for (const button of buttons) button.disabled = true;
+      selected.hidden = true;
+      status.hidden = false;
+      status.textContent = pendingMessage;
+      try {
+        const result = await runScenario<RunResponse>(SCENARIO_ID, scenarioInputs);
+        for (const input of inputs) input.value = String(result.action_values[input.name]);
+        selected.textContent =
+          `${labelFor(result.selected_action)} · V = ${result.action_values[result.selected_action]}`;
+        status.hidden = true;
+        selected.hidden = false;
+      } catch (error) {
+        status.textContent = `Error: ${(error as Error).message}`;
+      } finally {
+        for (const button of buttons) button.disabled = false;
+      }
+    };
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      // Empty or invalid inputs become null; Python reports the error.
+      const action_values = Object.fromEntries(
+        inputs.map((input) => [input.name, input.valueAsNumber]),
+      );
+      show({ action_values }, "Running in Python…");
+    });
+
+    // With empty inputs, Python runs its own defaults.
+    resetButton.addEventListener("click", () =>
+      show({}, "Resetting to Python defaults…"),
+    );
+
+    await show({}, "Loading Python defaults…");
+  };
+  initRunner();
+  document.addEventListener("astro:page-load", initRunner);
+</script>
+
+<style>
+  .runner-label {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 650;
+  }
+
+  .runner-outcome {
+    margin: 0.2rem 0 0;
+    overflow-wrap: anywhere;
+  }
+</style>

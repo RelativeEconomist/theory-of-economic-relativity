@@ -268,15 +268,31 @@ class TestObservationContract(unittest.TestCase):
     def test_an_update_rule_sees_only_its_own_view_and_observation(self):
         _UPDATE_CALLS.clear()
 
-        run_scenario(BASE_SCENARIO.variant(periods=1))
+        # agent_b starts flagged, so it selects HIGH while agent_a selects
+        # LOW: the two realized outcomes differ, and an observation
+        # delivered to the wrong agent would be visible.
+        run_scenario(
+            BASE_SCENARIO.variant(
+                periods=1,
+                agents=[AGENT_A, AGENT_B.variant(model_of_reality={"flag": True})],
+            )
+        )
 
-        self.assertEqual(len(_UPDATE_CALLS), 2)
+        received = {}
 
         for view, observation in _UPDATE_CALLS:
             self.assertIsInstance(view, UpdateView)
             self.assertIsInstance(observation, Observation)
             self.assertFalse(hasattr(view, "objective_state"))
-            self.assertEqual(observation["realized"], LOW)
+            received[view.name] = dict(observation.data)
+
+        self.assertEqual(
+            received,
+            {
+                AGENT_A.name: {"realized": LOW},
+                AGENT_B.name: {"realized": HIGH},
+            },
+        )
 
     def test_observation_receives_the_post_transition_objective_state(self):
         result = run_scenario(

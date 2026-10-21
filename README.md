@@ -160,21 +160,35 @@ The purpose is not to claim that passing these tests proves TER. The tests ask a
 
 The suite also includes framework contract tests that protect TER Core behavior and researcher-facing infrastructure.
 
+Academic reproductions under [`research/reproductions/`](research/reproductions/) go further: each reproduces a published model's results from its stated assumptions and checks them against an independent analytical benchmark. The first is Krugman (1980), Section I, as Configuration K. Its [configuration](research/reproductions/krugman_1980_configuration.md) and [validation](research/reproductions/krugman_1980_validation.md) documents record the mapping to TER, the anti-circularity rules, and the limitations.
+
 ## Repository Structure
 
 ```text
 theory/
-  academic.md          Canonical TER specification
+  academic.md                Canonical TER specification
 
 research/
-  ter/                 Executable TER research framework
-  tests/               Economic replication and framework tests
+  README.md                  Technical guide: API, tests, scenarios
+  ter-methodology-notes.md   Modeling discipline and variable placement
+  ter/                       TER Core, the executable research framework
+  tests/                     Economic replication and framework tests
+  reproductions/             Academic reproductions (Krugman 1980, Configuration K)
+  scenarios/                 Scenarios shared by tests and the website
+  adapters/                  JSON adapters that expose scenarios to the API
+  templates/                 Test and configuration templates, verification checklist
 
-run_tests.py           Test runner
-CONTRIBUTING.md        Contributor workflow
-LICENSE                CC BY 4.0 research and content license
-LICENSE-SOFTWARE       MIT software license
-LICENSE-SCOPE.txt      License scope
+applications/
+  web/                       Website and Learn interface (Astro)
+  api/                       HTTP API that runs research scenarios for the website
+
+scripts/dev-simulator.sh     Starts the local API and website together
+run_tests.py                 Test runner
+wrangler.api.jsonc           Cloudflare Worker config for the API
+CONTRIBUTING.md              Contributor workflow
+LICENSE                      CC BY 4.0 research and content license
+LICENSE-SOFTWARE             MIT software license
+LICENSE-SCOPE.txt            License scope
 ```
 
 The academic specification takes precedence over implementations, examples, tests, website content, and explanatory material.
@@ -197,6 +211,16 @@ Run a single replication test:
 ```bash
 python3 run_tests.py research/tests/test_24_cobweb_oscillation.py
 ```
+
+### Run the website locally
+
+The website's interactive Learn scenarios call a small HTTP API in [`applications/api/`](applications/api/), which runs scenarios from `research/` through TER Core. The API and the website contain no economics of their own. With Node.js 22.12+ and Python 3.14, start both from the repository root:
+
+```bash
+./scripts/dev-simulator.sh
+```
+
+Setup, checks, and deployment are in [`applications/web/README.md`](applications/web/README.md).
 
 ### Explore the implementation
 

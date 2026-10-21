@@ -17,16 +17,10 @@ import FHat from "../ui/FHat.astro";
         <span class="equation-label">Agent decision model</span>
 
         <div class="equation" aria-label="TER agent decision model">
-          <span>C<sub>i,t</sub></span>
+          <span>C</span>
           <span class="operator">=</span>
           <span>
-            D<sub>i,t</sub> (
-            <FHat /><sub>i,t</sub><span class="eq-comma">, </span>
-            M<sub>i,t</sub><span class="eq-comma">, </span>
-            V<sub>i,t</sub>(· | G<sub>i,t</sub><span class="eq-comma">, </span>
-            M<sub>i,t</sub><span class="eq-comma">, </span>
-            H<sub>i,t</sub>)
-            )
+            D(<FHat /><span class="eq-comma">, </span>M<span class="eq-comma">, </span>V(· | G<span class="eq-comma">, </span>M<span class="eq-comma">, </span>H))
           </span>
         </div>
 
@@ -42,13 +36,10 @@ import FHat from "../ui/FHat.astro";
         <span class="equation-label">Outcome model</span>
 
         <div class="equation" aria-label="TER outcome model">
-          <span>O<sub>i,t</sub></span>
+          <span>O</span>
           <span class="operator">=</span>
           <span>
-            R (
-            C<sub>i,t</sub><span class="eq-comma">, </span>
-            F<sub>t</sub>
-            )
+            R(C<span class="eq-comma">, </span>F<sub>t</sub>)
           </span>
         </div>
 
@@ -58,6 +49,10 @@ import FHat from "../ui/FHat.astro";
           The agent does not need to know F<sub>t</sub> when it decides.
         </p>
       </div>
+
+      <p class="simplified-note">
+        Simplified notation for readability. Full indexed notation appears on the Theory page.
+      </p>
     </div>
 
     <div class="architecture-grid">
@@ -200,7 +195,7 @@ import FHat from "../ui/FHat.astro";
     font-size: clamp(1.6rem, 3.3vw, 3.1rem);
     font-weight: 620;
     line-height: 1.10;
-    letter-spacing: -0.045em;
+    letter-spacing: 0.025em;
     text-align: center;
   }
 
@@ -226,6 +221,14 @@ import FHat from "../ui/FHat.astro";
     color: #a7ada0;
     font-size: 1.05rem;
     line-height: 1.6;
+    text-align: center;
+  }
+
+  .simplified-note {
+    margin: clamp(1rem, 2vw, 1.25rem) 0 0;
+    color: #8d9387;
+    font-size: 0.8rem;
+    line-height: 1.5;
     text-align: center;
   }
 
@@ -393,7 +396,8 @@ import FHat from "../ui/FHat.astro";
       text-align: left;
     }
 
-    .equation-note {
+    .equation-note,
+    .simplified-note {
       margin-inline: 0;
       text-align: left;
     }

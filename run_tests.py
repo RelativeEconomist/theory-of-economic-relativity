@@ -9,9 +9,12 @@ class FriendlyTestResult(unittest.TextTestResult):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.current_group = None
+        self.current_failed = False
+        self.failed_tests = 0
 
     def startTest(self, test):
         super().startTest(test)
+        self.current_failed = False
 
         group = test.__class__.__name__
         if group != self.current_group:
@@ -31,17 +34,28 @@ class FriendlyTestResult(unittest.TextTestResult):
         name = name.removeprefix("test_")
         return name.replace("_", " ").capitalize()
 
-    def addSuccess(self, test):
-        super().addSuccess(test)
-        self.stream.writeln(f"  ✓ {self._friendly_name(test)}")
-
     def addFailure(self, test, err):
         super().addFailure(test, err)
-        self.stream.writeln(f"  ✗ {self._friendly_name(test)}")
+        self.current_failed = True
 
     def addError(self, test, err):
         super().addError(test, err)
-        self.stream.writeln(f"  ✗ {self._friendly_name(test)}")
+        self.current_failed = True
+
+    def addSubTest(self, test, subtest, err):
+        # A failing subtest marks its whole test failed; unittest does not
+        # call addSuccess for that test.
+        super().addSubTest(test, subtest, err)
+        if err is not None:
+            self.current_failed = True
+
+    def stopTest(self, test):
+        super().stopTest(test)
+        if self.current_failed:
+            self.failed_tests += 1
+            self.stream.writeln(f"  ✗ {self._friendly_name(test)}")
+        else:
+            self.stream.writeln(f"  ✓ {self._friendly_name(test)}")
 
 
 class FriendlyTestRunner(unittest.TextTestRunner):
@@ -50,21 +64,35 @@ class FriendlyTestRunner(unittest.TextTestRunner):
 
 def main():
     repo_root = Path(__file__).resolve().parent
-    tests_dir = repo_root / "research" / "tests"
+    test_dirs = [
+        repo_root / "research" / "tests",
+        repo_root / "research" / "reproductions",
+    ]
 
     # Optional: run a single test file, e.g.
     # python3 run_tests.py research/tests/test_27_pokemon_card_choice.py
     pattern = "test_*.py"
     if len(sys.argv) > 1:
         test_file = Path(sys.argv[1])
-        if not (tests_dir / test_file.name).is_file():
-            raise SystemExit(f"Test file not found in research/tests: {sys.argv[1]}")
+        test_dirs = [
+            test_dir
+            for test_dir in test_dirs
+            if (test_dir / test_file.name).is_file()
+        ]
+        if not test_dirs:
+            raise SystemExit(
+                "Test file not found in research/tests or "
+                f"research/reproductions: {sys.argv[1]}"
+            )
         pattern = test_file.name
 
-    suite = unittest.defaultTestLoader.discover(
-        start_dir=str(tests_dir),
-        pattern=pattern,
-        top_level_dir=str(repo_root),
+    suite = unittest.TestSuite(
+        unittest.defaultTestLoader.discover(
+            start_dir=str(test_dir),
+            pattern=pattern,
+            top_level_dir=str(repo_root),
+        )
+        for test_dir in test_dirs
     )
 
     print()
@@ -82,17 +110,22 @@ def main():
     print()
     print("=" * 44)
 
+    if result.testsRun == 0:
+        print("FAIL: no tests were discovered.")
+        raise SystemExit(1)
+
     if result.wasSuccessful():
         print(
             f"PASS: {result.testsRun} tests completed successfully."
         )
     else:
-        failed = len(result.failures)
+        failures = len(result.failures)
         errors = len(result.errors)
 
+        # failures and errors count each failing subtest separately.
         print(
-            f"FAIL: {result.testsRun} tests run, "
-            f"{failed} failures, {errors} errors."
+            f"FAIL: {result.failed_tests} of {result.testsRun} tests failed "
+            f"({failures} failures, {errors} errors, counting subtests)."
         )
 
     raise SystemExit(0 if result.wasSuccessful() else 1)

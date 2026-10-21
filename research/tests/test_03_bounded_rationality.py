@@ -75,121 +75,16 @@ In this configured scenario:
 
 import unittest
 
-from research.ter import AgentSpec, Scenario, run_scenario
-from research.ter.rules import limited_search, mapped_value, maximize_value
-
-
-# ---------------------------------------------------------------------------
-# Actions
-# ---------------------------------------------------------------------------
-
-NEARBY_COFFEE = "nearby_coffee"
-OFFICE_COFFEE = "office_coffee"
-BEST_COFFEE = "best_coffee"
-
-
-# ---------------------------------------------------------------------------
-# Economic assumptions
-# ---------------------------------------------------------------------------
-
-NEARBY_COFFEE_VALUE = 6
-OFFICE_COFFEE_VALUE = 7
-BEST_COFFEE_VALUE = 10
-
-LIMITED_SEARCH_DEPTH = 2
-BROADER_SEARCH_DEPTH = 3
-
-
-# ---------------------------------------------------------------------------
-# Agents
-# ---------------------------------------------------------------------------
-
-BASE_AGENT = AgentSpec(
-    name="coffee_buyer",
-    objective="choose preferred coffee",
-    model_of_reality={},
-    perceived_feasible_set=[
-        NEARBY_COFFEE,
-        OFFICE_COFFEE,
-        BEST_COFFEE,
-    ],
-    valuation={
-        "values": {
-            NEARBY_COFFEE: NEARBY_COFFEE_VALUE,
-            OFFICE_COFFEE: OFFICE_COFFEE_VALUE,
-            BEST_COFFEE: BEST_COFFEE_VALUE,
-        },
-    },
-    valuation_rule=mapped_value,
-    decision_process=limited_search,
-    decision_parameters={
-        "search_limit": LIMITED_SEARCH_DEPTH,
-        "search_order": [
-            NEARBY_COFFEE,
-            OFFICE_COFFEE,
-            BEST_COFFEE,
-        ],
-    },
-    horizon="current purchase",
+from research.scenarios.bounded_rationality import (
+    BASE_AGENT,
+    BEST_COFFEE,
+    BROADER_SEARCH_SCENARIO,
+    EXHAUSTIVE_SCENARIO,
+    LIMITED_SCENARIO,
+    OFFICE_COFFEE,
+    REORDERED_SCENARIO,
 )
-
-
-# ---------------------------------------------------------------------------
-# Scenarios
-# ---------------------------------------------------------------------------
-
-BASE_SCENARIO = Scenario(
-    name="Coffee Buyer",
-    description="A single agent searches among three coffees under varying search depth and order.",
-    periods=1,
-    initial_state={},
-    agents=[
-        BASE_AGENT,
-    ],
-)
-
-
-LIMITED_SCENARIO = BASE_SCENARIO
-
-EXHAUSTIVE_SCENARIO = BASE_SCENARIO.variant(
-    agents=[
-        BASE_AGENT.variant(
-            decision_process=maximize_value,
-            # maximize_value does not use limited-search configuration.
-            decision_parameters={},
-        ),
-    ],
-)
-
-BROADER_SEARCH_SCENARIO = BASE_SCENARIO.variant(
-    agents=[
-        BASE_AGENT.variant(
-            decision_parameters={
-                "search_limit": BROADER_SEARCH_DEPTH,
-                "search_order": [
-                    NEARBY_COFFEE,
-                    OFFICE_COFFEE,
-                    BEST_COFFEE,
-                ],
-            },
-        ),
-    ],
-)
-
-REORDERED_SCENARIO = BASE_SCENARIO.variant(
-    agents=[
-        BASE_AGENT.variant(
-            decision_parameters={
-                "search_limit": LIMITED_SEARCH_DEPTH,
-                "search_order": [
-                    NEARBY_COFFEE,
-                    BEST_COFFEE,
-                    OFFICE_COFFEE,
-                ],
-            },
-        ),
-    ],
-)
+from research.ter import run_scenario
 
 
 # ---------------------------------------------------------------------------

@@ -2,6 +2,7 @@ from typing import Any
 
 from research.ter.agent import AgentState
 from research.ter.decision import ValuationView
+from research.ter.feasible import require_enumerated
 from research.ter.reality import RealityResult
 
 
@@ -74,9 +75,11 @@ def maximize_value(agent: AgentState):
                                the highest value. Must be a perceived
                                feasible action if supplied.
     """
+    perceived_feasible_set = require_enumerated(agent.perceived_feasible_set)
+
     values = {
         action: agent.value(action, agent)
-        for action in agent.perceived_feasible_set
+        for action in perceived_feasible_set
     }
 
     best_value = max(values.values())
@@ -113,12 +116,13 @@ def satisfice(agent: AgentState):
         satisficing_threshold
     """
     threshold = agent.decision_parameters["satisficing_threshold"]
+    perceived_feasible_set = require_enumerated(agent.perceived_feasible_set)
 
-    for action in agent.perceived_feasible_set:
+    for action in perceived_feasible_set:
         if agent.value(action, agent) >= threshold:
             return action
 
-    return agent.perceived_feasible_set[-1]
+    return perceived_feasible_set[-1]
 
 
 def limited_search(agent: AgentState):
@@ -144,10 +148,28 @@ def limited_search(agent: AgentState):
                        perceived_feasible_set -- it can reorder what is
                        perceived, not add to it.
     """
+    considered = limited_search_considered_actions(agent)
+
+    if not considered:
+        raise ValueError("Limited search considered no actions.")
+
+    return max(
+        considered,
+        key=lambda action: agent.value(action, agent),
+    )
+
+
+def limited_search_considered_actions(agent: AgentState):
+    """
+    Return the actions limited_search considers: the first search_limit
+    actions of its search sequence, in search order. Reads the same
+    decision_parameters as limited_search.
+    """
     search_limit = agent.decision_parameters["search_limit"]
+    perceived_feasible_set = require_enumerated(agent.perceived_feasible_set)
     search_order = agent.decision_parameters.get(
         "search_order",
-        agent.perceived_feasible_set,
+        perceived_feasible_set,
     )
 
     unavailable = [
@@ -162,15 +184,7 @@ def limited_search(agent: AgentState):
             f"feasible set: {unavailable}"
         )
 
-    considered = search_order[:search_limit]
-
-    if not considered:
-        raise ValueError("Limited search considered no actions.")
-
-    return max(
-        considered,
-        key=lambda action: agent.value(action, agent),
-    )
+    return search_order[:search_limit]
 
 
 def first_feasible(agent: AgentState):
@@ -179,7 +193,7 @@ def first_feasible(agent: AgentState):
 
     Useful for simple rule based, habitual, or ordered decision processes.
     """
-    return agent.perceived_feasible_set[0]
+    return require_enumerated(agent.perceived_feasible_set)[0]
 
 
 # ---------------------------------------------------------------------------
@@ -526,8 +540,8 @@ def quality_market_reality(actions, objective_state, parameters):
     Pooled/true quality pricing is not modeled here as feedback: both
     prices are fixed functions of scenario parameters (and, for the true
     price, actual seller quality), never of a realized outcome, so they
-    belong in each seller's initial valuation (V_0) instead. See
-    test_04_asymmetric_information.py.
+    belong in each seller's initial model of reality (M_0) as the offered
+    price it observes. See research/scenarios/asymmetric_information.py.
 
     Actual quality is a fact about reality, not any seller's belief --
     read from parameters, never from any agent's model_of_reality.

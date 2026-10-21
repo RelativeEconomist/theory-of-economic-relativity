@@ -16,15 +16,31 @@ In short: this file is *how to use the software* — the API, test structure, an
 
 ## Running Tests
 
-Run the suite from the repo root:
+Run the suite from the repo root with Python 3.10 or newer:
 
     python3 run_tests.py
 
-Run a single test file, as a module (not by file path, which fails with `ModuleNotFoundError` since this isn't an installed package):
+It runs every `test_*.py` in `research/tests/` and `research/reproductions/`, prints one ✓ or ✗ per test, and exits nonzero on any failure or if no tests are found.
+
+Run a single test file by its path, from the repo root:
+
+    python3 run_tests.py research/tests/test_24_cobweb_oscillation.py
+
+For unittest's own verbose output, run it as a module instead:
 
     python3 -m unittest research.tests.test_24_cobweb_oscillation -v
 
-[`test_08_externalities.py`](tests/test_08_externalities.py) shows the same API with per-agent economic outcomes.
+## Academic Reproductions
+
+[`reproductions/`](reproductions/) holds reproductions of published models. Each has an independent analytical benchmark that does not import TER, a TER configuration run through `research.ter`, and tests comparing the two. Its configuration document maps the source model's assumptions to TER, and its validation document sets the validation order, anti-circularity rules, and what each result does and does not show.
+
+Krugman (1980), Section I, is Configuration K:
+
+- [`krugman_1980.py`](reproductions/krugman_1980.py) and [`test_krugman_1980.py`](reproductions/test_krugman_1980.py) — Krugman's closed-form solution, without TER
+- [`krugman_1980_ter.py`](reproductions/krugman_1980_ter.py) and [`test_krugman_1980_ter.py`](reproductions/test_krugman_1980_ter.py) — the TER configuration and its validation
+- [`krugman_1980_configuration.md`](reproductions/krugman_1980_configuration.md) and [`krugman_1980_validation.md`](reproductions/krugman_1980_validation.md) — mappings, assumptions, evidence, and limitations
+
+Start a new reproduction from [`templates/established-model-configuration-template.md`](templates/established-model-configuration-template.md).
 
 ## The Research API
 
@@ -83,7 +99,7 @@ The canonical architecture is defined in `theory/academic.md` §3 and §5; this 
 | `G` | `AgentSpec.objective` / `AgentState.objective` | the objective value itself |
 | `M` | `AgentSpec.model_of_reality` / `AgentState.model_of_reality` | a dict of beliefs; changes only through the agent's own `update_rule`, applied to what it observes |
 | `F_t` | no dedicated field: the objective state (`Scenario.initial_state` as `F_0`, advanced only by the `transition`) and `Scenario.parameters` may encode conditions and constraints relevant to what `F_t` permits | implementation fields, not TER primitives; no single field is identical to `F_t`. Not an `AgentSpec`/`AgentState` field; never read by a decision process |
-| `F̂` | `AgentSpec.perceived_feasible_set` / `AgentState.perceived_feasible_set` | agent-side; what the decision process selects from. Not a copy of what the scenario permits |
+| `F̂` | `AgentSpec.perceived_feasible_set` / `AgentState.perceived_feasible_set` | agent-side; what the decision process selects from. Not a copy of what the scenario permits. A list, or an `Interval` / `Region` from `research.ter.feasible` for continuous or multidimensional actions; `C ∈ F̂` is checked by membership |
 | `V` | `AgentSpec.valuation` (data) + `AgentSpec.valuation_rule` (a callable) | `valuation` is declarative data (e.g. a value map); `valuation_rule` is the function that reads it and returns a score. Together they implement `V`. |
 | `H` | `AgentSpec.horizon` / `AgentState.horizon` | carried as data; no shared rule currently reads it |
 | `D` | `AgentSpec.decision_process` (a callable) + `AgentSpec.decision_parameters` (data) | the function implements `D`, which reads `F̂`, `G`, `M`, `V`, `H` and never `F_t`; `decision_parameters` configures it (e.g. `search_limit`, `search_order`) — not a new primitive |
@@ -212,9 +228,21 @@ agent.outcome_for(DO_NOT_PRODUCE).outcome["social_value"]
 
 Import shared rule functions directly from `research.ter.rules`. Rule fields accept callables only; symbolic strings such as `"maximize_value"` are not supported.
 
-If no existing rule fits, define a **local** rule — one that's genuinely specific to the test's economics — in the same file, before its first use, with a short docstring saying what it computes and why it isn't shared. Pass the function directly to `AgentSpec` or `Scenario`; see `test_22_feasible_set_learning.py` and `test_26_sequential_entry.py`.
+If no existing rule fits, define a **local** rule — one that's genuinely specific to the test's economics — in the same file, before its first use, with a short docstring saying what it computes and why it isn't shared. Pass the function directly to `AgentSpec` or `Scenario`; see `test_26_sequential_entry.py`.
 
 The trigger to move a local rule into `research.ter.rules` is simple: a **second** test wants the same mechanism. (`social_value_reality`, `private_value`, and `internalized_value` all started this way.)
+
+Whole scenarios follow the same rule. When a real second consumer, such as a web simulator adapter, needs a test's scenario, move it to [`scenarios/`](scenarios/) and import it back into the numbered test, which remains the source of truth for the hypotheses. Adapters in [`adapters/`](adapters/) import scenarios and contain no economic mechanisms; a scenario and its adapter share a filename where practical.
+
+## The Website Simulator
+
+The website's interactive scenarios run this code. The chain is:
+
+```text
+browser → POST /simulate → applications/api/ → adapters/ → scenarios/ → ter/
+```
+
+[`applications/api/`](../applications/api/) only moves JSON between HTTP and an adapter: `endpoint.py` holds the rules both servers share, `simulation.py` is the local server, and `worker.py` is the production Cloudflare Worker. `test_simulation_http.py`, `test_simulation_worker.py`, and the `*_adapter.py` tests in `tests/` cover them. Running the simulator locally and deploying it are described in [`applications/web/README.md`](../applications/web/README.md).
 
 ## Modify an Existing Test
 

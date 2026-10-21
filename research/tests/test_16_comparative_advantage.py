@@ -41,12 +41,15 @@ TER instantiation
 Component                     Instantiation in this test                     Status
 G   Objective                 maximize the market value of the period's      fixed
                               production
-M   Model of Reality          price_in_good_b_by_action: the one common      fixed (identical for
-                              relative price both producers perceive         both producers)
+M   Model of Reality          price_in_good_b_by_action: the one common      price fixed (identical
+                              relative price both producers perceive;        for both producers);
+                              productivity: the producer's own perceived     productivity varied
+                              units producible per period, by good           (by producer)
 F̂   Perceived Feasible Set    PRODUCE_GOOD_A, PRODUCE_GOOD_B                 fixed
-V   Valuation                 priced_productivity_value (local): a           varied (by producer,
-                              producer's own productivity for an action,     through productivity)
-                              valued at the common price read from M
+V   Valuation                 priced_productivity_value (local): values an   fixed
+                              action as the producer's perceived
+                              productivity for it times the common price,
+                              both read from M
 H   Time Horizon              current production period                      fixed
 D   Decision Process          maximize_value                       fixed
 C   Selected Action           PRODUCE_GOOD_B (Producer A), PRODUCE_GOOD_A    observed
@@ -76,17 +79,22 @@ Priced value of each option (productivity x price_in_good_b_by_action):
 This matches the comparative-advantage allocation identified above
 (Producer A -> Good B, Producer B -> Good A). Neither producer's V or D
 reads the other producer's productivity or any opportunity-cost figure;
-each uses only its own productivity and the one shared price.
+each uses only its own perceived productivity and the one shared price.
 
-Comparative-advantage allocation, valued in Good B units at the shared
-price: Producer A produces Good B (20), Producer B produces Good A (3.5),
-combined value 23.5. Reversed allocation: Producer A produces Good A
-(17.5), Producer B produces Good B (3), combined value 20.5.
+Control: at a relative price of 4.5, above both opportunity costs of
+Good A (3.0 and 4.0), both producers value Good A more (Producer A:
+22.5 > 20; Producer B: 4.5 > 3) and both select it. There is no
+specialization, so the price band, not the productivity figures alone,
+determines the comparative-advantage choices.
 
 Assumptions
 -----------
 - Productivity figures are test-specific economic assumptions, not TER
-  primitives.
+  primitives. Each producer's productivity is its own perceived
+  capability, so it belongs in M (academic.md section 6.2 grounds
+  opportunity costs in agents' resources, capabilities, and
+  constraints); V only evaluates actions using it. Producers are assumed
+  to perceive their own productivity correctly.
 - price_in_good_b_by_action is a common relative price both producers are
   declared to perceive identically (M). TER does not require producers to
   perceive the same price; that they do here is a simplifying assumption
@@ -103,11 +111,13 @@ Assumptions
 - Some assertions below check scenario premises (the productivity ordering
   and the price band) directly from the configured constants. They guard
   the fixture and are not evidence for the hypothesis.
-- This test does not establish the general gains-from-trade theorem or a
-  price-formation mechanism (the price is given, not derived). It shows
-  one scenario where value maximization at a given common price produces
-  comparative-advantage specialization and greater combined value than the
-  reversed allocation.
+- This test demonstrates specialization decisions at given prices
+  (Model 5.1). It does not model production, exchange, or consumption,
+  so it shows no realized gains from trade, and it does not derive the
+  price (no price-formation mechanism). Nor does it claim physical-output
+  dominance: the specialized allocation produces (1 of Good A, 20 of
+  Good B) and the opposite allocation (Producer A on Good A, Producer B
+  on Good B) produces (5, 3), so neither has more of both goods.
 
 Hypothesis
 ----------
@@ -120,11 +130,9 @@ in Good A and Producer A's in Good B.
 In this configured scenario:
 1. Each producer's decision process selects the good of its comparative
    advantage (Producer A: Good B; Producer B: Good A).
-2. Maximizing raw absolute productivity instead (ignoring the shared
-   price) would select a different, non-comparative-advantage good for
-   Producer B.
-3. The comparative-advantage allocation has greater combined priced value
-   (the sum of each producer's own value_of) than the reversed allocation.
+2. At a common relative price outside the band (above both opportunity
+   costs of Good A), the same producers do not specialize: both select
+   Good A.
 """
 
 import unittest
@@ -167,6 +175,10 @@ PRICE_IN_GOOD_B_BY_ACTION = {
     PRODUCE_GOOD_B: 1,
 }
 
+# Control price, above both producers' opportunity costs of Good A (3.0
+# and 4.0): outside the specialization band.
+OUT_OF_BAND_RELATIVE_PRICE_OF_GOOD_A_IN_GOOD_B = 4.5
+
 
 # ---------------------------------------------------------------------------
 # Valuation rule
@@ -178,24 +190,21 @@ def priced_productivity_value(action, agent):
     test-specific specification, not a TER primitive or a universal
     pricing rule.
 
-    Values a production action as this producer's own productivity for
-    that action, priced at the one common relative price both producers
-    perceive (M) -- never at any opportunity cost, and never by reading
-    the other producer's productivity. A common price is what makes two
-    producers with different absolute productivity comparable in the
-    same units; comparative-advantage specialization then falls out of
-    each producer independently maximizing its own priced value.
+    Values a production action as this producer's own perceived
+    productivity for that action, priced at the one common relative price
+    both producers perceive -- never at any opportunity cost, and never by
+    reading the other producer's productivity. A common price is what
+    makes two producers with different absolute productivity comparable
+    in the same units; comparative-advantage specialization then falls
+    out of each producer independently maximizing its own priced value.
 
-    Required valuation field:
+    Required model_of_reality fields:
 
-        productivity   action -> units producible in one period
-
-    Required model_of_reality field:
-
+        productivity                action -> units producible in one period
         price_in_good_b_by_action   action -> price in units of Good B
                                      (the numeraire good is priced at 1)
     """
-    productivity = agent.valuation["productivity"][action]
+    productivity = agent.model_of_reality["productivity"][action]
     price = agent.model_of_reality["price_in_good_b_by_action"][action]
 
     return productivity * price
@@ -210,8 +219,6 @@ BASE_PRODUCER = AgentSpec(
     objective="maximize the market value of the period's production",
     model_of_reality={
         "price_in_good_b_by_action": PRICE_IN_GOOD_B_BY_ACTION,
-    },
-    valuation={
         "productivity": {
             PRODUCE_GOOD_A: 0,
             PRODUCE_GOOD_B: 0,
@@ -228,7 +235,7 @@ BASE_PRODUCER = AgentSpec(
 
 PRODUCER_A = BASE_PRODUCER.variant(
     name="producer_a",
-    valuation={
+    model_of_reality={
         "productivity": {
             PRODUCE_GOOD_A: PRODUCER_A_PRODUCTIVITY_GOOD_A,
             PRODUCE_GOOD_B: PRODUCER_A_PRODUCTIVITY_GOOD_B,
@@ -238,7 +245,7 @@ PRODUCER_A = BASE_PRODUCER.variant(
 
 PRODUCER_B = BASE_PRODUCER.variant(
     name="producer_b",
-    valuation={
+    model_of_reality={
         "productivity": {
             PRODUCE_GOOD_A: PRODUCER_B_PRODUCTIVITY_GOOD_A,
             PRODUCE_GOOD_B: PRODUCER_B_PRODUCTIVITY_GOOD_B,
@@ -263,6 +270,23 @@ SPECIALIZATION_SCENARIO = Scenario(
     agents=[
         PRODUCER_A,
         PRODUCER_B,
+    ],
+)
+
+# Control: the same producers, perceiving one common price outside the band.
+OUT_OF_BAND_PRICE_IN_GOOD_B_BY_ACTION = {
+    PRODUCE_GOOD_A: OUT_OF_BAND_RELATIVE_PRICE_OF_GOOD_A_IN_GOOD_B,
+    PRODUCE_GOOD_B: 1,
+}
+
+OUT_OF_BAND_PRICE_SCENARIO = SPECIALIZATION_SCENARIO.variant(
+    agents=[
+        producer.variant(
+            model_of_reality={
+                "price_in_good_b_by_action": OUT_OF_BAND_PRICE_IN_GOOD_B_BY_ACTION,
+            },
+        )
+        for producer in (PRODUCER_A, PRODUCER_B)
     ],
 )
 
@@ -330,54 +354,18 @@ class TestComparativeAdvantage(unittest.TestCase):
             PRODUCE_GOOD_A,
         )
 
-    def test_raw_absolute_productivity_maximization_would_select_the_wrong_allocation(self):
-        # If each producer instead maximized raw absolute productivity,
-        # ignoring the common price (the mechanism this test previously,
-        # incorrectly, used), Producer B would select Good B -- not Good
-        # A, its actual comparative advantage. Comparing raw productivity
-        # only within one producer's own two options never involves the
-        # other producer's numbers at all, so it cannot reliably track
-        # comparative advantage, which is inherently a cross-producer
-        # comparison. The priced mechanism this scenario actually uses
-        # gets Producer B to Good A instead.
-        raw_productivity_pick_for_producer_b = (
-            PRODUCE_GOOD_A
-            if PRODUCER_B_PRODUCTIVITY_GOOD_A > PRODUCER_B_PRODUCTIVITY_GOOD_B
-            else PRODUCE_GOOD_B
+    def test_a_price_outside_the_band_does_not_produce_specialization(self):
+        # Control through D: only the perceived common price differs
+        # from SPECIALIZATION_SCENARIO. Above both opportunity costs of
+        # Good A, both producers select Good A.
+        result = run_scenario(OUT_OF_BAND_PRICE_SCENARIO)
+
+        self.assertEqual(
+            result.agent(PRODUCER_A.name).selected_action,
+            PRODUCE_GOOD_A,
         )
 
         self.assertEqual(
-            raw_productivity_pick_for_producer_b,
-            PRODUCE_GOOD_B,
-        )
-
-        result = run_scenario(SPECIALIZATION_SCENARIO)
-        producer_b = result.agent(PRODUCER_B.name)
-
-        self.assertNotEqual(
-            raw_productivity_pick_for_producer_b,
-            producer_b.selected_action,
-        )
-
-    def test_comparative_advantage_allocation_outperforms_reversed_allocation(self):
-        result = run_scenario(SPECIALIZATION_SCENARIO)
-
-        producer_a = result.agent(PRODUCER_A.name)
-        producer_b = result.agent(PRODUCER_B.name)
-
-        specialization_value = (
-            producer_a.value_of(PRODUCE_GOOD_B)
-            + producer_b.value_of(PRODUCE_GOOD_A)
-        )
-
-        # The comparison allocation: each producer makes the other good
-        # instead -- the reverse of comparative advantage.
-        reversed_allocation_value = (
-            producer_a.value_of(PRODUCE_GOOD_A)
-            + producer_b.value_of(PRODUCE_GOOD_B)
-        )
-
-        self.assertGreater(
-            specialization_value,
-            reversed_allocation_value,
+            result.agent(PRODUCER_B.name).selected_action,
+            PRODUCE_GOOD_A,
         )

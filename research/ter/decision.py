@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 from research.ter.agent import AgentState
+from research.ter.feasible import MATHEMATICAL_SETS, PerceivedFeasibleSet
 
 
 @dataclass(frozen=True)
@@ -57,7 +58,7 @@ class DecisionView:
     """
 
     model_of_reality: Any
-    perceived_feasible_set: list[Any]
+    perceived_feasible_set: PerceivedFeasibleSet
     value: Callable[..., float]
     name: str
     valuation: dict[str, Any]
@@ -101,13 +102,20 @@ def select_action(agent: AgentState):
     D is called with a DecisionView, not the full AgentState: G and H
     reach D only through V, and F_t is not a direct input to D. Whether F_t permits C is checked later, on the
     reality/outcome side, without rewriting C.
+
+    C in F_hat is enforced by membership, so it holds for a list F_hat
+    and for a mathematical one (research.ter.feasible) alike. Only a list
+    can be checked for emptiness up front; an empty mathematical set
+    rejects every selected action instead.
     """
-    if not agent.perceived_feasible_set:
+    perceived_feasible_set = agent.perceived_feasible_set
+
+    if not isinstance(perceived_feasible_set, MATHEMATICAL_SETS) and not perceived_feasible_set:
         raise ValueError("Perceived feasible set cannot be empty.")
 
     selected = agent.decision_process(_decision_view(agent))
 
-    if selected not in agent.perceived_feasible_set:
+    if selected not in perceived_feasible_set:
         raise ValueError(
             "Decision process selected an action outside the perceived feasible set."
         )

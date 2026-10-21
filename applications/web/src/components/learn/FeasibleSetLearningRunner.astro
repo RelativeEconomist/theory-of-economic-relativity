@@ -1,0 +1,182 @@
+---
+/**
+ * Runs the Feasible Set Learning scenario through the Python `/simulate`
+ * endpoint (applications/api/endpoint.py). The scenario has no inputs: Python
+ * runs both decision points and returns each one as its trace recorded it,
+ * with the agent's values. This component compares the two decisions.
+ */
+import "./runner.css";
+---
+<section class="learning-runner doc-section" data-learning-runner>
+  <h2 class="doc-heading">Simulator</h2>
+  <p class="lede">
+    Python runs the fixed Test 22 specification and returns both decision
+    points as recorded. There are no inputs to change.
+  </p>
+
+  <div class="runner-card">
+    <div role="status" aria-live="polite" aria-atomic="true">
+      <p class="runner-status" data-status>
+        Not run yet. The simulator needs JavaScript and the Python endpoint.
+      </p>
+      <div class="learning-output" data-output hidden>
+        <p class="learning-explanation">
+          Both actions are available throughout, but the agent initially
+          perceives only the ordinary action.
+        </p>
+        <table class="learning-table" data-comparison></table>
+        <p class="learning-explanation">
+          <strong>What changed?</strong> After observing its first outcome,
+          the agent's update rule adds the better action to its perceived
+          feasible set.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { runScenario } from "./run-scenario";
+
+  const SCENARIO_ID = "feasible-set-learning";
+
+  type Period = {
+    decision_state: { perceived_feasible_set: string[] };
+    selected_action: string;
+  };
+
+  type RunResponse = {
+    /** The agent's own V for each action, as Python reports it. */
+    action_values: Record<string, number>;
+    periods: Period[];
+  };
+
+  // "better_alternative_action" -> "Better alternative action"
+  const actionLabel = (action: string) => {
+    const words = action.replaceAll("_", " ");
+    return words.charAt(0).toUpperCase() + words.slice(1);
+  };
+
+  const headerCell = (text: string, scope: "row" | "col") => {
+    const th = document.createElement("th");
+    th.scope = scope;
+    th.textContent = text;
+    return th;
+  };
+
+  /** A row header, then one cell per decision point, one line per item. */
+  const tableRow = (label: string, cells: string[][], className?: string) => {
+    const tr = document.createElement("tr");
+    tr.append(headerCell(label, "row"));
+    for (const lines of cells) {
+      const td = document.createElement("td");
+      if (className) td.className = className;
+      lines.forEach((line, k) => {
+        if (k > 0) td.append(document.createElement("br"));
+        td.append(line);
+      });
+      tr.append(td);
+    }
+    return tr;
+  };
+
+  // Every cell comes from that decision point's own period, never from final state.
+  const fillComparison = (table: HTMLElement, periods: Period[], values: Record<string, number>) => {
+    const head = document.createElement("thead");
+    const headRow = document.createElement("tr");
+    headRow.append(
+      document.createElement("td"),
+      ...periods.map((_, index) => headerCell(`Decision ${index + 1}`, "col")),
+    );
+    head.append(headRow);
+
+    const body = document.createElement("tbody");
+    body.append(
+      tableRow("Perceived options", periods.map((p) => p.decision_state.perceived_feasible_set.map(actionLabel))),
+      tableRow("Selected action", periods.map((p) => [actionLabel(p.selected_action)]), "learning-selected"),
+      tableRow("Value", periods.map((p) => [String(values[p.selected_action])])),
+    );
+    table.replaceChildren(head, body);
+  };
+
+  const initRunner = async () => {
+    const root = document.querySelector<HTMLElement>("[data-learning-runner]");
+    if (!root || root.dataset.bound) return;
+    root.dataset.bound = "true";
+
+    const status = root.querySelector<HTMLElement>("[data-status]")!;
+    const output = root.querySelector<HTMLElement>("[data-output]")!;
+    const comparison = root.querySelector<HTMLElement>("[data-comparison]")!;
+
+    status.textContent = "Loading Test 22 from Python…";
+    try {
+      const { action_values: values, periods } = await runScenario<RunResponse>(SCENARIO_ID, {});
+      if (!values) {
+        throw new Error("The endpoint did not return action_values. Restart it to load the current adapter.");
+      }
+      fillComparison(comparison, periods, values);
+      status.hidden = true;
+      output.hidden = false;
+    } catch (error) {
+      status.textContent = `Error: ${(error as Error).message}`;
+    }
+  };
+  initRunner();
+  document.addEventListener("astro:page-load", initRunner);
+</script>
+
+<style>
+  /* Author display rules would otherwise override the hidden attribute. */
+  .learning-output[hidden] {
+    display: none;
+  }
+
+  .learning-explanation {
+    margin: 1rem 0 0;
+    font-size: 0.95rem;
+    line-height: 1.55;
+  }
+
+  .learning-explanation:first-child {
+    margin-top: 0;
+  }
+
+  .learning-explanation strong {
+    font-weight: 650;
+  }
+
+  .learning-table {
+    width: 100%;
+    margin-top: 0.75rem;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+  }
+
+  /* The table is built by the script, so its cells need :global() to match. */
+  .learning-table :global(th),
+  .learning-table :global(td) {
+    padding: 0.55rem 0.75rem 0.55rem 0;
+    text-align: left;
+    vertical-align: top;
+    overflow-wrap: anywhere;
+  }
+
+  .learning-table :global(tbody > tr > *) {
+    border-top: 1px solid var(--line);
+  }
+
+  .learning-table :global(th) {
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 650;
+  }
+
+  .learning-table :global(thead th) {
+    padding-top: 0;
+  }
+
+  .learning-table :global(.learning-selected) {
+    font-weight: 650;
+  }
+</style>

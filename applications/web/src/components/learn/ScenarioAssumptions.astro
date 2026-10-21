@@ -4,22 +4,41 @@ interface Props {
 }
 
 const { assumptions } = Astro.props;
+// Source order is priority: the first few stay visible, the rest collapse.
+const visibleAssumptions = assumptions.slice(0, 4);
+const moreAssumptions = assumptions.slice(4);
 ---
 <section class="scenario-assumptions doc-section">
-  <p class="eyebrow">Assumptions</p>
-  <h2 class="doc-heading">What this test assumes.</h2>
+  <h2 class="doc-heading">Assumptions</h2>
 
   <ul class="assumptions-list hairline-grid">
-    {assumptions.map((assumption) => <li>{assumption}</li>)}
+    {visibleAssumptions.map((assumption) => <li>{assumption}</li>)}
   </ul>
+
+  {moreAssumptions.length > 0 && (
+    <details class="disclosure">
+      <summary>More assumptions</summary>
+      <ul class="assumptions-list hairline-grid">
+        {moreAssumptions.map((assumption) => <li>{assumption}</li>)}
+      </ul>
+    </details>
+  )}
 </section>
 
 <style>
   .assumptions-list {
-    margin: 2.5rem 0 0;
+    margin: 2rem 0 0;
     padding: 0;
     list-style: none;
     border: 1px solid var(--line);
+  }
+
+  .disclosure {
+    margin-top: 1rem;
+  }
+
+  .disclosure .assumptions-list {
+    margin-top: 0;
   }
 
   .assumptions-list li {

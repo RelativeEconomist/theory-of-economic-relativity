@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Callable
 
+from research.ter.feasible import PerceivedFeasibleSet
+
 if TYPE_CHECKING:
     from research.ter.decision import ValuationView
 
@@ -43,7 +45,7 @@ class AgentState:
 
     objective: Any
     model_of_reality: Any
-    perceived_feasible_set: list[Any]
+    perceived_feasible_set: PerceivedFeasibleSet
     value: Callable[[Any, "ValuationView"], float]
     horizon: Any
     decision_process: Callable[["AgentState"], Any]

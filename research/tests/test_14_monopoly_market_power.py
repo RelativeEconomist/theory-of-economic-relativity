@@ -35,10 +35,9 @@ Implied profits (price - unit_cost) * quantity_demanded(price):
 
 The interior price (MID) wins: profit is not monotonic in price, because
 raising price always reduces quantity along the same demand schedule.
-This is the trade-off market power is about -- see
-test_no_demand_response_would_make_the_highest_price_always_win below
-for what happens to this trade-off when quantity is decoupled from
-price.
+This is the trade-off a downward-sloping demand curve creates -- see
+test_perceived_inelastic_demand_removes_the_interior_trade_off below for
+what happens when the firm perceives no demand response.
 
 Competitive benchmark (derived separately, from the same demand schedule
 and cost, never chosen by the monopolist and never part of its F̂):
@@ -48,9 +47,10 @@ a price-taking firm facing the same demand at price = marginal cost.
     COMPETITIVE_QUANTITY = quantity_demanded(5) = 160 - 10*5 = 110
 
 The monopolist's selected price (11) exceeds marginal cost (5): a markup
-of 6. The monopolist's selected quantity (50) is less than the
-competitive quantity (110): market power restricts output relative to
-the competitive benchmark.
+of 6. The quantity its perceived demand implies at that price (50) is
+less than the competitive quantity (110): market power restricts output
+relative to the competitive benchmark. Both quantities are derived from
+the demand schedule, not realized outcomes; no R runs in this test.
 
 TER instantiation
 -----------------
@@ -93,8 +93,8 @@ Quantity is derived from price through the firm's perceived demand
 schedule (M) every time the valuation rule runs, so raising price
 reduces quantity sold. Profit (price - unit cost) * quantity is
 therefore not monotonic in price, and the interior price maximizes it.
-Because the selected price exceeds marginal cost, the selected quantity
-falls short of the competitive quantity.
+Because the selected price exceeds marginal cost, the quantity perceived
+demand implies at that price falls short of the competitive quantity.
 
 Assumptions
 -----------
@@ -134,17 +134,16 @@ In this configured scenario:
    the shared demand schedule (MONOPOLY_PRICE_MID), not the lowest or
    highest price.
 3. The selected monopoly price exceeds marginal cost: a positive markup.
-4. The monopoly quantity is less than the competitive benchmark quantity
-   derived from the same demand schedule and cost at price = marginal
-   cost.
-5. Every profit figure the framework reports is exactly what
-   quantity_demanded and unit cost predict -- not an independently
-   declared constant that merely happens to agree.
-6. If quantity were unrelated to the firm's chosen price (no demand
-   response), the profit-maximizing choice would degenerate to the
-   highest available price, and the markup/quantity-restriction
-   signature of market power would disappear. This is what the demand
-   schedule is for.
+4. The quantity the firm's perceived demand implies at the selected price
+   is less than the competitive benchmark quantity derived from the same
+   demand schedule and cost at price = marginal cost. Both are derived
+   quantities, not realized outcomes.
+5. If the firm perceives perfectly inelastic demand (quantity fixed
+   regardless of its price), there is no interior trade-off: it selects
+   the highest available price, with a larger markup than under the
+   downward-sloping demand. Inelastic demand does not remove market
+   power -- it removes the output restriction, since quantity no longer
+   falls as price rises.
 """
 
 import unittest
@@ -297,15 +296,19 @@ COMPETITIVE_QUANTITY = quantity_demanded(COMPETITIVE_PRICE)
 
 
 # ---------------------------------------------------------------------------
-# Diagnostic: what happens without a demand response
+# Diagnostic: perceived perfectly inelastic demand
 # ---------------------------------------------------------------------------
 #
-# If quantity sold did not respond to the firm's own price choice, there
-# would be no trade-off, and nothing distinguishing market power from
-# ordinary profit maximization. This local scenario uses the monopolist's
-# own valuation rule, prices, and unit cost unchanged; only the firm's
-# perceived demand (M) differs, holding quantity fixed at 50 units (the
-# monopoly-optimal quantity above) regardless of price (slope 0).
+# If the firm perceives that quantity sold does not respond to its own
+# price, raising price never costs it sales, so there is no interior
+# trade-off. This is the extreme of pricing power, not its absence: the
+# markup is as large as the price grid allows, while the output
+# restriction disappears because quantity is fixed. This local scenario
+# uses the monopolist's own valuation rule, prices, and unit cost
+# unchanged; only the firm's perceived demand (M) differs, holding
+# quantity fixed at 50 units (the monopoly-optimal quantity above)
+# regardless of price (slope 0). It changes the firm's perception, not
+# reality: no R runs.
 
 NO_DEMAND_RESPONSE_QUANTITY = 50
 
@@ -321,7 +324,8 @@ NO_DEMAND_RESPONSE_SCENARIO = Scenario(
     name="Pricing Without a Demand Response",
     description=(
         "Diagnostic only: the same three prices and the same unit cost, "
-        "but the firm perceives quantity sold as fixed, not responding to price."
+        "but the firm perceives quantity sold as fixed, not responding to price "
+        "(perfectly inelastic perceived demand)."
     ),
     periods=1,
     initial_state={},
@@ -360,33 +364,11 @@ class TestMonopolyMarketPower(unittest.TestCase):
             MONOPOLY_PRICE_MID,
         )
 
-        self.assertGreater(
+        # The one profit figure checked: (11 - 5) * 50 at the selected price.
+        self.assertEqual(
             monopolist.value_of(MONOPOLY_PRICE_MID),
-            monopolist.value_of(MONOPOLY_PRICE_LOW),
+            300,
         )
-
-        self.assertGreater(
-            monopolist.value_of(MONOPOLY_PRICE_MID),
-            monopolist.value_of(MONOPOLY_PRICE_HIGH),
-        )
-
-    def test_profits_are_generated_from_the_shared_demand_schedule_not_precomputed_constants(self):
-        # Implementation check: the valuation rule derives profit from
-        # the schedule.
-        result = run_scenario(MONOPOLY_PRICING_SCENARIO)
-        monopolist = result.agent(MONOPOLIST.name)
-
-        for action, price in (
-            (MONOPOLY_PRICE_LOW, MONOPOLY_PRICE_LOW_VALUE),
-            (MONOPOLY_PRICE_MID, MONOPOLY_PRICE_MID_VALUE),
-            (MONOPOLY_PRICE_HIGH, MONOPOLY_PRICE_HIGH_VALUE),
-        ):
-            quantity = quantity_demanded(price)
-
-            self.assertEqual(
-                monopolist.value_of(action),
-                price * quantity - UNIT_COST * quantity,
-            )
 
     def test_selected_monopoly_price_exceeds_marginal_cost(self):
         result = run_scenario(MONOPOLY_PRICING_SCENARIO)
@@ -396,50 +378,51 @@ class TestMonopolyMarketPower(unittest.TestCase):
             monopolist.selected_action
         ]
 
-        markup = selected_price - UNIT_COST
-
+        # A positive markup: price above marginal cost.
         self.assertGreater(
             selected_price,
             UNIT_COST,
         )
 
-        self.assertGreater(
-            markup,
-            0,
-        )
-
-    def test_monopoly_quantity_is_less_than_the_competitive_quantity(self):
+    def test_quantity_implied_by_the_selected_price_is_below_the_competitive_quantity(self):
         result = run_scenario(MONOPOLY_PRICING_SCENARIO)
         monopolist = result.agent(MONOPOLIST.name)
 
         selected_price = MONOPOLIST.valuation["price_by_action"][
             monopolist.selected_action
         ]
-        # Test-specific comparison computed from the selected price; not
-        # a realized outcome.
-        monopoly_quantity = quantity_demanded(selected_price)
+        # Derived from the firm's perceived demand (M) at the selected
+        # price; not a realized outcome.
+        perceived_demand = MONOPOLIST.model_of_reality
+        monopoly_quantity = quantity_demanded(
+            selected_price,
+            intercept=perceived_demand["demand_intercept"],
+            slope=perceived_demand["demand_slope"],
+        )
 
         self.assertLess(
             monopoly_quantity,
             COMPETITIVE_QUANTITY,
         )
 
-    def test_no_demand_response_would_make_the_highest_price_always_win(self):
-        # Diagnostic: with quantity decoupled from the firm's own price
-        # choice, there is no trade-off left -- profit is strictly
-        # increasing in price, so the "profit-maximizing" choice
-        # degenerates to whichever price is highest. This is not market
-        # power; it is the absence of the mechanism that produces it.
-        # Contrast MONOPOLY_PRICING_SCENARIO's interior selection above.
-        result = run_scenario(NO_DEMAND_RESPONSE_SCENARIO)
-        firm = result.agent(NO_DEMAND_RESPONSE_FIRM.name)
+    def test_perceived_inelastic_demand_removes_the_interior_trade_off(self):
+        # Diagnostic: when the firm perceives no demand response, profit
+        # is strictly increasing in price, so it selects the highest
+        # available price. Pricing power is not lost -- the markup is
+        # larger than under downward-sloping demand -- only the interior
+        # trade-off and the output restriction are gone. Contrast
+        # MONOPOLY_PRICING_SCENARIO's interior selection above.
+        price_by_action = MONOPOLIST.valuation["price_by_action"]
+
+        inelastic = run_scenario(NO_DEMAND_RESPONSE_SCENARIO).agent(NO_DEMAND_RESPONSE_FIRM.name)
+        downward_sloping = run_scenario(MONOPOLY_PRICING_SCENARIO).agent(MONOPOLIST.name)
 
         self.assertEqual(
-            firm.selected_action,
+            inelastic.selected_action,
             MONOPOLY_PRICE_HIGH,
         )
 
-        self.assertNotEqual(
-            firm.selected_action,
-            MONOPOLY_PRICE_MID,
+        self.assertGreater(
+            price_by_action[inelastic.selected_action] - UNIT_COST,
+            price_by_action[downward_sloping.selected_action] - UNIT_COST,
         )

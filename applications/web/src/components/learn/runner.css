@@ -1,0 +1,116 @@
+/*
+ * Card, form, and result layout shared by the Learn simulators
+ * (BasicAgentChoiceRunner, BoundedRationalityRunner,
+ * AsymmetricInformationRunner, FeasibleSetLearningRunner). Fieldsets fill
+ * the first column; Run and Reset sit at the bottom of the second.
+ */
+.runner-card {
+  margin-top: 2.5rem;
+  padding: 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.runner-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 1.5rem;
+}
+
+.runner-values {
+  display: grid;
+  grid-column: 1;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.runner-values > legend {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+  padding: 0;
+  font-weight: 650;
+}
+
+.runner-symbol {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 999px;
+  font-family: ui-monospace, "SF Mono", "Menlo", monospace;
+  font-weight: 700;
+  /* Mirrors the Editable status color in the TER model section. */
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.runner-field {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.runner-field label {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.runner-field input,
+.runner-field select {
+  width: 100%;
+  min-height: 3.25rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+}
+
+.runner-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  grid-column: 2;
+  gap: 0.75rem;
+}
+
+.runner-buttons .button:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.runner-result {
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+}
+
+.runner-status {
+  margin: 0;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.runner-selected {
+  font-size: 1.25rem;
+  font-weight: 650;
+}
+
+@media (max-width: 720px) {
+  .runner-form,
+  .runner-values {
+    grid-template-columns: 1fr;
+  }
+
+  .runner-buttons {
+    grid-column: 1;
+  }
+}

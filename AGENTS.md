@@ -36,6 +36,10 @@ Prefer direct and understandable implementations over speculative flexibility or
 
 An abstraction should solve a repeated current problem, not a hypothetical future one.
 
+## Coding guidelines
+
+Follow `CODING_GUIDELINES.md` for readability, documentation, naming, and abstraction decisions.
+
 ## Core execution boundaries
 
 Preserve these boundaries unless the canonical theory changes:
@@ -108,6 +112,18 @@ Do not commit, push, rebase, reset, discard changes, or alter the index unless e
 
 Never overwrite unrelated staged or unstaged user work.
 
+## Autonomous implementation and review
+
+After implementation is approved:
+
+- Implement within the approved scope.
+- Run relevant checks, fix failures, and repeat until verified or blocked.
+- Do not weaken checks or change expected behavior merely to make tests pass.
+- Review the final diff for defects, unnecessary complexity, and missing requirements. Rerun affected checks after corrections.
+- Stop for scope changes, theory conflicts, consequential unresolved decisions, or repeated failures without progress.
+- Provide verification evidence and remaining risks for human review.
+- Match review depth to risk: focused inspection for routine changes; detailed implementation and failure-case review for consequential changes.
+
 ## Implementation report
 
 After code work, report only:
@@ -145,3 +161,13 @@ Before finalizing public-facing or instructional changes, perform a dedicated si
 6. Does the wording remain faithful to canonical TER?
 
 Do not modify `theory/academic.md` as part of this simplification pass unless explicitly authorized.
+
+## Engineering Principles
+
+- **Prefer simplicity.** Choose the simplest solution that satisfies the requirements. Avoid speculative abstractions and unnecessary infrastructure.
+- **Separate responsibilities.** Keep API endpoints thin. Delegate business logic to services and domain functions.
+- **Use abstractions deliberately.** Favor composition and clear boundaries. Introduce abstractions when they solve a real problem, not merely to anticipate reuse.
+- **Keep data models straightforward.** Favor clear schemas and explicit relationships. Use transactions when operations must succeed or fail together.
+- **Follow existing conventions.** Extend established patterns unless there is a justified reason to change them.
+- **Optimize for maintainability.** Code should be easy to understand, test, debug, and modify.
+- **Explain complexity.** When a more complex solution is necessary, explain why a simpler alternative is insufficient.
