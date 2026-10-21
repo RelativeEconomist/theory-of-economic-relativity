@@ -16,11 +16,17 @@ In short: this file is *how to use the software* — the API, test structure, an
 
 ## Running Tests
 
-Run the suite from the repo root:
+Run the suite from the repo root with Python 3.10 or newer:
 
     python3 run_tests.py
 
-Run a single test file, as a module (not by file path, which fails with `ModuleNotFoundError` since this isn't an installed package):
+It runs every `test_*.py` in `research/tests/` and `research/reproductions/`, prints one ✓ or ✗ per test, and exits nonzero on any failure or if no tests are found.
+
+Run a single test file by its path, from the repo root:
+
+    python3 run_tests.py research/tests/test_24_cobweb_oscillation.py
+
+For unittest's own verbose output, run it as a module instead:
 
     python3 -m unittest research.tests.test_24_cobweb_oscillation -v
 

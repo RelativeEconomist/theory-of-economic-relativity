@@ -64,7 +64,9 @@ WITHDRAW means the depositor submits a withdrawal request. What happens
 to the request is R's job: withdrawal_liquidity_reality realizes only as
 much as the bank's liquidity allows. Requested withdrawals can therefore
 exceed realized withdrawals; the depositor's selected action stays
-WITHDRAW, and only how much of it is realized differs.
+WITHDRAW, and only how much of it is realized differs. That liquidity
+cap is tested in test_23_unsustainable_imbalance.py, where requests
+grow until they exceed available liquidity.
 
 Economic mechanism
 ------------------
@@ -111,8 +113,6 @@ In this configured scenario:
 4. Reduced liquidity raises perceived failure risk.
 5. Feedback can produce additional withdrawals.
 6. High liquidity and confidence can remain stable.
-7. Requested withdrawals may exceed the liquidity available to realize
-   them.
 """
 
 import unittest
@@ -150,19 +150,15 @@ STABLE_DEPOSITOR_COUNT = 10
 HIGH_RISK_DEPOSITOR_COUNT = 3
 LOW_RISK_DEPOSITOR_COUNT = 7
 
-INSOLVENT_DEPOSITOR_COUNT = 5
-
 BASE_FAILURE_PROBABILITY = 0.05
 LOW_RISK_SIGNAL = 0.05
 HIGH_RISK_SIGNAL = 0.50
-INSOLVENT_RISK_SIGNAL = 0.90
 
 DEPOSIT_VALUE = 100
 DEPOSIT_BENEFIT = 6
 WITHDRAWAL_COST = 1
 
 STARTING_LIQUIDITY = 1000
-INSOLVENT_STARTING_LIQUIDITY = 200
 REFERENCE_LIQUIDITY = 1000
 
 WITHDRAWAL_AMOUNT = 100
@@ -277,35 +273,6 @@ RUN_SCENARIO = STABLE_SCENARIO.variant(
 )
 
 
-INSOLVENT_LIQUIDITY_SCENARIO = Scenario(
-    name="Withdrawal Demand Exceeds Liquidity",
-    description="All depositors attempt to withdraw from a liquidity-constrained bank",
-    periods=1,
-
-    initial_state={
-        "liquidity": INSOLVENT_STARTING_LIQUIDITY,
-    },
-
-    agents=AgentGroup(
-        base=BASE_DEPOSITOR,
-        count=INSOLVENT_DEPOSITOR_COUNT,
-        name_prefix="depositor",
-        model_of_reality={
-            "risk_signal": INSOLVENT_RISK_SIGNAL,
-            "failure_probability": INSOLVENT_RISK_SIGNAL,
-        },
-    ),
-
-    parameters={
-        "withdrawal_amount": WITHDRAWAL_AMOUNT,
-    },
-
-    reality=withdrawal_liquidity_reality,
-    transition=remaining_liquidity_transition,
-    observation=observe_liquidity,
-)
-
-
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
@@ -412,29 +379,4 @@ class TestBankRun(unittest.TestCase):
         self.assertEqual(
             result.final["liquidity"],
             STARTING_LIQUIDITY,
-        )
-
-    def test_requested_withdrawals_can_exceed_actual_liquidity(self):
-        result = run_scenario(
-            INSOLVENT_LIQUIDITY_SCENARIO
-        )
-
-        self.assertEqual(
-            result.trace[-1].reality.system["withdrawals"],
-            INSOLVENT_DEPOSITOR_COUNT,
-        )
-
-        self.assertEqual(
-            result.trace[-1].reality.system["requested_liquidity"],
-            INSOLVENT_DEPOSITOR_COUNT * WITHDRAWAL_AMOUNT,
-        )
-
-        self.assertEqual(
-            result.trace[-1].reality.system["realized_withdrawals"],
-            INSOLVENT_STARTING_LIQUIDITY,
-        )
-
-        self.assertEqual(
-            result.final["liquidity"],
-            0,
         )

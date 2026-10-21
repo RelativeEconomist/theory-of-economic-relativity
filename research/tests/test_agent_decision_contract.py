@@ -17,10 +17,15 @@ These are properties of the decision mechanism itself, not economic
 claims, so they live here rather than in an economic replication test.
 
 TestMaximizeTieBreakContract below covers a narrower implementation
-guarantee: maximize_value's optional tie_break_preference (a D
-configuration entry, not a TER primitive) only resolves ties among actions
-already sharing the highest value, never overrides a unique higher-valued
-action, and must itself be in the perceived feasible set.
+guarantee: tied maxima resolve to the first tied action in F̂ order
+unless maximize_value's optional tie_break_preference (a D configuration
+entry, not a TER primitive) names one of them; the preference never
+overrides a unique higher-valued action, and must itself be in the
+perceived feasible set.
+
+TestSatisficeFallbackContract pins satisfice's current behavior when no
+action reaches the threshold: it selects the last action in F̂ order.
+This is an implementation default, not a TER rule.
 
 Out of scope
 ------------
@@ -30,7 +35,7 @@ F_t and outcome realization.
 import unittest
 
 from research.ter import AgentSpec, Scenario, run_scenario
-from research.ter.rules import mapped_value, maximize_value
+from research.ter.rules import mapped_value, maximize_value, satisfice
 
 
 # ---------------------------------------------------------------------------
@@ -183,6 +188,24 @@ PREFERENCE_OUTSIDE_FHAT_SCENARIO = SINGLETON_SCENARIO.variant(
 class TestMaximizeTieBreakContract(unittest.TestCase):
     TEST_NAME = "Framework: maximize_value Tie-Break Contract"
 
+    def test_tied_maxima_without_preference_select_the_first_in_perceived_feasible_set_order(self):
+        # F̂ order differs from the valuation map's order, so the tie
+        # resolves by F̂ order specifically.
+        scenario = SINGLETON_SCENARIO.variant(
+            agents=[
+                TIE_BREAK_BASE_AGENT.variant(
+                    perceived_feasible_set=[ACTION_B, ACTION_A, ACTION_C],
+                ),
+            ],
+        )
+
+        agent = run_scenario(scenario).agent(TIE_BREAK_BASE_AGENT.name)
+
+        self.assertEqual(
+            agent.selected_action,
+            ACTION_B,
+        )
+
     def test_tied_maxima_with_valid_preference_selects_preferred_action(self):
         agent = run_scenario(TIED_WITH_PREFERENCE_SCENARIO).agent(TIE_BREAK_BASE_AGENT.name)
 
@@ -205,3 +228,36 @@ class TestMaximizeTieBreakContract(unittest.TestCase):
             "tie_break_preference must be in the perceived feasible set",
         ):
             run_scenario(PREFERENCE_OUTSIDE_FHAT_SCENARIO)
+
+
+# ---------------------------------------------------------------------------
+# satisfice fallback contract
+# ---------------------------------------------------------------------------
+
+# No perceived feasible action reaches the threshold. The last action in
+# F̂ order is also the lowest valued, so the fallback is visibly not a
+# maximization.
+UNREACHED_THRESHOLD_SCENARIO = SINGLETON_SCENARIO.variant(
+    agents=[
+        TIE_BREAK_BASE_AGENT.variant(
+            decision_process=satisfice,
+            decision_parameters={
+                "satisficing_threshold": 10,
+            },
+        ),
+    ],
+)
+
+
+class TestSatisficeFallbackContract(unittest.TestCase):
+    TEST_NAME = "Framework: satisfice Fallback Contract"
+
+    def test_unreached_threshold_selects_the_last_perceived_feasible_action(self):
+        # Current implementation default, not a TER rule: academic.md does
+        # not specify what satisficing selects when nothing is acceptable.
+        agent = run_scenario(UNREACHED_THRESHOLD_SCENARIO).agent(TIE_BREAK_BASE_AGENT.name)
+
+        self.assertEqual(
+            agent.selected_action,
+            ACTION_C,
+        )

@@ -79,9 +79,8 @@ Hypothesis
 In this configured bilateral trade:
 1. The buyer chooses BUY.
 2. The seller chooses SELL.
-3. Consumer surplus plus producer surplus equals total surplus.
-4. Total surplus equals buyer reservation value minus seller
-   reservation cost.
+3. Total surplus -- consumer surplus plus producer surplus -- equals
+   buyer reservation value minus seller reservation cost.
 """
 
 import unittest
@@ -192,7 +191,7 @@ TOTAL_SURPLUS_SCENARIO = Scenario(
 class TestTotalSurplus(unittest.TestCase):
     TEST_NAME = "Test 20: Total Surplus / Gains from Trade"
 
-    def test_buyer_chooses_buy(self):
+    def test_buyer_buys_and_seller_sells(self):
         result = run_scenario(TOTAL_SURPLUS_SCENARIO)
 
         self.assertEqual(
@@ -200,62 +199,25 @@ class TestTotalSurplus(unittest.TestCase):
             BUY,
         )
 
-    def test_seller_chooses_sell(self):
-        result = run_scenario(TOTAL_SURPLUS_SCENARIO)
-
         self.assertEqual(
             result.agent(SELLER.name).selected_action,
             SELL,
         )
 
-    def test_consumer_surplus_plus_producer_surplus_equals_total_surplus(self):
-        result = run_scenario(TOTAL_SURPLUS_SCENARIO)
-
-        buyer = result.agent(BUYER.name)
-        seller = result.agent(SELLER.name)
-
-        self.assertEqual(
-            buyer.selected_action,
-            BUY,
-        )
-
-        self.assertEqual(
-            seller.selected_action,
-            SELL,
-        )
-
-        consumer_surplus = buyer.value_of(BUY)
-        producer_surplus = seller.value_of(SELL)
-
-        self.assertEqual(
-            consumer_surplus,
-            5,
-        )
-
-        self.assertEqual(
-            producer_surplus,
-            3,
-        )
-
-        total_surplus = consumer_surplus + producer_surplus
-
-        self.assertEqual(
-            total_surplus,
-            8,
-        )
-
     def test_total_surplus_equals_reservation_value_minus_reservation_cost(self):
         result = run_scenario(TOTAL_SURPLUS_SCENARIO)
 
-        buyer = result.agent(BUYER.name)
-        seller = result.agent(SELLER.name)
+        consumer_surplus = result.agent(BUYER.name).value_of(BUY)
+        producer_surplus = result.agent(SELLER.name).value_of(SELL)
 
-        consumer_surplus = buyer.value_of(BUY)
-        producer_surplus = seller.value_of(SELL)
-
-        total_surplus = consumer_surplus + producer_surplus
+        # 5 + 3 = 8: the market price paid by the buyer is received by
+        # the seller, so it cancels from the total.
+        self.assertEqual(
+            (consumer_surplus, producer_surplus),
+            (5, 3),
+        )
 
         self.assertEqual(
-            total_surplus,
+            consumer_surplus + producer_surplus,
             BUYER_RESERVATION_VALUE - SELLER_RESERVATION_COST,
         )

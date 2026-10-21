@@ -230,49 +230,25 @@ class TestProducerSurplus(unittest.TestCase):
             DO_NOT_SELL,
         )
 
-    def test_selling_sellers_surplus_equals_price_minus_reservation_cost(self):
+    def test_selling_sellers_surplus_is_price_minus_reservation_cost_and_sums_to_the_total(self):
+        # Sellers 1 and 2 are the sellers (see the SELL test above).
         result = run_scenario(PRODUCER_SURPLUS_SCENARIO)
 
-        seller_1 = result.agent(SELLER_1.name)
-        seller_2 = result.agent(SELLER_2.name)
+        seller_1_surplus = result.agent(SELLER_1.name).value_of(SELL)
+        seller_2_surplus = result.agent(SELLER_2.name).value_of(SELL)
 
         self.assertEqual(
-            seller_1.selected_action,
-            SELL,
-        )
-
-        self.assertEqual(
-            seller_2.selected_action,
-            SELL,
-        )
-
-        self.assertEqual(
-            seller_1.value_of(SELL),
+            seller_1_surplus,
             MARKET_PRICE - SELLER_1_RESERVATION_COST,
         )
 
         self.assertEqual(
-            seller_2.value_of(SELL),
+            seller_2_surplus,
             MARKET_PRICE - SELLER_2_RESERVATION_COST,
         )
 
-    def test_total_producer_surplus_equals_sum_across_selling_sellers(self):
-        result = run_scenario(PRODUCER_SURPLUS_SCENARIO)
-
-        seller_1 = result.agent(SELLER_1.name)
-        seller_2 = result.agent(SELLER_2.name)
-
-        total_producer_surplus = (
-            seller_1.value_of(SELL)
-            + seller_2.value_of(SELL)
-        )
-
-        expected_total_producer_surplus = (
-            MARKET_PRICE - SELLER_1_RESERVATION_COST
-            + MARKET_PRICE - SELLER_2_RESERVATION_COST
-        )
-
+        # Total producer surplus: 6 + 3 = 9.
         self.assertEqual(
-            total_producer_surplus,
-            expected_total_producer_surplus,
+            seller_1_surplus + seller_2_surplus,
+            9,
         )

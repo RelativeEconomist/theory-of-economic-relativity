@@ -228,49 +228,25 @@ class TestConsumerSurplus(unittest.TestCase):
             DO_NOT_BUY,
         )
 
-    def test_purchasing_buyers_surplus_equals_reservation_value_minus_price(self):
+    def test_purchasing_buyers_surplus_is_reservation_value_minus_price_and_sums_to_the_total(self):
+        # Buyers 1 and 2 are the purchasers (see the BUY test above).
         result = run_scenario(CONSUMER_SURPLUS_SCENARIO)
 
-        buyer_1 = result.agent(BUYER_1.name)
-        buyer_2 = result.agent(BUYER_2.name)
+        buyer_1_surplus = result.agent(BUYER_1.name).value_of(BUY)
+        buyer_2_surplus = result.agent(BUYER_2.name).value_of(BUY)
 
         self.assertEqual(
-            buyer_1.selected_action,
-            BUY,
-        )
-
-        self.assertEqual(
-            buyer_2.selected_action,
-            BUY,
-        )
-
-        self.assertEqual(
-            buyer_1.value_of(BUY),
+            buyer_1_surplus,
             BUYER_1_RESERVATION_VALUE - MARKET_PRICE,
         )
 
         self.assertEqual(
-            buyer_2.value_of(BUY),
+            buyer_2_surplus,
             BUYER_2_RESERVATION_VALUE - MARKET_PRICE,
         )
 
-    def test_total_consumer_surplus_equals_sum_across_purchasing_buyers(self):
-        result = run_scenario(CONSUMER_SURPLUS_SCENARIO)
-
-        buyer_1 = result.agent(BUYER_1.name)
-        buyer_2 = result.agent(BUYER_2.name)
-
-        total_consumer_surplus = (
-            buyer_1.value_of(BUY)
-            + buyer_2.value_of(BUY)
-        )
-
-        expected_total_consumer_surplus = (
-            BUYER_1_RESERVATION_VALUE - MARKET_PRICE
-            + BUYER_2_RESERVATION_VALUE - MARKET_PRICE
-        )
-
+        # Total consumer surplus: 5 + 2 = 7.
         self.assertEqual(
-            total_consumer_surplus,
-            expected_total_consumer_surplus,
+            buyer_1_surplus + buyer_2_surplus,
+            7,
         )

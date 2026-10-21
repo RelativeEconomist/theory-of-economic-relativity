@@ -9,7 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.12"]
+        # Oldest supported version and the current release.
+        python-version: ["3.10", "3.14"]
     steps:
       - uses: actions/checkout@v4
 
@@ -19,3 +20,23 @@ jobs:
 
       - name: Run TER test suite
         run: python run_tests.py
+
+  web-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: applications/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: applications/web/package-lock.json
+
+      - name: Install web dependencies
+        run: npm ci
+
+      - name: Type-check the website
+        run: npm run check

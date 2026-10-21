@@ -9,9 +9,12 @@ class FriendlyTestResult(unittest.TextTestResult):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.current_group = None
+        self.current_failed = False
+        self.failed_tests = 0
 
     def startTest(self, test):
         super().startTest(test)
+        self.current_failed = False
 
         group = test.__class__.__name__
         if group != self.current_group:
@@ -31,17 +34,28 @@ class FriendlyTestResult(unittest.TextTestResult):
         name = name.removeprefix("test_")
         return name.replace("_", " ").capitalize()
 
-    def addSuccess(self, test):
-        super().addSuccess(test)
-        self.stream.writeln(f"  ✓ {self._friendly_name(test)}")
-
     def addFailure(self, test, err):
         super().addFailure(test, err)
-        self.stream.writeln(f"  ✗ {self._friendly_name(test)}")
+        self.current_failed = True
 
     def addError(self, test, err):
         super().addError(test, err)
-        self.stream.writeln(f"  ✗ {self._friendly_name(test)}")
+        self.current_failed = True
+
+    def addSubTest(self, test, subtest, err):
+        # A failing subtest marks its whole test failed; unittest does not
+        # call addSuccess for that test.
+        super().addSubTest(test, subtest, err)
+        if err is not None:
+            self.current_failed = True
+
+    def stopTest(self, test):
+        super().stopTest(test)
+        if self.current_failed:
+            self.failed_tests += 1
+            self.stream.writeln(f"  ✗ {self._friendly_name(test)}")
+        else:
+            self.stream.writeln(f"  ✓ {self._friendly_name(test)}")
 
 
 class FriendlyTestRunner(unittest.TextTestRunner):
@@ -96,17 +110,22 @@ def main():
     print()
     print("=" * 44)
 
+    if result.testsRun == 0:
+        print("FAIL: no tests were discovered.")
+        raise SystemExit(1)
+
     if result.wasSuccessful():
         print(
             f"PASS: {result.testsRun} tests completed successfully."
         )
     else:
-        failed = len(result.failures)
+        failures = len(result.failures)
         errors = len(result.errors)
 
+        # failures and errors count each failing subtest separately.
         print(
-            f"FAIL: {result.testsRun} tests run, "
-            f"{failed} failures, {errors} errors."
+            f"FAIL: {result.failed_tests} of {result.testsRun} tests failed "
+            f"({failures} failures, {errors} errors, counting subtests)."
         )
 
     raise SystemExit(0 if result.wasSuccessful() else 1)

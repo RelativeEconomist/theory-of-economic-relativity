@@ -20,7 +20,7 @@ import unittest
 from http.client import HTTPMessage
 from unittest.mock import patch
 
-from research.adapters import asymmetric_information, bounded_rationality, feasible_set_learning
+from research.adapters import asymmetric_information, feasible_set_learning
 from research.adapters.basic_agent_choice import SCENARIO_ID, run
 from research.http.endpoint import MAX_BODY_BYTES, PATH
 
@@ -138,6 +138,9 @@ class TestSimulationWorker(unittest.TestCase):
         self.assertIn(expected, body["error"])
 
     def test_envelopes_match_the_direct_adapter_run(self):
+        # The Worker passes the parsed envelope to endpoint.simulate, the
+        # same routing the local server uses; per-scenario routing is
+        # tested once, in test_simulation_http.py.
         for inputs in ({}, {"action_values": CONFIGURED_VALUES}):
             with self.subTest(inputs=inputs):
                 body = json.dumps({"scenario": SCENARIO_ID, "inputs": inputs}).encode()
@@ -147,57 +150,6 @@ class TestSimulationWorker(unittest.TestCase):
                 self.assertEqual(response.status, 200)
                 self.assertEqual(response.headers["Content-Type"], "application/json")
                 self.assertEqual(response.json(), run({"scenario": SCENARIO_ID, **inputs}))
-
-    def test_bounded_rationality_envelopes_reach_its_adapter(self):
-        for inputs in (
-            {},
-            {"decision_process": "maximize_value"},
-            {"decision_process": "limited_search", "search_limit": 3},
-        ):
-            with self.subTest(inputs=inputs):
-                body = json.dumps(
-                    {"scenario": bounded_rationality.SCENARIO_ID, "inputs": inputs}
-                ).encode()
-
-                response = fetch(FakeRequest(body))
-
-                self.assertEqual(response.status, 200)
-                self.assertEqual(
-                    response.json(),
-                    bounded_rationality.run(
-                        {"scenario": bounded_rationality.SCENARIO_ID, **inputs}
-                    ),
-                )
-
-    def test_asymmetric_information_envelopes_reach_its_adapter(self):
-        for inputs in ({}, {"pricing": "verified"}, {"believed_share_high": 0.75}):
-            with self.subTest(inputs=inputs):
-                body = json.dumps(
-                    {"scenario": asymmetric_information.SCENARIO_ID, "inputs": inputs}
-                ).encode()
-
-                response = fetch(FakeRequest(body))
-
-                self.assertEqual(response.status, 200)
-                self.assertEqual(
-                    response.json(),
-                    asymmetric_information.run(
-                        {"scenario": asymmetric_information.SCENARIO_ID, **inputs}
-                    ),
-                )
-
-    def test_feasible_set_learning_envelopes_reach_its_adapter(self):
-        body = json.dumps(
-            {"scenario": feasible_set_learning.SCENARIO_ID, "inputs": {}}
-        ).encode()
-
-        response = fetch(FakeRequest(body))
-
-        self.assertEqual(response.status, 200)
-        self.assertEqual(
-            response.json(),
-            feasible_set_learning.run({"scenario": feasible_set_learning.SCENARIO_ID}),
-        )
 
     def test_rejected_requests_return_the_endpoint_or_adapter_error(self):
         for request, expected in (
