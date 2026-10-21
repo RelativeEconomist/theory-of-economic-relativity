@@ -26,7 +26,7 @@ echo "  Web  http://localhost:4321"
 
 # Job control gives each service its own process group.
 set -m
-PYTHONDONTWRITEBYTECODE=1 python3.14 -m research.http.simulation </dev/null &
+PYTHONDONTWRITEBYTECODE=1 python3.14 -m applications.api.simulation </dev/null &
 api_pid=$!
 (cd applications/web && exec npm run dev) </dev/null &
 web_pid=$!

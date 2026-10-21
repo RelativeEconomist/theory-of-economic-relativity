@@ -1,6 +1,6 @@
 /**
  * Posts a scenario's inputs to the Python `/simulate` endpoint
- * (research/http/endpoint.py) and returns its JSON result, or throws an
+ * (applications/api/endpoint.py) and returns its JSON result, or throws an
  * Error carrying the endpoint's message.
  */
 const API_URL: string = import.meta.env.PUBLIC_TER_API_URL ?? "http://127.0.0.1:8000";

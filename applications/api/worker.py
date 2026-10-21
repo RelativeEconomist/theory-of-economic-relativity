@@ -2,7 +2,7 @@
 Cloudflare Worker that serves the TER simulation endpoint in production.
 
 POST /simulate takes and returns the same JSON as the local server
-(research.http.simulation). Only the transport differs:
+(applications.api.simulation). Only the transport differs:
 
 - CORS allows exactly the TER_ALLOWED_ORIGIN origin, never localhost.
 - A POST must declare its Content-Length, so the body size is known before
@@ -24,7 +24,7 @@ from urllib.parse import urlsplit
 
 from workers import Response, WorkerEntrypoint
 
-from research.http.endpoint import MAX_BODY_BYTES, PATH, exact_https_origin, simulate
+from applications.api.endpoint import MAX_BODY_BYTES, PATH, exact_https_origin, simulate
 
 # The request envelope nests 3 levels: {"inputs": {"action_values": {...}}}.
 # Parsing a few thousand levels overflows the Worker runtime's stack, which

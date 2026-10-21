@@ -17,7 +17,7 @@ body stalls for 10 seconds; 413 for a body over 64 KiB; and
 
 Run from the repository root for local development:
 
-    python3 -m research.http.simulation
+    python3 -m applications.api.simulation
 
 Browsers on the local Astro dev server (port 4321) may call it. Set
 TER_ALLOWED_ORIGIN to one exact HTTPS origin to also allow a production site.
@@ -27,7 +27,7 @@ import json
 import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from research.http.endpoint import MAX_BODY_BYTES, PATH, exact_https_origin, simulate
+from applications.api.endpoint import MAX_BODY_BYTES, PATH, exact_https_origin, simulate
 
 HOST = "127.0.0.1"
 PORT = 8000

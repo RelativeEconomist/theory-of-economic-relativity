@@ -96,9 +96,9 @@ src/styles/global.css                              Global styles
 # Repository root
 scripts/dev-simulator.sh                           Runs simulator and website
 wrangler.api.jsonc                                 Simulator Worker config
-research/http/endpoint.py                          Rules shared by both servers
-research/http/simulation.py                        Local POST /simulate server
-research/http/worker.py                            Production POST /simulate Worker
+applications/api/endpoint.py                       Rules shared by both servers
+applications/api/simulation.py                     Local POST /simulate server
+applications/api/worker.py                         Production POST /simulate Worker
 research/adapters/                                 JSON adapter per scenario
 research/scenarios/                                Scenario definitions
 research/ter/                                      TER core

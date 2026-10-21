@@ -17,9 +17,9 @@ from http.server import ThreadingHTTPServer
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
+from applications.api.simulation import PATH, SimulationHandler, allowed_origins
 from research.adapters import asymmetric_information, bounded_rationality, feasible_set_learning
 from research.adapters.basic_agent_choice import SCENARIO_ID, run
-from research.http.simulation import PATH, SimulationHandler, allowed_origins
 
 DEV_ORIGIN = "http://localhost:4321"
 ALLOWED_ORIGINS = (DEV_ORIGIN, "http://127.0.0.1:4321")

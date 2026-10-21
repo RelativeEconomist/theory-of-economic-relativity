@@ -13,7 +13,7 @@ independent evidence for the conditions used to derive it. See "TER
 Execution Results" in krugman_1980_validation.md for each result's status.
 
 Run with:
-    python3.14 -m unittest research.reproductions.test_krugman_1980_ter -v
+    python3 run_tests.py research/reproductions/test_krugman_1980_ter.py
 
 Fixture values are illustrative test inputs, not empirical claims.
 """
@@ -48,7 +48,7 @@ from research.ter import Scenario, run_scenario
 from research.ter.feasible import Interval, Region
 
 # The firm's price comes from a numerical search of a flat maximum, which
-# resolves it to about 3e-9 (relative); every equilibrium quantity is
+# resolves it to about 5e-9 (relative); every equilibrium quantity is
 # derived from that price. Comparisons are relative, with an absolute floor
 # for values near zero (e.g. profit): as strict as 7 decimal places at unit
 # scale, stricter at larger scales.
@@ -62,6 +62,7 @@ class CloseTestCase(unittest.TestCase):
             TOLERANCE * max(1.0, abs(expected)),
             f"{actual} != {expected} within relative tolerance {TOLERANCE}",
         )
+
 
 RESULTS = {
     "home": run_scenario(HOME_AUTARKY),
@@ -110,7 +111,6 @@ class ConfigurationKInformationBoundaryTest(CloseTestCase):
         self.assertEqual(firm_set, Interval(0, float("inf"), closed_low=False))
         self.assertIsInstance(consumer_set, Region)
         self.assertEqual(set(consumer_set.coordinates), set(firms(result)))
-
 
 
 class ConfigurationKEquilibriumDerivationTest(CloseTestCase):
@@ -412,14 +412,6 @@ class ConfigurationKInfeasibleAllocationTest(CloseTestCase):
             with self.subTest(agent=name):
                 self.assertEqual(realized, {"allocation_feasible": False})
 
-    def test_price_above_what_consumers_can_pay(self):
-        # Counterfactual: one firm charges more than consumers expected.
-        result = RESULTS["home"]
-        reality = result.counterfactual(0, {"home_firm_1": 0.8})
-
-        self.assert_nothing_realized(reality)
-        self.assertEqual(violated_constraints(reality), {"budget"})
-
     def test_labor_demand_beyond_the_labor_force(self):
         # F_t has less labor than agents expect: n firms' production needs
         # 20 + 0.75 * 60 = 65 units of labor, but only 60 exist.
@@ -432,10 +424,11 @@ class ConfigurationKInfeasibleAllocationTest(CloseTestCase):
         self.assertEqual(violated_constraints(reality), {"labor"})
         self.assertClose(reality.system["attempted"]["labor_demand"]["home"], 65)
 
-    def test_overspending_is_rejected_at_any_monetary_scale(self):
-        # One firm charging 1% more makes consumers overspend by 0.1% of
-        # income; the same rescaled allocation must be equally infeasible,
-        # in R and in the consumer's perceived budget, at a tiny wage.
+    def test_price_above_what_consumers_can_pay_at_any_monetary_scale(self):
+        # Counterfactual: one firm charging 1% more than consumers expected
+        # makes them overspend by 0.1% of income. The same rescaled
+        # allocation must be equally infeasible, in R and in the consumer's
+        # perceived budget, at a tiny wage.
         for wage in (WAGE, 1e-8):
             result = run_scenario(krugman_scenario("Rescaled", {"home": HOME_LABOR}, wage=wage))
             price = result.agent("home_firm_1").selected_action

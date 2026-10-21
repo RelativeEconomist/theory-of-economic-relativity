@@ -1,8 +1,8 @@
 """
 Transport-neutral rules for the TER simulation endpoint.
 
-The local server (research.http.simulation) and the Cloudflare Worker
-(research.http.worker) share these, so both accept the same route, body
+The local server (applications.api.simulation) and the Cloudflare Worker
+(applications.api.worker) share these, so both accept the same route, body
 size, production origin form, and request envelope.
 """
 

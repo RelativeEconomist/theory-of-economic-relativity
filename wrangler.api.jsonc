@@ -2,16 +2,16 @@
 // Deploy from the repository root: npx wrangler deploy --config wrangler.api.jsonc
 {
   "name": "theory-of-economic-relativity-api",
-  "main": "research/http/worker.py",
+  "main": "applications/api/worker.py",
   "compatibility_date": "2026-10-10",
   // disable_python_external_sdk keeps the runtime's built-in `workers` module,
   // so plain Wrangler can build this Worker without pywrangler.
   "compatibility_flags": ["python_workers", "disable_python_external_sdk"],
   // Wrangler bundles only main's directory and python_modules/, which the
   // runtime puts on sys.path. Copy there what the Worker imports as
-  // research.*, plus the VERSION file research.ter reads.
+  // applications.api.* and research.*, plus the VERSION file research.ter reads.
   "build": {
-    "command": "rm -rf python_modules/research && mkdir -p python_modules/research && cp -R research/__init__.py research/adapters research/http research/scenarios research/ter python_modules/research/ && cp VERSION python_modules/VERSION"
+    "command": "rm -rf python_modules/research python_modules/applications && mkdir -p python_modules/research python_modules/applications && cp -R research/__init__.py research/adapters research/scenarios research/ter python_modules/research/ && cp -R applications/api python_modules/applications/ && cp VERSION python_modules/VERSION"
   },
   "routes": [{ "pattern": "api.theoryofeconomicrelativity.com", "custom_domain": true }],
   "workers_dev": false,

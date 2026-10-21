@@ -20,9 +20,9 @@ import unittest
 from http.client import HTTPMessage
 from unittest.mock import patch
 
+from applications.api.endpoint import MAX_BODY_BYTES, PATH
 from research.adapters import asymmetric_information, feasible_set_learning
 from research.adapters.basic_agent_choice import SCENARIO_ID, run
-from research.http.endpoint import MAX_BODY_BYTES, PATH
 
 PRODUCTION_ORIGIN = "https://www.theoryofeconomicrelativity.com"
 CLIENT_IP = "203.0.113.7"
@@ -59,7 +59,7 @@ with patch.dict(
         )
     },
 ):
-    from research.http.worker import MAX_JSON_DEPTH, Default
+    from applications.api.worker import MAX_JSON_DEPTH, Default
 
 
 class FakeRequest:

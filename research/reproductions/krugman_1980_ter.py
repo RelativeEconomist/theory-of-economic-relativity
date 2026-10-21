@@ -30,7 +30,7 @@ compare with the benchmark, is checked afterward (test_krugman_1980_ter.py).
 Nothing in V, D, or R encodes an expected output.
 
 Run with:
-    python3.14 -m unittest research.reproductions.test_krugman_1980_ter -v
+    python3 run_tests.py research/reproductions/test_krugman_1980_ter.py
 """
 
 import math
@@ -66,13 +66,13 @@ VALUE_TIE_TOLERANCE = 1e-12
 
 # R's slack when checking an allocation against F_t, relative to each
 # limit (no absolute floor, so results do not depend on the monetary
-# unit). The firm's search resolves price to about 1e-9 (relative), which
+# unit). The firm's search resolves price to about 5e-9 (relative), which
 # moves spending by the same order; 1e-7 absorbs that and nothing
 # economically meaningful.
 REALIZATION_TOLERANCE = 1e-7
 
 # Relative slack for quantities derived from the TER-selected markup: the
-# whole-number firm count and the fixed-point check. The markup's ~1e-9
+# whole-number firm count and the fixed-point check. The markup's ~5e-9
 # resolution moves derived firm counts by ~1e-8.
 DERIVATION_TOLERANCE = 1e-6
 
@@ -365,8 +365,8 @@ def krugman_reality(actions, objective_state, parameters):
     of it: every price is positive (Krugman's market is defined only at
     positive prices), no quantity is negative, every purchased variety is
     offered, every consumer can pay for its bundle at the selected prices
-    from its actual wage, and each country's
-    firms need no more labor than its labor force. Otherwise R reports the
+    from its actual wage, and each country's firms need no more labor
+    than its labor force. Otherwise R reports the
     allocation infeasible: which constraints failed and the attempted
     quantities, and no realized consumption, output, or profit. Krugman
     specifies no rationing or adjustment rule, so R does not invent one,

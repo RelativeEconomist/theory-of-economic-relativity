@@ -30,7 +30,17 @@ For unittest's own verbose output, run it as a module instead:
 
     python3 -m unittest research.tests.test_24_cobweb_oscillation -v
 
-[`test_08_externalities.py`](tests/test_08_externalities.py) shows the same API with per-agent economic outcomes.
+## Academic Reproductions
+
+[`reproductions/`](reproductions/) holds reproductions of published models. Each has an independent analytical benchmark that does not import TER, a TER configuration run through `research.ter`, and tests comparing the two. Its configuration document maps the source model's assumptions to TER, and its validation document sets the validation order, anti-circularity rules, and what each result does and does not show.
+
+Krugman (1980), Section I, is Configuration K:
+
+- [`krugman_1980.py`](reproductions/krugman_1980.py) and [`test_krugman_1980.py`](reproductions/test_krugman_1980.py) — Krugman's closed-form solution, without TER
+- [`krugman_1980_ter.py`](reproductions/krugman_1980_ter.py) and [`test_krugman_1980_ter.py`](reproductions/test_krugman_1980_ter.py) — the TER configuration and its validation
+- [`krugman_1980_configuration.md`](reproductions/krugman_1980_configuration.md) and [`krugman_1980_validation.md`](reproductions/krugman_1980_validation.md) — mappings, assumptions, evidence, and limitations
+
+Start a new reproduction from [`templates/established-model-configuration-template.md`](templates/established-model-configuration-template.md).
 
 ## The Research API
 
@@ -223,6 +233,16 @@ If no existing rule fits, define a **local** rule — one that's genuinely speci
 The trigger to move a local rule into `research.ter.rules` is simple: a **second** test wants the same mechanism. (`social_value_reality`, `private_value`, and `internalized_value` all started this way.)
 
 Whole scenarios follow the same rule. When a real second consumer, such as a web simulator adapter, needs a test's scenario, move it to [`scenarios/`](scenarios/) and import it back into the numbered test, which remains the source of truth for the hypotheses. Adapters in [`adapters/`](adapters/) import scenarios and contain no economic mechanisms; a scenario and its adapter share a filename where practical.
+
+## The Website Simulator
+
+The website's interactive scenarios run this code. The chain is:
+
+```text
+browser → POST /simulate → applications/api/ → adapters/ → scenarios/ → ter/
+```
+
+[`applications/api/`](../applications/api/) only moves JSON between HTTP and an adapter: `endpoint.py` holds the rules both servers share, `simulation.py` is the local server, and `worker.py` is the production Cloudflare Worker. `test_simulation_http.py`, `test_simulation_worker.py`, and the `*_adapter.py` tests in `tests/` cover them. Running the simulator locally and deploying it are described in [`applications/web/README.md`](../applications/web/README.md).
 
 ## Modify an Existing Test
 

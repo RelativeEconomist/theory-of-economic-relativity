@@ -18,7 +18,7 @@ Section I assumptions:
   the world goods market clears.
 
 Run with:
-    python3.14 -m research.reproductions.krugman_1980
+    python3 -m research.reproductions.krugman_1980
 """
 
 # Illustrative demonstration/test fixtures only; not empirical assumptions.

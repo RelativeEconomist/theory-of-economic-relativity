@@ -1,7 +1,7 @@
 """Tests for the Krugman (1980), Section I analytical reproduction.
 
 Run with:
-    python3.14 -m unittest research.reproductions.test_krugman_1980 -v
+    python3 run_tests.py research/reproductions/test_krugman_1980.py
 
 Fixture values are illustrative test inputs, not empirical claims.
 """

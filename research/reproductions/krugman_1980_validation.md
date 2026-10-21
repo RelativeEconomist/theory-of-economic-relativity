@@ -134,7 +134,9 @@ Equilibrium conditions are used to derive the equilibrium, so TER can confirm th
 | Balanced trade | **Equilibrium condition** (equivalent to world goods-market clearing with two countries); realization check; matches the benchmark. |
 | Welfare gain | **Realized** consumption evaluated with each consumer's `V`; matches the benchmark; ordinal gain only. |
 
-Configuration K therefore derives Krugman's equilibrium from one TER decision, the firm's markup, plus Krugman's stated equilibrium conditions, and shows that one joint `R` realizes it feasibly. It does not test the equilibrium conditions themselves, and its single-pass fixed point relies on the markup not depending on expected market conditions.
+The checks can fail. A competing configuration in which firms misperceive demand elasticity does not reproduce Krugman's markup, and `R` reports its allocation infeasible. Counterfactual prices consumers cannot pay, labor demand beyond the labor force, unoffered varieties, negative purchases, and nonpositive prices are each reported infeasible with nothing realized (`test_krugman_1980_ter.py`). A derivation whose firm price is not a fixed point, or whose firm count is not a whole number, raises instead of being adjusted.
+
+Configuration K therefore derives Krugman's equilibrium from one TER decision, the firm's markup, plus Krugman's stated equilibrium conditions, and shows that one joint `R` realizes it feasibly. It does not test the equilibrium conditions themselves, and its single-pass fixed point relies on the markup not depending on expected market conditions. Its other limitations (whole-number firm counts, counterfactuals without a demand response, unresolved infeasible allocations, unmodeled entrants) are listed in the configuration document.
 
 ---
 
