@@ -5,4 +5,3 @@ __pycache__/
 .wrangler/
 .dev.vars
 python_modules/
-applications/web/.env.production

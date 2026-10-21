@@ -940,9 +940,9 @@ export const scenarios: Scenario[] = [
       "An agent at first perceives only one of two permitted actions. Observing its own outcome adds the other to its perceived feasible set, and its next decision selects it.",
     sourceLabel: "Test 22",
     economicQuestion:
-      "Can a realized outcome lead an agent to add to its perceived feasible set an action the scenario already permits, so that a later decision selects it?",
+      "Can experience reveal an option the agent did not previously realize was available?",
     context:
-      "One agent decides twice between an ordinary action and a better one. Both are permitted throughout, but at first the agent perceives only the ordinary action.",
+      "The agent makes the same choice twice. At first, it knows only about the ordinary option. After the first outcome, it discovers a better option that was available all along. On the second decision, it can choose between both.",
     scope:
       "One agent, two decision points. This illustrates TER Models 5.1, 5.2, and 5.5, not a general process of learning.",
     terComponents: [
@@ -960,7 +960,8 @@ export const scenarios: Scenario[] = [
         name: "Model of reality",
         definition:
           "The agent's model of reality, including information, beliefs, assumptions, expectations, and interpretations.",
-        mapping: "Left empty, and never updated.",
+        mapping:
+          "Intentionally empty and fixed in this scenario, so the simulator omits it. M remains part of Model 5.1; this test does not exercise it.",
         testTreatment: "Fixed",
       },
       {
@@ -970,7 +971,7 @@ export const scenarios: Scenario[] = [
         definition:
           "The objectively realized conditions and constraints relevant when the selected action(s) at decision point t are realized. Not agent specific, and not an input to the decision process.",
         mapping:
-          "The scenario's permission data lists both actions as permitted at both decision points. It represents one relevant aspect of F_t, not all of it, and nothing changes it.",
+          "Both actions are objectively permitted at both decision points. This is one relevant aspect of F_t, not all of it, and nothing changes it.",
         testTreatment: "Fixed",
       },
       {
@@ -1022,7 +1023,7 @@ export const scenarios: Scenario[] = [
         definition:
           "Maps the selected action(s) and the relevant objectively realized state F_t to the realized outcome; its arguments depend on model scope.",
         mapping:
-          "Records the selected action as the action the agent experienced. It does not check permission or add other consequences.",
+          "Records the selected action as the action the agent experienced. It does not check which actions are permitted or add other consequences.",
         testTreatment: "Fixed",
       },
       {
@@ -1038,13 +1039,13 @@ export const scenarios: Scenario[] = [
     assumptions: [
       "Values are scenario-specific assumptions, not TER primitives.",
       "The agent observes its own realized outcome exactly, and nothing else.",
-      "The update rule is specific to this scenario: once the agent observes that it experienced the ordinary action, it adds the better action to F̂. It reads only the agent's own state and observation, never the permission data.",
+      "The update rule is this scenario's one learning mechanism: after observing that it experienced the ordinary action, the agent adds the better action to F̂. The rule reads only the agent's own state and observation, never F_t.",
       "TER does not claim experience always improves perception, and the test does not model why the agent first missed the better action.",
     ],
     economicSetup:
-      "At the first decision the agent perceives only the ordinary action, so it selects it. R records that the agent experienced the ordinary action; the agent observes this, and its update rule adds the better action to F̂. At the second decision the agent selects the better action, valued 9 against 4.",
+      "The first decision can select only the ordinary action, because F̂ contains nothing else. The second decision uses the updated F̂ and selects the better action, valued 9 against 4.",
     whatChanges:
-      "Only what the agent perceives changes, and only through the update that follows its observation. The permission data, values, and decision process stay the same.",
+      "Only F̂ changes, and only through the update rule. The objectively permitted actions, values, and decision process stay fixed.",
     terNote:
       "Model 5.5 is written from the system outcome O_t; in this single-agent specification, feedback starts from O_{i,t}. Its arrows mark possible influence, not change in every component: here the one update rule changes only F̂.",
     hypotheses: [
@@ -1052,14 +1053,14 @@ export const scenarios: Scenario[] = [
       "The first decision is restricted to the ordinary action.",
       "The observed outcome of that decision leads the update to add the better action to F̂ for the next decision.",
       "The next decision selects the better action, now perceived and more highly valued.",
-      "The permission data does not change during the run; only perception does.",
+      "The objectively permitted actions do not change during the run; only perception does.",
     ],
     configuration: [
       { label: "Agent", value: "1" },
       { label: "Decision points", value: "2" },
       { label: "Actions and values", value: "Ordinary action = 4, better alternative action = 9" },
       { label: "Initial perceived feasible set", value: "Ordinary action" },
-      { label: "Permission data", value: "Both actions, at both decision points" },
+      { label: "Objectively permitted actions", value: "Both actions, at both decision points" },
       { label: "Decision process", value: "Choose the highest-valued perceived feasible action" },
       { label: "Time horizon", value: "Ongoing decision" },
     ],

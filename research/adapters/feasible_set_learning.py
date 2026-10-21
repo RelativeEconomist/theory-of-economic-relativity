@@ -14,6 +14,7 @@ Response:
         "name": "Feasible Set Discovery Through Experience",
         "agent": "decision_maker",
         "permitted_actions": ["ordinary_action", "better_alternative_action"],
+        "action_values": {"ordinary_action": 4, "better_alternative_action": 9},
         "periods": [
             {
                 "decision_point": 0,
@@ -45,7 +46,8 @@ realized_outcome is O_{i,t} from R; observation is what the agent
 received about it; updated_agent_state is its M and F̂ after the update,
 which the next decision starts from. added_actions lists the actions the
 update added to F̂. permitted_actions is the agent's permission data in
-the initial objective state.
+the initial objective state. action_values is the agent's own V for each
+action in its final F̂, which the update made the full permitted set.
 """
 
 from research.scenarios.feasible_set_learning import BASE_AGENT, LEARNING_SCENARIO
@@ -90,8 +92,10 @@ def run(request: dict) -> dict:
     agent's state after its update.
     """
     validate_request(request)
-    trace = run_scenario(LEARNING_SCENARIO).trace
+    result = run_scenario(LEARNING_SCENARIO)
+    trace = result.trace
     agent = BASE_AGENT.name
+    agent_result = result.agent(agent)
     periods = []
 
     for t, step in enumerate(trace):
@@ -124,5 +128,9 @@ def run(request: dict) -> dict:
         "name": LEARNING_SCENARIO.name,
         "agent": agent,
         "permitted_actions": list(trace.initial["permitted_actions"][agent]),
+        "action_values": {
+            action: agent_result.value_of(action)
+            for action in agent_result.state.perceived_feasible_set
+        },
         "periods": periods,
     }

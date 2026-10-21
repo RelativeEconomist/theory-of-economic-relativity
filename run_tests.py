@@ -50,21 +50,35 @@ class FriendlyTestRunner(unittest.TextTestRunner):
 
 def main():
     repo_root = Path(__file__).resolve().parent
-    tests_dir = repo_root / "research" / "tests"
+    test_dirs = [
+        repo_root / "research" / "tests",
+        repo_root / "research" / "reproductions",
+    ]
 
     # Optional: run a single test file, e.g.
     # python3 run_tests.py research/tests/test_27_pokemon_card_choice.py
     pattern = "test_*.py"
     if len(sys.argv) > 1:
         test_file = Path(sys.argv[1])
-        if not (tests_dir / test_file.name).is_file():
-            raise SystemExit(f"Test file not found in research/tests: {sys.argv[1]}")
+        test_dirs = [
+            test_dir
+            for test_dir in test_dirs
+            if (test_dir / test_file.name).is_file()
+        ]
+        if not test_dirs:
+            raise SystemExit(
+                "Test file not found in research/tests or "
+                f"research/reproductions: {sys.argv[1]}"
+            )
         pattern = test_file.name
 
-    suite = unittest.defaultTestLoader.discover(
-        start_dir=str(tests_dir),
-        pattern=pattern,
-        top_level_dir=str(repo_root),
+    suite = unittest.TestSuite(
+        unittest.defaultTestLoader.discover(
+            start_dir=str(test_dir),
+            pattern=pattern,
+            top_level_dir=str(repo_root),
+        )
+        for test_dir in test_dirs
     )
 
     print()

@@ -4,6 +4,7 @@ from dataclasses import dataclass, field, fields
 from typing import Any, Callable
 
 from research.ter.decision import _valuation_view
+from research.ter.feasible import PerceivedFeasibleSet
 
 
 @dataclass
@@ -18,6 +19,10 @@ class AgentSpec:
     V     -> valuation + valuation_rule
     H     -> horizon
     D     -> decision_process
+
+    perceived_feasible_set is a list of actions, or a mathematical set
+    (research.ter.feasible.Interval or Region) for continuous or
+    multidimensional actions.
 
     decision_parameters is not a new TER primitive. It is implementation
     configuration for the existing decision process D (e.g. a search
@@ -38,7 +43,7 @@ class AgentSpec:
     name: str
     objective: Any
     model_of_reality: dict[str, Any]
-    perceived_feasible_set: list[Any]
+    perceived_feasible_set: PerceivedFeasibleSet
     valuation_rule: Callable[..., Any]
     decision_process: Callable[..., Any]
     horizon: Any = None

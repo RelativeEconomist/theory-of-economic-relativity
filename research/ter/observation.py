@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from research.ter.agent import AgentState
+from research.ter.feasible import PerceivedFeasibleSet
 from research.ter.immutable import freeze, thaw
 
 
@@ -52,7 +53,7 @@ class UpdateView:
     name: str
     objective: Any
     model_of_reality: Any
-    perceived_feasible_set: list[Any]
+    perceived_feasible_set: PerceivedFeasibleSet
     horizon: Any
     valuation: dict[str, Any]
     decision_parameters: dict[str, Any]

@@ -4,12 +4,24 @@ from dataclasses import replace
 
 from research.ter.agent import AgentState
 from research.ter.decision import select_action
+from research.ter.feasible import MATHEMATICAL_SETS
 from research.ter.immutable import FrozenDict, freeze, thaw
 from research.ter.observation import UPDATABLE_FIELDS, Observation, update_view
 from research.ter.reality import RealityResult
 from research.ter.scenario import AgentSpec, Scenario, ScenarioResult
 from research.ter.schedule import Schedule
 from research.ter.trace import Trace, TraceStep, record_agents
+
+
+def copy_perceived_feasible_set(perceived_feasible_set):
+    """
+    An independent F_hat for a new agent: a list copy of an enumerated
+    set, or the mathematical set itself (immutable, so safe to share).
+    """
+    if isinstance(perceived_feasible_set, MATHEMATICAL_SETS):
+        return perceived_feasible_set
+
+    return list(perceived_feasible_set)
 
 
 def build_agent(spec: AgentSpec) -> AgentState:
@@ -30,7 +42,9 @@ def build_agent(spec: AgentSpec) -> AgentState:
         name=spec.name,
         objective=spec.objective,
         model_of_reality=deepcopy(spec.model_of_reality),
-        perceived_feasible_set=list(spec.perceived_feasible_set),
+        perceived_feasible_set=copy_perceived_feasible_set(
+            spec.perceived_feasible_set
+        ),
         value=spec.valuation_rule,
         horizon=spec.horizon,
         decision_process=spec.decision_process,

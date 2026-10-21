@@ -19,8 +19,10 @@ from research.adapters.feasible_set_learning import SCENARIO_ID, run
 from research.scenarios.feasible_set_learning import (
     BASE_AGENT,
     BETTER_ACTION,
+    BETTER_ACTION_VALUE,
     LEARNING_SCENARIO,
     ORDINARY_ACTION,
+    ORDINARY_ACTION_VALUE,
 )
 from research.ter import run_scenario
 
@@ -50,6 +52,12 @@ class TestFeasibleSetLearningAdapter(unittest.TestCase):
         # The final update truthfully reports no further change.
         self.assertEqual(second["updated_agent_state"], second["decision_state"])
         self.assertEqual(second["added_actions"], [])
+
+        # V comes from the scenario's own valuation, for every action in F̂.
+        self.assertEqual(
+            result["action_values"],
+            {ORDINARY_ACTION: ORDINARY_ACTION_VALUE, BETTER_ACTION: BETTER_ACTION_VALUE},
+        )
 
     def test_each_period_is_read_from_its_own_trace_step(self):
         result = run({"scenario": SCENARIO_ID})
@@ -152,7 +160,8 @@ class TestFeasibleSetLearningAdapter(unittest.TestCase):
 
         self.assertEqual(json.loads(encoded), result)
         self.assertEqual(
-            set(result), {"scenario", "name", "agent", "permitted_actions", "periods"}
+            set(result),
+            {"scenario", "name", "agent", "permitted_actions", "action_values", "periods"},
         )
 
         for period in result["periods"]:
