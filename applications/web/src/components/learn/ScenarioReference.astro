@@ -1,7 +1,6 @@
 ---
-/** Collapsed reference material: full variables, configuration, implementation, and theory links. */
+/** Collapsed reference material: configuration, implementation, and theory links. */
 import type { Scenario } from "../../data/learn/scenarios";
-import TerVariableTable from "./TerVariableTable.astro";
 
 interface Props {
   scenario: Scenario;
@@ -14,13 +13,6 @@ const sourceUrl = `https://github.com/RelativeEconomist/theory-of-economic-relat
   <h2 class="doc-heading">Deeper reference</h2>
 
   <div class="reference-list">
-    {scenario.terComponents && (
-      <details class="disclosure">
-        <summary>TER variable definitions</summary>
-        <TerVariableTable components={scenario.terComponents} />
-      </details>
-    )}
-
     {scenario.configuration && (
       <details class="disclosure">
         <summary>Test configuration</summary>

@@ -10,8 +10,6 @@
  * disagree, the executable code wins.
  */
 
-export type ScenarioStatus = "active" | "coming-soon";
-
 /** One row of the core TER decision architecture, as it applies to a scenario. */
 export interface TerComponentMapping {
   /** Stable identifier for the variable, independent of display formatting. */
@@ -36,7 +34,10 @@ export interface ScenarioField {
 
 export interface Scenario {
   slug: string;
-  status: ScenarioStatus;
+  /** Executable runner on the scenario page: "simulator" when the reader can
+   *  adjust inputs, "simulation" when it runs a fixed specification. Omitted
+   *  for documentation-only scenarios. */
+  runner?: "simulator" | "simulation";
   title: string;
   category: string;
   summary: string;
@@ -51,6 +52,8 @@ export interface Scenario {
   economicSetup?: string;
   /** Short statement of what varies across this test's cases vs. what is held fixed. */
   whatChanges?: string;
+  /** Text for the page's Interpretation section. */
+  interpretation?: string;
   /** Short TER-terms restatement of `whatChanges`, shown below it in Interpretation. */
   terNote?: string;
   terComponents?: TerComponentMapping[];
@@ -73,16 +76,15 @@ export interface Scenario {
 export const scenarios: Scenario[] = [
   {
     slug: "basic-agent-choice",
-    status: "active",
+    runner: "simulator",
     title: "Basic Agent Choice",
     category: "Individual choice",
     summary:
       "A single agent chooses its highest-valued action among three coffees it perceives as available.",
     sourceLabel: "Test 1",
-    economicQuestion:
-      "Can an agent choose the highest-valued action from the options it perceives as available?",
+    economicQuestion: "Given multiple coffee options, which one will an agent choose?",
     context:
-      "One agent chooses among three coffees. Each coffee has a value, and the decision process selects the highest-valued option.",
+      "An agent chooses among three coffees, each with a different assigned value. The agent considers all three options and uses a decision process that selects the coffee with the highest value.",
     terComponents: [
       {
         key: "G",
@@ -174,10 +176,8 @@ export const scenarios: Scenario[] = [
       "Values are hand-assigned for each run, not derived from any utility function.",
       "Ties go to the first tied coffee in F̂ order: Coffee A, Coffee C, Coffee B.",
     ],
-    whatChanges:
-      "The simulator changes only the coffee values. Everything else stays fixed, so a different selected action comes from a different valuation.",
-    terNote:
-      "In TER terms, only V changes; G, M, F̂, H, and D remain fixed. Selecting the highest value is one D specification; TER does not require optimization.",
+    interpretation:
+      "Changing how the agent values each coffee can change which one it selects. In this example, the decision process always chooses the highest-valued option, although TER does not require every agent to make decisions this way.",
     hypotheses: [
       "The agent selects the highest-valued action in its perceived feasible set.",
     ],
@@ -194,16 +194,16 @@ export const scenarios: Scenario[] = [
   },
   {
     slug: "bounded-rationality",
-    status: "active",
+    runner: "simulator",
     title: "Bounded Rationality",
     category: "Individual choice",
     summary:
       "The same coffee buyer picks a different coffee once its decision process only searches part of its perceived feasible set — TER does not require universal optimization.",
     sourceLabel: "Test 3",
     economicQuestion:
-      "Can TER represent a nonoptimal choice produced by limited search rather than universal optimization?",
+      "When an agent has several coffee options, how might limiting its search affect which one it chooses?",
     context:
-      "One agent chooses among three coffees it perceives as available. Its decision process either checks every coffee or stops after the first few in its search order.",
+      "An agent chooses among three coffees with different values. It can either consider every option or limit its search to the first few coffees in a specified order. By comparing these two decision processes, we can see how searching fewer options may change the choice.",
     terComponents: [
       {
         key: "G",
@@ -298,7 +298,7 @@ export const scenarios: Scenario[] = [
       "Ties go to the first tied coffee checked: in F̂ order (Nearby, Office, Best) under maximize value, in search order under limited search.",
     ],
     whatChanges:
-      "Limited search can stop before it reaches the highest-valued coffee. Checking more coffees, or checking them in a different order, can change the selected coffee.",
+      "An agent that considers every coffee selects the highest-valued option. When its search is limited, it may select a lower-valued coffee without ever evaluating the best one. Searching more options or changing their search order can change the result.",
     terNote: "Limited search is one D specification; TER does not require optimization.",
     hypotheses: [
       "Exhaustive search selects the highest-valued action.",
@@ -329,18 +329,17 @@ export const scenarios: Scenario[] = [
   },
   {
     slug: "supply-and-demand",
-    status: "active",
     title: "Supply and Demand",
     category: "Markets",
     summary:
       "Independent buyer and seller decisions aggregate into demand, supply, and a market-clearing price.",
     sourceLabel: "Test 7",
     economicQuestion:
-      "Can independent buyer and seller decisions aggregate into downward-sloping demand, upward-sloping supply, and predictable changes in market-clearing price?",
+      "How do individual decisions by buyers and sellers determine supply, demand, and the price at which a market clears?",
     economicSetup:
-      "The market contains five buyers with reservation values of 9, 8, 7, 6, and 5, and five sellers with costs of 1, 2, 3, 4, and 5. At each candidate price from 1 through 9, buyers independently choose whether to buy and sellers independently choose whether to sell. Their decisions determine quantity demanded, quantity supplied, excess demand, and whether that price clears the market.",
+      "A market contains five buyers and five sellers, each with different willingness-to-pay values or selling costs. At different prices, buyers decide whether to purchase and sellers decide whether to sell. By comparing their choices, the test identifies the price at which the quantity buyers want equals the quantity sellers offer.",
     whatChanges:
-      "Each buyer and seller keeps the same specification across a range of candidate prices; only the quoted price changes. The test counts their individual buy and sell decisions at each candidate price to find where the market clears. The test then changes demand or supply by adding one agent and checks whether the clearing price moves in the expected direction.",
+      "As prices rise, fewer buyers are willing to purchase and more sellers are willing to sell. The test identifies a market-clearing price of 5, then demonstrates how adding a buyer or seller can change that price. It compares decisions across possible prices rather than simulating how prices adjust over time.",
     terComponents: [
       {
         key: "G",
@@ -471,22 +470,22 @@ export const scenarios: Scenario[] = [
   },
   {
     slug: "asymmetric-information",
-    status: "active",
+    runner: "simulator",
     title: "Asymmetric Information",
     category: "Information",
     summary:
       "High-quality sellers withdraw when individual quality cannot be observed and the market prices goods using pooled expected quality.",
     sourceLabel: "Test 4",
     economicQuestion:
-      "Can TER represent the adverse-selection mechanism in Akerlof's \"market for lemons,\" where high-quality sellers withdraw when individual quality is unobservable and goods are priced using pooled expected quality?",
+      "When buyers cannot tell whether a used car is high or low quality, how does that affect which cars sellers are willing to sell?",
     context:
-      "Six used-car sellers each know their own car's quality and choose to sell or hold at the price they are offered. When buyers cannot see quality, every car is offered the same pooled price.",
+      "Six sellers each own a used car and know its quality. When buyers cannot observe the quality of individual cars, every seller receives the same price based on expected quality. The test compares this situation with one where each car's quality can be verified and priced separately.",
     scope:
       "One decision point, six interacting sellers. This illustrates TER Models 5.1 and 5.3, not real used-car markets.",
     economicSetup:
       "The market contains three high-quality sellers and three low-quality sellers. High-quality goods are worth 10, and their sellers have a reservation value of 8. Low-quality goods are worth 4, and their sellers have a reservation value of 2. The market initially believes that 50% of the goods for sale are high quality. Every seller chooses between selling at the offered price and holding onto the good.",
     whatChanges:
-      "The sellers, reservation values, perceived feasible sets, and decision process stay the same. The test changes what quality information the offered price reflects, and so the price each seller observes. Under pooled pricing, individual quality is unobservable. Under verified pricing, each seller's quality can be used directly.",
+      "When every car receives the same pooled price, high-quality sellers may find that selling is no longer worthwhile. In this example, only low-quality cars are sold under pooled pricing. When individual quality can be verified, all six sellers choose to sell. This demonstrates the adverse-selection mechanism in Akerlof's market for lemons.",
     terNote:
       "In TER terms, only each seller's M (the price it observes) changes; G, F̂, V, H, D, and F_t stay fixed. All six selected actions meet the same F_t through one joint R, which produces the system outcome O_t. No seller-level outcome is defined, so O_t is not a sum of individual outcomes.",
     terComponents: [
@@ -646,18 +645,17 @@ export const scenarios: Scenario[] = [
   },
   {
     slug: "externalities",
-    status: "active",
     title: "Externalities",
     category: "Externalities",
     summary:
       "A privately profitable action can create a negative external effect and produce lower total value under a specified social-value measure.",
     sourceLabel: "Test 8",
     economicQuestion:
-      "Can a privately preferred action create a negative external effect and produce a lower value under a specified social-value measure, and can internalizing that effect in the firm's own valuation change the action it selects?",
+      "Can a decision that benefits a business also create costs for others, and can accounting for those costs change the decision?",
     economicSetup:
-      "One firm chooses between producing and not producing. Producing gives the firm a private value of 4, but also creates an external effect on others represented by −7. Not producing has a private value of 0 and an external effect of 0. The firm perceives both actions as available, and its objective and decision process are the same in both cases considered below.",
+      "A firm decides whether to produce a good. Producing gives the firm a private value of 4 but creates an external cost of 7 for others. The test compares what the firm chooses when it considers only its private benefit with what it chooses when that external cost is included in its valuation.",
     whatChanges:
-      "Everything except the firm's valuation treatment stays the same. In the private-incentive case, the firm considers only its own private value. In the internalized case, the firm's valuation also includes the external effect.",
+      "When the firm considers only its own benefit, it chooses to produce. However, the production decision generates a net value of −3 under the test's specified social-value measure. When the firm includes the external cost in its valuation, it chooses not to produce. The test does not model how that internalization would occur in practice.",
     terComponents: [
       {
         key: "G",
@@ -787,18 +785,17 @@ export const scenarios: Scenario[] = [
   },
   {
     slug: "actual-vs-perceived-feasibility",
-    status: "active",
     title: "Perceived Feasibility vs. Scenario Permission",
     category: "Feasibility",
     summary:
       "A producer may select an action the scenario does not permit. The selected action stays the one the decision process chose; the realized outcome shows what the scenario allowed.",
     sourceLabel: "Model 5.2",
     economicQuestion:
-      "When an agent's perceived feasible set includes an action the scenario does not permit, does the selected action remain the action the agent chose while the realized outcome is limited by the scenario's permission data rather than re-decided?",
+      "What happens when an agent believes it can take an action, but reality does not allow that action to be fully carried out?",
     economicSetup:
-      "Three producers choose a production action: hold (0 units), produce 60, or produce 100. Producing 60 is valued at 6 and producing 100 is valued at 10; holding is valued at 0. The three producers share the same objective, values, time horizon, and decision process. They differ only in which actions the scenario permits for them and which actions they perceive as feasible.",
+      "Three producers choose how much to produce: nothing, 60 units, or 100 units. Although they use the same values and decision process, they differ in which actions they perceive as available and what the scenario actually permits. The test compares what each producer selects with what is ultimately realized.",
     whatChanges:
-      "The producers use the same objective, valuation, horizon, and decision process. What differs is the relationship between what each producer perceives as feasible and what the scenario permits: the accurate producer perceives exactly the permitted actions, the mistaken producer perceives one extra action that isn't permitted, and the severely mismatched producer perceives two production actions that aren't permitted. This is a single-period test — it does not involve learning or feedback between periods.",
+      "A producer may choose to produce 100 units even when reality does not permit that amount. Under this test's realization rule, the decision remains unchanged, but actual production can be limited to 60 units or even zero. This illustrates why TER distinguishes an agent's selected action from its realized outcome.",
     terComponents: [
       {
         key: "G",
@@ -933,16 +930,16 @@ export const scenarios: Scenario[] = [
   },
   {
     slug: "feasible-set-learning",
-    status: "active",
+    runner: "simulation",
     title: "Learning: Feasible Set Discovery",
     category: "Learning",
     summary:
       "An agent at first perceives only one of two permitted actions. Observing its own outcome adds the other to its perceived feasible set, and its next decision selects it.",
     sourceLabel: "Test 22",
     economicQuestion:
-      "Can experience reveal an option the agent did not previously realize was available?",
+      "Can an agent's experience reveal an option it previously overlooked, changing what it chooses the next time?",
     context:
-      "The agent makes the same choice twice. At first, it knows only about the ordinary option. After the first outcome, it discovers a better option that was available all along. On the second decision, it can choose between both.",
+      "An agent makes two decisions between an ordinary action and a better alternative. Initially, it perceives only the ordinary action as available, even though both are objectively permitted. After experiencing its first outcome, the scenario's learning rule adds the better option to its perceived feasible set before the next decision.",
     scope:
       "One agent, two decision points. This illustrates TER Models 5.1, 5.2, and 5.5, not a general process of learning.",
     terComponents: [
@@ -1045,7 +1042,7 @@ export const scenarios: Scenario[] = [
     economicSetup:
       "The first decision can select only the ordinary action, because F̂ contains nothing else. The second decision uses the updated F̂ and selects the better action, valued 9 against 4.",
     whatChanges:
-      "Only F̂ changes, and only through the update rule. The objectively permitted actions, values, and decision process stay fixed.",
+      "At first, the agent selects the ordinary action, valued at 4, because it is the only option it perceives. After observing the outcome, its perceived options expand, and it selects the better alternative, valued at 9. The objectively permitted actions never change; only the agent's perception changes through the specified update rule.",
     terNote:
       "Model 5.5 is written from the system outcome O_t; in this single-agent specification, feedback starts from O_{i,t}. Its arrows mark possible influence, not change in every component: here the one update rule changes only F̂.",
     hypotheses: [
@@ -1091,8 +1088,4 @@ export const scenarios: Scenario[] = [
 
 export function getScenario(slug: string): Scenario | undefined {
   return scenarios.find((scenario) => scenario.slug === slug);
-}
-
-export function getActiveScenarios(): Scenario[] {
-  return scenarios.filter((scenario) => scenario.status === "active");
 }

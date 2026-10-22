@@ -1,0 +1,203 @@
+---
+/**
+ * A TER variable whose button reveals its short definition and a link to the
+ * full definition in the canonical theory. It opens on hover, click, tap, or
+ * Enter/Space, and closes on Escape, an outside click, or leaving it.
+ */
+import type { TerComponentMapping } from "../../data/learn/scenarios";
+import TerSymbol from "./TerSymbol.astro";
+
+interface Props {
+  component: TerComponentMapping;
+  /** Show only the symbol, for inline use in a sentence. */
+  symbolOnly?: boolean;
+}
+
+// Section 3 headings of theory/academic.md as rendered on /theory/. R has no
+// heading of its own; it is defined in the notation table.
+const THEORY_ANCHORS: Record<TerComponentMapping["key"], string> = {
+  G: "objective",
+  M: "model-of-reality",
+  F: "objective-feasible-state-of-reality",
+  F_hat: "perceived-feasible-set",
+  V: "valuation",
+  H: "time-horizon",
+  D: "decision-process",
+  C: "selected-action",
+  R: "ter-variables-and-notation",
+  O: "realized-outcome-and-system-outcome",
+};
+
+const { component, symbolOnly = false } = Astro.props;
+const popoverId = `ter-term-${component.key}`;
+const definitionLabel = `Full definition of ${component.name}`;
+---
+<span class:list={["ter-term", { "ter-term-inline": symbolOnly }]} data-ter-term>
+  <button
+    type="button"
+    class="ter-term-trigger"
+    aria-expanded="false"
+    aria-controls={popoverId}
+    aria-label={symbolOnly ? `${component.symbol.replace("_", "")} ${component.name}` : undefined}
+  >
+    <span class="ter-term-symbol"><TerSymbol symbol={component.symbol} /></span>
+    {!symbolOnly && <span class="ter-term-name">{component.name}</span>}
+  </button>
+  <span class="ter-term-popover" id={popoverId} hidden>
+    {component.definition}{" "}
+    <a href={`/theory/#${THEORY_ANCHORS[component.key]}`} aria-label={definitionLabel}>Full definition →</a>
+  </span>
+</span>
+
+<script>
+  const terms = [...document.querySelectorAll<HTMLElement>("[data-ter-term]")];
+  // Terms opened by hover close when the pointer leaves; a click pins them open.
+  const hoverOpened = new WeakSet<HTMLElement>();
+
+  function trigger(term: HTMLElement) {
+    return term.querySelector<HTMLButtonElement>(".ter-term-trigger")!;
+  }
+
+  function isOpen(term: HTMLElement) {
+    return trigger(term).getAttribute("aria-expanded") === "true";
+  }
+
+  function setOpen(term: HTMLElement, open: boolean) {
+    const popover = term.querySelector<HTMLElement>(".ter-term-popover")!;
+    trigger(term).setAttribute("aria-expanded", String(open));
+    popover.hidden = !open;
+    popover.style.removeProperty("--shift");
+    if (!open) {
+      hoverOpened.delete(term);
+      return;
+    }
+    // Keep the popover inside the viewport on narrow screens.
+    const overflow = popover.getBoundingClientRect().right - (document.documentElement.clientWidth - 16);
+    if (overflow > 0) popover.style.setProperty("--shift", `${-overflow}px`);
+  }
+
+  function closeOthers(except?: HTMLElement) {
+    for (const term of terms) if (term !== except && isOpen(term)) setOpen(term, false);
+  }
+
+  for (const term of terms) {
+    trigger(term).addEventListener("click", () => {
+      closeOthers(term);
+      if (hoverOpened.has(term)) {
+        hoverOpened.delete(term);
+      } else {
+        setOpen(term, !isOpen(term));
+      }
+    });
+
+    term.addEventListener("pointerenter", (event) => {
+      if (event.pointerType !== "mouse" || isOpen(term)) return;
+      closeOthers(term);
+      setOpen(term, true);
+      hoverOpened.add(term);
+    });
+
+    term.addEventListener("pointerleave", (event) => {
+      if (event.pointerType === "mouse" && hoverOpened.has(term)) setOpen(term, false);
+    });
+
+    term.addEventListener("focusout", (event) => {
+      if (!term.contains(event.relatedTarget as Node | null)) setOpen(term, false);
+    });
+  }
+
+  document.addEventListener("click", (event) => {
+    if (!(event.target as Element).closest("[data-ter-term]")) closeOthers();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    const focusedTerm = terms.find((term) => term.contains(document.activeElement));
+    closeOthers();
+    if (focusedTerm) trigger(focusedTerm).focus();
+  });
+</script>
+
+<style>
+  .ter-term {
+    position: relative;
+    display: inline-block;
+  }
+
+  .ter-term-trigger {
+    display: grid;
+    grid-template-columns: 2.5rem 1fr;
+    align-items: baseline;
+    gap: 1rem;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: help;
+  }
+
+  .ter-term-inline .ter-term-trigger {
+    display: inline;
+    width: auto;
+  }
+
+  .ter-term-symbol {
+    font-family: ui-monospace, "SF Mono", "Menlo", monospace;
+    font-size: 1.05rem;
+    font-weight: 650;
+  }
+
+  .ter-term-inline .ter-term-symbol {
+    font-size: inherit;
+  }
+
+  .ter-term-name,
+  .ter-term-inline .ter-term-symbol {
+    font-weight: 650;
+    text-decoration: underline dotted;
+    text-decoration-color: var(--muted);
+    text-underline-offset: 4px;
+  }
+
+  .ter-term-popover {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    z-index: 20;
+    width: max-content;
+    max-width: min(22rem, calc(100vw - 2rem));
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 400;
+    line-height: 1.5;
+    text-align: left;
+    translate: var(--shift, 0) 0;
+  }
+
+  /* Bridges the gap above the popover so moving the pointer onto it keeps it open. */
+  .ter-term-popover::before {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 100%;
+    left: 0;
+    height: 0.5rem;
+  }
+
+  .ter-term-popover a {
+    white-space: nowrap;
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 3px;
+    text-underline-offset: 3px;
+  }
+</style>
