@@ -11,11 +11,11 @@ import BasicAgentChoiceRunner from "../../components/learn/BasicAgentChoiceRunne
 import BoundedRationalityRunner from "../../components/learn/BoundedRationalityRunner.astro";
 import AsymmetricInformationRunner from "../../components/learn/AsymmetricInformationRunner.astro";
 import FeasibleSetLearningRunner from "../../components/learn/FeasibleSetLearningRunner.astro";
-import { getActiveScenarios } from "../../data/learn/scenarios";
+import { scenarios } from "../../data/learn/scenarios";
 import type { Scenario } from "../../data/learn/scenarios";
 
 export async function getStaticPaths() {
-  return getActiveScenarios().map((scenario) => ({
+  return scenarios.map((scenario) => ({
     params: { slug: scenario.slug },
     props: { scenario },
   }));
@@ -26,20 +26,15 @@ interface Props {
 }
 
 const { scenario } = Astro.props;
-const activeScenarios = getActiveScenarios();
-const scenarioIndex = activeScenarios.findIndex((item) => item.slug === scenario.slug);
-const previousScenario = scenarioIndex > 0 ? activeScenarios[scenarioIndex - 1] : undefined;
+const scenarioIndex = scenarios.findIndex((item) => item.slug === scenario.slug);
+const previousScenario = scenarioIndex > 0 ? scenarios[scenarioIndex - 1] : undefined;
 const nextScenario =
-  scenarioIndex >= 0 && scenarioIndex < activeScenarios.length - 1
-    ? activeScenarios[scenarioIndex + 1]
+  scenarioIndex >= 0 && scenarioIndex < scenarios.length - 1
+    ? scenarios[scenarioIndex + 1]
     : undefined;
 
-// Interactive scenarios pair a simulator with the compact model view.
-const isInteractive =
-  scenario.slug === "basic-agent-choice" ||
-  scenario.slug === "bounded-rationality" ||
-  scenario.slug === "asymmetric-information" ||
-  scenario.slug === "feasible-set-learning";
+// Scenarios with a runner pair it with the compact model view.
+const isInteractive = scenario.runner !== undefined;
 // Multi-agent scenarios also show the Model 5.3 system outcome equation.
 const isMultiAgent = scenario.slug === "asymmetric-information";
 ---
@@ -91,8 +86,7 @@ const isMultiAgent = scenario.slug === "asymmetric-information";
 
     <section class="scenario-interpretation doc-section">
       <h2 class="doc-heading">Interpretation</h2>
-      {scenario.economicSetup && <p class="lede">{scenario.economicSetup}</p>}
-      {scenario.whatChanges && <p class="lede">{scenario.whatChanges}</p>}
+      {scenario.interpretation && <p class="lede">{scenario.interpretation}</p>}
       {scenario.terNote && <p class="ter-note">{scenario.terNote}</p>}
       {scenario.hypotheses && <ScenarioHypotheses hypotheses={scenario.hypotheses} />}
       {(scenario.results || scenario.resultsTable) && (

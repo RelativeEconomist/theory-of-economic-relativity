@@ -1,18 +1,17 @@
 ---
-import { getActiveScenarios } from "../../data/learn/scenarios";
+import { scenarios } from "../../data/learn/scenarios";
 
 interface Props {
   currentSlug: string;
 }
 
 const { currentSlug } = Astro.props;
-const activeScenarios = getActiveScenarios();
 ---
 <nav class="scenario-selector" aria-label="Choose a scenario">
   <label class="scenario-selector-label" for="scenario-select">Scenario</label>
   <div class="scenario-select-wrap">
     <select id="scenario-select" class="scenario-select" data-scenario-select>
-      {activeScenarios.map((scenario) => (
+      {scenarios.map((scenario) => (
         <option value={`/learn/${scenario.slug}/`} selected={scenario.slug === currentSlug}>
           {scenario.title}
         </option>

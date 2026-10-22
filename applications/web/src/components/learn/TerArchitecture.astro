@@ -4,12 +4,12 @@
  * its symbol, plain name, role in this test, and treatment. Multi-agent
  * scenarios add the Model 5.3 system outcome equation. The compact view
  * shows treatments as status badges and lists "Not modeled" variables after
- * the rows. Full definitions live in the deeper reference.
+ * the rows. Each symbol and name reveals its definition (TerTerm).
  */
 import katex from "katex";
 import "katex/dist/katex.min.css";
 import type { TerComponentMapping } from "../../data/learn/scenarios";
-import TerSymbol from "./TerSymbol.astro";
+import TerTerm from "./TerTerm.astro";
 
 interface Props {
   components: TerComponentMapping[];
@@ -56,7 +56,7 @@ const systemOutcomeEquation = katex.renderToString(
       as an input to the decision. The equation is{" "}
       <a href="/theory/#51-agent-decision-model">Model 5.1, the Agent Decision Model</a>.
       Each row shows how this test instantiates a component and how the test
-      treats it; full definitions are in the deeper reference below.
+      treats it; select a variable for its definition.
     </p>
   )}
 
@@ -73,8 +73,7 @@ const systemOutcomeEquation = katex.renderToString(
   <ul class:list={["mapping-list", { compact }]} role="list">
     {rows.map((component) => (
       <li class="mapping-row">
-        <span class="symbol"><TerSymbol symbol={component.symbol} /></span>
-        <span class="name">{component.name}</span>
+        <span class="term"><TerTerm component={component} /></span>
         <span class="mapping">{component.mapping}</span>
         {compact ? (
           <span class:list={["status", `status-${component.testTreatment?.toLowerCase()}`]}>{component.testTreatment}</span>
@@ -89,7 +88,7 @@ const systemOutcomeEquation = katex.renderToString(
     <p class="not-modeled">
       <strong>Not modeled:</strong>{" "}
       {notModeled.map((component, index) => (
-        <>{index > 0 && ", "}<TerSymbol symbol={component.symbol} /></>
+        <>{index > 0 && ", "}<TerTerm component={component} symbolOnly /></>
       ))}.
     </p>
   )}
@@ -140,14 +139,8 @@ const systemOutcomeEquation = katex.renderToString(
     grid-template-columns: 2.5rem 12rem 1fr auto;
   }
 
-  .symbol {
-    font-family: ui-monospace, "SF Mono", "Menlo", monospace;
-    font-size: 1.05rem;
-    font-weight: 650;
-  }
-
-  .name {
-    font-weight: 650;
+  .term {
+    grid-column: span 2;
   }
 
   .mapping {

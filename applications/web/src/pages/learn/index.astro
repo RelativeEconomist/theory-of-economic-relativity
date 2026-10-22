@@ -16,36 +16,26 @@ import { scenarios } from "../../data/learn/scenarios";
 
   <section class=""><div class="shell">
     <div class="scenario-grid hairline-grid hairline-grid-cols-2" role="list">
-      {scenarios.map((scenario) => {
-        const isActive = scenario.status === "active";
-        const inner = (
-          <>
-            <div class="scenario-card-top">
-              {scenario.sourceLabel && <span class="test-number">{scenario.sourceLabel}</span>}
-              <span class:list={["status-badge", { "is-active": isActive }]}>
-                {isActive ? "Active" : "Coming soon"}
+      {scenarios.map((scenario) => (
+        <a
+          href={`/learn/${scenario.slug}/`}
+          class="scenario-card"
+          role="listitem"
+          data-reveal
+        >
+          <div class="scenario-card-top">
+            {scenario.sourceLabel && <span class="test-number">{scenario.sourceLabel}</span>}
+            {scenario.runner && (
+              <span class="runner-badge">
+                {scenario.runner === "simulator" ? "Simulator" : "Simulation"}
               </span>
-            </div>
-            <h3>{scenario.title}</h3>
-            <p>{scenario.summary}</p>
-            <span class="category">{scenario.category}</span>
-          </>
-        );
-        return isActive ? (
-          <a
-            href={`/learn/${scenario.slug}/`}
-            class="scenario-card"
-            role="listitem"
-            data-reveal
-          >
-            {inner}
-          </a>
-        ) : (
-          <div class="scenario-card is-disabled" role="listitem" aria-disabled="true" data-reveal>
-            {inner}
+            )}
           </div>
-        );
-      })}
+          <h3>{scenario.title}</h3>
+          <p>{scenario.summary}</p>
+          <span class="category">{scenario.category}</span>
+        </a>
+      ))}
     </div>
   </div></section>
   <section class="section-sm">
@@ -97,16 +87,13 @@ import { scenarios } from "../../data/learn/scenarios";
     background: var(--surface);
   }
 
-  .scenario-card.is-disabled {
-    color: var(--muted);
-    cursor: default;
-  }
-
   .scenario-card-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
+    /* Matches the badge height so cards without one keep the same rhythm. */
+    min-height: 1.75rem;
   }
 
   .test-number {
@@ -117,7 +104,7 @@ import { scenarios } from "../../data/learn/scenarios";
     text-transform: uppercase;
   }
 
-  .status-badge {
+  .runner-badge {
     padding: 0.3rem 0.6rem;
     border: 1px solid var(--line);
     border-radius: 999px;
@@ -126,12 +113,6 @@ import { scenarios } from "../../data/learn/scenarios";
     font-weight: 650;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-  }
-
-  .status-badge.is-active {
-    border-color: transparent;
-    background: var(--accent);
-    color: var(--accent-ink);
   }
 
   .scenario-card h3 {
