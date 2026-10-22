@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "astro/config";
+import { loadEnv } from "vite";
 import { unified } from "@astrojs/markdown-remark";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
@@ -25,10 +26,31 @@ const versionFile = fileURLToPath(new URL("VERSION", repoRootUrl));
 // string is never duplicated and the root VERSION file stays canonical.
 const terVersion = readFileSync(versionFile, "utf-8").trim();
 
+// run-scenario.ts falls back to the local simulator at 127.0.0.1:8000 for
+// development. A production build must name the API explicitly, so it
+// fails here instead of shipping that fallback.
+const requireTerApiUrlForBuild = {
+  name: "require-ter-api-url",
+  hooks: {
+    "astro:config:setup": ({ command }) => {
+      if (command !== "build") return;
+
+      const env = loadEnv("production", projectRoot, "PUBLIC_");
+
+      if (!env.PUBLIC_TER_API_URL?.trim()) {
+        throw new Error(
+          "PUBLIC_TER_API_URL must be set for production builds " +
+            "(e.g. https://api.theoryofeconomicrelativity.com).",
+        );
+      }
+    },
+  },
+};
+
 export default defineConfig({
   site: "https://www.theoryofeconomicrelativity.com",
   devToolbar: { enabled: false },
-  integrations: [mdx(), sitemap()],
+  integrations: [requireTerApiUrlForBuild, mdx(), sitemap()],
   markdown: {
     processor: unified({
       remarkPlugins: [
