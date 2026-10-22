@@ -53,8 +53,8 @@ browser → POST /simulate → scenario adapter → scenario → TER core
 
 The page posts `{"scenario": "basic-agent-choice", "inputs": {...}}` to
 `PUBLIC_TER_API_URL` + `/simulate`. Empty `inputs` runs the Python defaults.
-`PUBLIC_TER_API_URL` is read at build time and defaults to
-`http://127.0.0.1:8000`.
+`PUBLIC_TER_API_URL` is read at build time. `astro dev` defaults it to
+`http://127.0.0.1:8000`; `astro build` fails if it is unset.
 
 ## Production
 
@@ -65,15 +65,42 @@ Two Cloudflare Workers, each with its own Wrangler config:
 | `theory-of-economic-relativity` | `applications/web/wrangler.jsonc` | `dist/` at `https://www.theoryofeconomicrelativity.com` |
 | `theory-of-economic-relativity-api` | `wrangler.api.jsonc` | `POST /simulate` at `https://api.theoryofeconomicrelativity.com` |
 
+The website deploys through Cloudflare's Git integration on every push to
+`main`. The simulator deploys when a GitHub Release is published:
+
+1. Merge to `main` and update `VERSION`, `CITATION.cff`, and
+   `theory/academic.md` to the new version.
+2. Publish a GitHub Release with a new tag such as `v0.5.3`. Pre-releases do
+   not deploy.
+3. `.github/workflows/deploy-api.yml` checks out that tag, runs the TER test
+   suite, deploys `wrangler.api.jsonc`, and runs
+   `scripts/smoke_test_api.py`. The smoke test POSTs Feasible Set Learning
+   to production and fails unless the response matches the same run locally.
+   To deploy the same tag again, re-run the workflow from the Actions tab.
+
+The workflow needs two GitHub repository secrets (Settings → Secrets and
+variables → Actions):
+
+- `CLOUDFLARE_API_TOKEN`: a custom token from the "Edit Cloudflare Workers"
+  template, scoped to this account and the `theoryofeconomicrelativity.com`
+  zone (Account › Workers Scripts: Edit, Zone › Workers Routes: Edit).
+- `CLOUDFLARE_ACCOUNT_ID`: the Cloudflare account that owns both Workers.
+
+Manual deploys still work:
+
 ```bash
 # Website, from applications/web
 npm run build && npx wrangler deploy
 
 # Simulator, from the repository root
 npx wrangler deploy --config wrangler.api.jsonc
+
+# Check the production simulator, from the repository root
+python3 scripts/smoke_test_api.py
 ```
 
-- `.env.production` sets `PUBLIC_TER_API_URL` for production builds.
+- Production builds take `PUBLIC_TER_API_URL` from the Cloudflare build
+  settings, or locally from the git-ignored `.env.production`.
 - The simulator allows browser calls only from `TER_ALLOWED_ORIGIN` in
   `wrangler.api.jsonc`, accepts 30 requests a minute per IP, and rejects
   bodies over 64 KiB.
@@ -95,6 +122,8 @@ src/styles/global.css                              Global styles
 
 # Repository root
 scripts/dev-simulator.sh                           Runs simulator and website
+scripts/smoke_test_api.py                          Checks a deployed simulator
+.github/workflows/deploy-api.yml                   Deploys the simulator on release
 wrangler.api.jsonc                                 Simulator Worker config
 applications/api/endpoint.py                       Rules shared by both servers
 applications/api/simulation.py                     Local POST /simulate server

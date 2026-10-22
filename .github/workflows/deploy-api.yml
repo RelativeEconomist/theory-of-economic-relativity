@@ -1,0 +1,51 @@
+name: Deploy API
+
+# Deploys the TER simulation API Worker (wrangler.api.jsonc) from the exact
+# release tag, then runs a real simulation against production. The website
+# deploys separately through Cloudflare's Git integration on main.
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+# Never run two production deployments at once; queue instead of cancelling.
+concurrency:
+  group: api-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Pre-releases do not deploy to production.
+    if: ${{ !github.event.release.prerelease }}
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ github.event.release.tag_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ github.event.release.tag_name }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Run TER test suite
+        run: python run_tests.py
+
+      - name: Deploy API Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npx --yes wrangler@4.149.0 deploy --config wrangler.api.jsonc \
+            --tag "$RELEASE_TAG" \
+            --message "GitHub release $RELEASE_TAG ($(git rev-parse --short HEAD))"
+
+      - name: Smoke-test production simulation
+        run: python scripts/smoke_test_api.py https://api.theoryofeconomicrelativity.com
