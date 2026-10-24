@@ -49,6 +49,9 @@ const requireTerApiUrlForBuild = {
 
 export default defineConfig({
   site: "https://www.theoryofeconomicrelativity.com",
+  redirects: {
+    "/contribute/": "/participate/",
+  },
   devToolbar: { enabled: false },
   integrations: [requireTerApiUrlForBuild, mdx(), sitemap()],
   markdown: {

@@ -11,7 +11,7 @@ export const siteConfig = {
     { label: "Home", href: "/", external: false },
     { label: "Learn", href: "/learn/", external: false },
     { label: "Theory", href: "/theory/", external: false },
-    { label: "Contribute", href: "/contribute/", external: false },
+    { label: "Participate", href: "/participate/", external: false },
     {
       label: "GitHub",
       href: "https://github.com/RelativeEconomist/theory-of-economic-relativity",

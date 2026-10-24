@@ -6,6 +6,17 @@ The goal is simple: make it easy to test whether economic phenomena can be repre
 
 The canonical theory is [`theory/academic.md`](theory/academic.md). The research code tests it. If they ever disagree, `academic.md` wins.
 
+### Help investigate TER
+
+You do not need to write code or agree with TER to contribute.
+
+- Review an economic model’s assumptions or its TER mapping.
+- Reproduce a result or test a boundary case.
+- Identify an error, limitation, or possible counterexample.
+- Improve an explanation or contribute code.
+
+Start with [Help review and test TER scenarios](https://github.com/RelativeEconomist/theory-of-economic-relativity/issues/7). Choose any existing scenario and share what you checked and what you found. Supporting sources and reproduction steps are helpful. Code changes are optional.
+
 ## Before You Start
 
 This file covers contribution workflow only. For everything about writing, running, and reading TER research code — the API, building blocks, standard test structure, naming conventions, reading results, shared vs. local rules, and framework internals — see [`research/README.md`](research/README.md).
