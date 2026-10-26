@@ -193,6 +193,13 @@ export const scenarios: Scenario[] = [
     sourcePath: "research/scenarios/basic_agent_choice.py",
   },
   {
+    slug: "pokemon-card-choice",
+    title: "Pokémon: Trade or sell?",
+    sourceLabel: "Trade or sell?",
+    category: "Individual choice",
+    summary: "Would you complete your collection or try to sell for more?",
+  },
+  {
     slug: "bounded-rationality",
     runner: "simulator",
     title: "Bounded Rationality",

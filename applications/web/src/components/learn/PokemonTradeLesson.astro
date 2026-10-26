@@ -1,0 +1,521 @@
+---
+/**
+ * Trade-or-sell choice exercise. It records the reader's own answers in page
+ * memory only: nothing is stored, sent, or run through the TER engine, and no
+ * choice is turned into an outcome or recommendation.
+ */
+import CollectionBinder from "./CollectionBinder.astro";
+import TerSymbol from "./TerSymbol.astro";
+
+const TRADE = "trade";
+const SELL = "sell";
+
+const firstChoices = [
+  { value: TRADE, title: "Trade with my friend", text: "Complete your collection now." },
+  { value: SELL, title: "Try to sell for $115", text: "Receive money if you find a buyer." },
+];
+
+const secondChoices = [
+  { value: TRADE, title: "Trade with my friend" },
+  { value: SELL, title: "Try to sell for $115" },
+];
+
+const reasons = [
+  "Completing my collection.",
+  "Getting more money.",
+  "Having a confirmed trade instead of an uncertain sale.",
+  "Something else.",
+];
+
+// Symbols only where the TER variable matches the explanation.
+const mapping = [
+  {
+    symbol: "G",
+    label: "Objectives",
+    text: "Completing a collection and obtaining money are possible objectives. The same opportunity can matter differently depending on what someone wants to accomplish.",
+  },
+  {
+    symbol: "M",
+    label: "Beliefs",
+    text: "The estimated market prices and the possibility of finding a buyer inform expectations. Listing a card for $115 does not guarantee receiving $115.",
+  },
+  {
+    symbol: "V",
+    label: "Valuation",
+    text: "The value someone places on the trade can include completing the collection. The value they place on attempting a sale can reflect money, uncertainty, and effort. Market prices alone do not specify either valuation.",
+  },
+  {
+    symbol: "C",
+    label: "Choice",
+    text: "You selected an action in each situation. We recorded those choices without imposing a decision rule.",
+  },
+  {
+    symbol: "O",
+    label: "Outcome",
+    text: "A choice is not a completed transaction. Under the stated scenario, the friend is ready to trade. Attempting a sale produces money only if a buyer completes it.",
+  },
+  {
+    label: "Scope",
+    text: "This is a hypothetical choice exercise. It does not model bargaining, fees, buying another card after a sale, or the friend’s decision process. Differences in responses can motivate investigation, but they do not establish why people behave as they do.",
+  },
+];
+---
+<section class="pokemon-lesson doc-section" data-pokemon-lesson>
+  <div class="lesson-copy illustrated">
+    <div>
+      <p>You have a spare Pokémon card with an estimated market price of $100. A friend offers you a card with an estimated market price of $90. It is the last card you need to complete your collection.</p>
+      <p>You could make the trade now, or try to sell your spare card for $115. Finding a buyer at that price is not guaranteed.</p>
+    </div>
+    <div class="illustration">
+      <CollectionBinder label="A binder page with one empty slot, beside the card your friend offers to fill it." />
+    </div>
+  </div>
+
+  <fieldset class="lesson-step" aria-labelledby="first-question">
+    <h2 class="step-heading" id="first-question" tabindex="-1">Would you complete your collection or try to sell for more?</h2>
+    <div class="choice-grid">
+      {firstChoices.map((choice) => (
+        <label class="choice">
+          <input type="radio" name="first-choice" value={choice.value} data-first />
+          <span class="choice-body">
+            <span class="choice-title">{choice.title}</span>
+            <span class="choice-text">{choice.text}</span>
+          </span>
+        </label>
+      ))}
+    </div>
+    <p class="fine-print">For this exercise, choose between these two options. Prices are illustrative, and selling fees are excluded.</p>
+  </fieldset>
+
+  <fieldset class="lesson-step" aria-labelledby="reason-question" data-reason-step hidden>
+    <h2 class="step-heading" id="reason-question">What mattered most to you?</h2>
+    <div class="reason-list">
+      {reasons.map((reason) => (
+        <label class="choice">
+          <input type="radio" name="reason" value={reason} data-reason />
+          <span class="choice-body">
+            <span class="choice-title">{reason}</span>
+          </span>
+        </label>
+      ))}
+    </div>
+    <div class="lesson-buttons" data-reason-actions>
+      <button class="button button-primary" type="button" data-continue disabled>Continue</button>
+      <button class="button button-ghost" type="button" data-skip>Skip</button>
+    </div>
+  </fieldset>
+
+  <div class="lesson-step" data-variation-step hidden>
+    <div class="illustrated">
+      <div>
+        <h2 class="step-heading">Would one detail change your choice?</h2>
+        <p>Imagine you already own the card your friend offered. The trade would no longer complete your collection. The estimated prices and the opportunity to try selling for $115 stay the same.</p>
+      </div>
+      <div class="illustration">
+        <CollectionBinder owned label="The same binder page with that slot already filled, beside the same offered card." />
+      </div>
+    </div>
+    <fieldset class="choice-fieldset">
+      <legend class="choice-legend">What would you choose now?</legend>
+      <div class="choice-grid">
+        {secondChoices.map((choice) => (
+          <label class="choice">
+            <input type="radio" name="second-choice" value={choice.value} data-second />
+            <span class="choice-body">
+              <span class="choice-title">{choice.title}</span>
+            </span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  </div>
+
+  <div class="lesson-step" data-reveal-step hidden>
+    <h2 class="step-heading">What changed?</h2>
+    <dl class="answer-comparison">
+      <div>
+        <dt>Completes your collection</dt>
+        <dd data-first-answer></dd>
+      </div>
+      <div>
+        <dt>Already in your collection</dt>
+        <dd data-second-answer></dd>
+      </div>
+    </dl>
+    <p data-changed hidden>Your choice changed even though the estimated prices stayed the same. Whether the offered card completed your collection made a difference to your decision.</p>
+    <p data-unchanged hidden>Your choice stayed the same. Removing the collection benefit did not change which option you preferred. Someone else might respond differently.</p>
+    <p>A market price does not tell us everything about what an option is worth to someone. Completing a collection, receiving money, and accepting uncertainty can matter differently to different people.
+      TER helps make those differences explicit by separating objectives, beliefs, valuations, choices, and realized outcomes.</p>
+    <div class="lesson-buttons">
+      <button class="button button-ghost" type="button" data-restart>Start again</button>
+      <button class="button button-primary" type="button" data-explore>Explore the TER mapping</button>
+    </div>
+  </div>
+
+  <details class="disclosure ter-details" data-ter-details hidden>
+    <summary data-ter-summary>How TER describes this choice</summary>
+    <p>Your answers are your own choices. This lesson does not calculate what you should choose or infer a complete model of your preferences.</p>
+    <dl class="ter-mapping">
+      {mapping.map((item) => (
+        <div>
+          <dt>{item.symbol && <><TerSymbol symbol={item.symbol} />, </>}{item.label}</dt>
+          <dd>{item.text}</dd>
+        </div>
+      ))}
+    </dl>
+  </details>
+
+  <p class="sr-only" role="status" aria-live="polite" data-announcer></p>
+</section>
+
+<script>
+  const CHOICE_LABELS: Record<string, string> = {
+    trade: "Trade with my friend",
+    sell: "Try to sell for $115",
+  };
+
+  const initLesson = () => {
+    const root = document.querySelector<HTMLElement>("[data-pokemon-lesson]");
+    if (!root || root.dataset.bound) return;
+    root.dataset.bound = "true";
+
+    const $ = <T extends HTMLElement>(selector: string) => root.querySelector<T>(selector)!;
+    const radios = (selector: string) => [...root.querySelectorAll<HTMLInputElement>(selector)];
+    const firstInputs = radios("[data-first]");
+    const reasonInputs = radios("[data-reason]");
+    const secondInputs = radios("[data-second]");
+    const reasonStep = $("[data-reason-step]");
+    const reasonActions = $("[data-reason-actions]");
+    const continueButton = $<HTMLButtonElement>("[data-continue]");
+    const variationStep = $("[data-variation-step]");
+    const revealStep = $("[data-reveal-step]");
+    const firstAnswer = $("[data-first-answer]");
+    const secondAnswer = $("[data-second-answer]");
+    const changed = $("[data-changed]");
+    const unchanged = $("[data-unchanged]");
+    const details = $<HTMLDetailsElement>("[data-ter-details]");
+    const summary = $("[data-ter-summary]");
+    const announcer = $("[data-announcer]");
+    const firstQuestion = $("#first-question");
+
+    // The reader's answers, kept in page memory only. The first and second
+    // choices answer different situations and are never merged; reason is
+    // undefined when skipped.
+    let answers: { first?: string; reason?: string; second?: string } = {};
+
+    // Announces a newly revealed step without moving focus to it.
+    const reveal = (step: HTMLElement) => {
+      if (!step.hidden) return;
+      step.hidden = false;
+      announcer.textContent = step.querySelector("h2")?.textContent ?? "";
+    };
+
+    const showComparison = () => {
+      const { first, second } = answers;
+      if (!first || !second) return;
+      firstAnswer.textContent = CHOICE_LABELS[first];
+      secondAnswer.textContent = CHOICE_LABELS[second];
+      changed.hidden = first === second;
+      unchanged.hidden = first !== second;
+    };
+
+    const finishReasonStep = () => {
+      reasonActions.hidden = true;
+      reveal(variationStep);
+    };
+
+    for (const input of firstInputs) {
+      input.addEventListener("change", () => {
+        answers.first = input.value;
+        showComparison();
+        reveal(reasonStep);
+      });
+    }
+
+    for (const input of reasonInputs) {
+      input.addEventListener("change", () => {
+        continueButton.disabled = false;
+        // A reason picked after the step closes is still the stated reason.
+        if (reasonActions.hidden) answers.reason = input.value;
+      });
+    }
+
+    continueButton.addEventListener("click", () => {
+      const selected = reasonInputs.find((input) => input.checked);
+      if (!selected) return;
+      answers.reason = selected.value;
+      finishReasonStep();
+    });
+
+    $("[data-skip]").addEventListener("click", () => {
+      answers.reason = undefined;
+      for (const input of reasonInputs) input.checked = false;
+      continueButton.disabled = true;
+      finishReasonStep();
+    });
+
+    for (const input of secondInputs) {
+      input.addEventListener("change", () => {
+        answers.second = input.value;
+        showComparison();
+        if (revealStep.hidden) {
+          reveal(revealStep);
+          details.hidden = false;
+        }
+      });
+    }
+
+    $("[data-restart]").addEventListener("click", () => {
+      answers = {};
+      for (const input of [...firstInputs, ...reasonInputs, ...secondInputs]) input.checked = false;
+      continueButton.disabled = true;
+      reasonActions.hidden = false;
+      for (const step of [reasonStep, variationStep, revealStep, details]) step.hidden = true;
+      details.open = false;
+      announcer.textContent = "";
+      firstQuestion.focus();
+    });
+
+    $("[data-explore]").addEventListener("click", () => {
+      details.open = true;
+      summary.focus();
+    });
+  };
+
+  initLesson();
+  document.addEventListener("astro:page-load", initLesson);
+</script>
+
+<style>
+  [hidden] {
+    display: none !important;
+  }
+
+  .lesson-copy p,
+  .lesson-step p {
+    max-width: 55rem;
+    margin: 1rem 0 0;
+    line-height: 1.55;
+    text-wrap: pretty;
+  }
+
+  /* Artwork sits beside the copy, never inside a choice, so neither option looks more appealing. */
+  .illustrated {
+    display: grid;
+    grid-template-columns: minmax(0, 46rem) 15rem;
+    gap: 2.5rem;
+    align-items: center;
+  }
+
+  .illustrated > div {
+    min-width: 0;
+  }
+
+  .lesson-step {
+    min-width: 0;
+    margin: 2.5rem 0 0;
+    padding: 2rem 0 0;
+    border: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  /* The h3 scale: the global h2 is sized for page sections, not questions. */
+  .step-heading {
+    max-width: 55rem;
+    margin: 0;
+    font-size: clamp(1.45rem, 2.4vw, 2rem);
+    line-height: 1.08;
+  }
+
+  .step-heading:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  .choice-fieldset {
+    min-width: 0;
+    margin: 1.5rem 0 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .choice-legend {
+    padding: 0;
+    font-weight: 650;
+  }
+
+  .choice-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    margin-top: 1.25rem;
+  }
+
+  .reason-list {
+    display: grid;
+    gap: 0.75rem;
+    max-width: 40rem;
+    margin-top: 1.25rem;
+  }
+
+  .choice {
+    position: relative;
+    display: block;
+    cursor: pointer;
+  }
+
+  /* The radio stays in the accessibility tree and keyboard order. */
+  .choice input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+
+  .choice-body {
+    display: grid;
+    gap: 0.35rem;
+    height: 100%;
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    overflow-wrap: anywhere;
+  }
+
+  .choice:hover .choice-body {
+    border-color: var(--ink);
+  }
+
+  .choice input:checked + .choice-body {
+    border-color: var(--ink);
+    background: var(--ink);
+    color: var(--bg);
+  }
+
+  .choice input:focus-visible + .choice-body {
+    outline: 3px solid var(--violet);
+    outline-offset: 4px;
+  }
+
+  .choice-title {
+    font-weight: 650;
+  }
+
+  .choice-text {
+    color: var(--muted);
+  }
+
+  .choice input:checked + .choice-body .choice-text {
+    color: inherit;
+  }
+
+  .lesson-step .fine-print {
+    margin-top: 1rem;
+  }
+
+  .lesson-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+
+  .lesson-buttons .button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .answer-comparison {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 55rem;
+    margin: 1.25rem 0 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+  }
+
+  .answer-comparison > div {
+    padding: 1rem 1.25rem;
+  }
+
+  .answer-comparison > div + div {
+    border-left: 1px solid var(--line);
+  }
+
+  .answer-comparison dt {
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 650;
+  }
+
+  .answer-comparison dd {
+    margin: 0.35rem 0 0;
+    font-weight: 650;
+  }
+
+  .ter-details {
+    margin-top: 2.5rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .ter-details > p {
+    max-width: 55rem;
+    margin: 0;
+    line-height: 1.55;
+  }
+
+  .ter-mapping {
+    margin: 1rem 0 0;
+  }
+
+  .ter-mapping > div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .ter-mapping dt {
+    font-weight: 650;
+  }
+
+  .ter-mapping dd {
+    margin: 0;
+    line-height: 1.55;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+
+  @media (max-width: 720px) {
+    .illustrated {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1.25rem;
+    }
+
+    .illustration {
+      width: min(100%, 12rem);
+    }
+
+    .choice-grid,
+    .answer-comparison,
+    .ter-mapping > div {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .answer-comparison > div + div {
+      border-top: 1px solid var(--line);
+      border-left: 0;
+    }
+
+    .ter-mapping > div {
+      gap: 0.35rem;
+    }
+  }
+</style>

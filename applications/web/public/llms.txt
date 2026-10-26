@@ -5,7 +5,7 @@
 ## Important context
 
 - The site contains no CMS, user accounts, or payments.
-- Primary pages: /, /learn/, /theory/, /contribute/, /contact/.
+- Primary pages: /, /learn/, /theory/, /participate/, /contact/.
 - Contact: via the form at /contact/. No public email address is listed.
 
 ## Usage
