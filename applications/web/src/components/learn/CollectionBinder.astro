@@ -1,0 +1,80 @@
+---
+/**
+ * A binder page beside the card a friend offers. With `owned`, the gap the
+ * offered card would fill is already filled, so the offer is a duplicate.
+ */
+interface Props {
+  owned?: boolean;
+  label: string;
+}
+
+const { owned = false, label } = Astro.props;
+
+const CARD_WIDTH = 40;
+const CARD_HEIGHT = 54;
+const GAP_SLOT = 5;
+const slots = Array.from({ length: 9 }, (_, index) => ({
+  x: 16 + (index % 3) * (CARD_WIDTH + 8),
+  y: 16 + Math.floor(index / 3) * (CARD_HEIGHT + 8),
+  index,
+}));
+---
+<svg class="collection-binder" viewBox="0 0 280 210" role="img" aria-label={label}>
+  <rect class="binder-page" x="4" y="4" width="160" height="202" rx="10" />
+  {slots.map(({ x, y, index }) =>
+    index === GAP_SLOT && !owned ? (
+      <rect class="empty-slot" x={x} y={y} width={CARD_WIDTH} height={CARD_HEIGHT} rx="4" />
+    ) : (
+      <g class={index === GAP_SLOT ? "card offered-card" : "card"} transform={`translate(${x} ${y})`}>
+        <rect width={CARD_WIDTH} height={CARD_HEIGHT} rx="4" />
+        <path class="creature" d="M13 24 12 14 18 21Q20 20.5 22 21L28 14 27 24A8 8 0 1 1 13 24Z" />
+      </g>
+    ),
+  )}
+  <g class="card offered-card" transform="translate(196 61) scale(1.6)">
+    <rect width={CARD_WIDTH} height={CARD_HEIGHT} rx="4" />
+    <path class="creature" d="M13 24 12 14 18 21Q20 20.5 22 21L28 14 27 24A8 8 0 1 1 13 24Z" />
+  </g>
+</svg>
+
+<style>
+  .collection-binder {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .binder-page {
+    fill: var(--surface);
+    stroke: var(--line);
+  }
+
+  rect {
+    vector-effect: non-scaling-stroke;
+  }
+
+  .card rect {
+    fill: var(--bg);
+    stroke: var(--line);
+  }
+
+  .card .creature {
+    fill: var(--line);
+  }
+
+  .empty-slot {
+    fill: none;
+    stroke: var(--muted);
+    stroke-dasharray: 4 3;
+  }
+
+  .offered-card rect {
+    fill: var(--surface);
+    stroke: var(--violet);
+    stroke-width: 1.5;
+  }
+
+  .offered-card .creature {
+    fill: var(--violet);
+  }
+</style>

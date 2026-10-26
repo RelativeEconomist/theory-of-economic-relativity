@@ -115,109 +115,13 @@ is already covered by hypothesis 3.
 
 import unittest
 
-from research.ter import (
-    AgentSpec,
-    RealityResult,
-    Scenario,
-    run_scenario,
+from research.scenarios.pokemon_card_choice import (
+    KEEP, KEEP_VALUE, SALE_OFFER, SCENARIO, SELL, STUDENT, offer_scenario,
 )
-from research.ter.rules import maximize_value, price_taking_value
+from research.ter import run_scenario
 
-
-# ---------------------------------------------------------------------------
-# Actions
-# ---------------------------------------------------------------------------
-
-KEEP = "keep"
-SELL = "sell"
-
-
-# ---------------------------------------------------------------------------
-# Economic assumptions
-# ---------------------------------------------------------------------------
-
-KEEP_VALUE = 250
-SALE_OFFER = 280
 LOW_OFFER = 220
 TIE_OFFER = KEEP_VALUE
-
-
-# ---------------------------------------------------------------------------
-# Reality function (R) -- scoped to this test
-# ---------------------------------------------------------------------------
-
-def card_sale_reality(actions, objective_state, parameters):
-    """Realize this student's keep or sell action under actual sale conditions."""
-    (student_name, action), = actions.items()
-
-    if action == KEEP:
-        status = "kept"
-    elif action == SELL:
-        status = (
-            "sold"
-            if objective_state["buyer_exists"]
-            else "sale_failed"
-        )
-    else:
-        raise ValueError(f"Unsupported card action: {action}")
-
-    sold = status == "sold"
-
-    return RealityResult(
-        agents={
-            student_name: {
-                "status": status,
-                "owns_card": not sold,
-                "cash_received": parameters["sale_offer"] if sold else 0,
-            },
-        },
-    )
-
-
-# ---------------------------------------------------------------------------
-# Agents
-# ---------------------------------------------------------------------------
-
-STUDENT = AgentSpec(
-    name="student",
-    objective="maximize personal benefit from the card decision",
-    model_of_reality={"price": SALE_OFFER},
-    perceived_feasible_set=[KEEP, SELL],
-    valuation={
-        "price_taking_action": SELL,
-        "price_role": "benefit",
-        "benefits": {KEEP: KEEP_VALUE},
-        "costs": {},
-    },
-    valuation_rule=price_taking_value,
-    decision_process=maximize_value,
-    decision_parameters={"tie_break_preference": SELL},
-    horizon="current keep-versus-cash decision",
-)
-
-
-# ---------------------------------------------------------------------------
-# Scenarios
-# ---------------------------------------------------------------------------
-
-SCENARIO = Scenario(
-    name="Pokemon Card -- Keep or Sell",
-    description="A student chooses between retaining a card and selling it.",
-    periods=1,
-    initial_state={"buyer_exists": True},
-    agents=[STUDENT],
-    parameters={"sale_offer": SALE_OFFER},
-    reality=card_sale_reality,
-)
-
-
-def offer_scenario(offer, buyer_exists):
-    """Set the believed offer (M) and the paid offer (R) to the same amount."""
-    return SCENARIO.variant(
-        agents=[STUDENT.variant(model_of_reality={"price": offer})],
-        parameters={"sale_offer": offer},
-        initial_state={"buyer_exists": buyer_exists},
-    )
 
 
 # ---------------------------------------------------------------------------

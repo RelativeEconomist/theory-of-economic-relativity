@@ -1,0 +1,300 @@
+---
+import "./runner.css";
+import TerSymbol from "./TerSymbol.astro";
+
+const mapping = [
+  ["G", "Objective", "Maximize personal benefit from the card decision."],
+  ["M", "Beliefs", "The expected sale price is attainable."],
+  ["F̂", "Perceived options", "Keep or sell."],
+  ["V", "Valuation", "Personal keep value and expected sale price."],
+  ["H", "Horizon", "The current decision."],
+  ["D", "Decision rule", "Choose the higher value; sell when values are equal."],
+  ["C", "Selected action", "Keep or sell."],
+  ["F_t", "Actual conditions", "Whether a buyer exists at the stated price."],
+  ["R", "Realization", "Determine whether the card is retained or sold and how much cash is received."],
+  ["O", "Outcome", "Card ownership, cash received, and sale status."],
+];
+const repository = "https://github.com/RelativeEconomist/theory-of-economic-relativity/blob/main";
+---
+<section class="pokemon-runner doc-section" data-pokemon-runner>
+  <p class="lede">You open a Pokémon pack and find a rare Charizard card. You want to keep it, but selling it could give you money for something else you care about.</p>
+  <p>What would make selling worthwhile?</p>
+  <p>For this example, keeping the card is worth $250 to you. That is your personal valuation, not a claim about its market price. It represents how much you value owning the card compared with having the money.</p>
+  <p>You believe you can sell it for $280. Under this model’s decision rule, you choose to sell because $280 exceeds your $250 keep value.</p>
+  <p>But choosing to sell does not guarantee a sale. What happens if nobody will actually pay $280?</p>
+
+  <h2>Explore the decision</h2>
+  <p>Change the value of keeping the card, the expected sale price, or whether a buyer is actually available.</p>
+  <p>A collector might place a high value on keeping the card. Someone saving for a purchase might prefer the cash. Neither preference is automatically right or wrong. The simulator takes the values you enter and shows what follows under its stated decision rule.</p>
+  <p>Start with the default values. Run the simulation, then remove the buyer and run it again. Notice what changes and what stays the same.</p>
+  <div class="runner-card">
+    <div class="card-controls">
+      <div class="card-context">
+        <h3>Charizard</h3>
+        <p>Rare card</p>
+        <p>Currently owned by the seller</p>
+      </div>
+      <form class="runner-form" novalidate>
+        <div class="runner-field">
+          <label for="keep-value">Value of keeping it ($)</label>
+          <input id="keep-value" data-keep-value type="number" min="0" step="any" required aria-describedby="keep-helper keep-error" />
+          <p class="field-helper" id="keep-helper">What keeping the card is worth to you, expressed in dollars.</p>
+          <p class="field-helper" id="keep-error" data-keep-error role="alert" hidden>Enter a number of 0 or greater.</p>
+        </div>
+        <div class="runner-field">
+          <label for="sale-price">Expected sale price ($)</label>
+          <input id="sale-price" data-sale-price type="number" min="0" step="any" required aria-describedby="price-helper price-error" />
+          <p class="field-helper" id="price-helper">What you believe someone will pay.</p>
+          <p class="field-helper" id="price-error" data-price-error role="alert" hidden>Enter a number of 0 or greater.</p>
+        </div>
+        <fieldset class="buyer-control" aria-describedby="buyer-helper">
+          <legend>Buyer available at that price</legend>
+          <div class="buyer-segments">
+            <label><input type="radio" name="buyer" value="yes" data-buyer checked /><span>Yes</span></label>
+            <label><input type="radio" name="buyer" value="no" data-buyer /><span>No</span></label>
+          </div>
+          <p class="field-helper" id="buyer-helper">Actual buyer availability. The seller assumes a buyer is available when deciding.</p>
+        </fieldset>
+        <div class="runner-buttons">
+          <button class="button button-primary" type="submit" disabled>Run simulation</button>
+          <button class="button button-ghost" type="button" data-reset disabled>Reset</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="runner-result">
+      <p class="runner-status" data-status role="status" aria-live="polite" aria-atomic="true"></p>
+      <div data-results hidden>
+        <dl class="decision-results">
+          <div><dt>Decision</dt><dd class="runner-selected" data-decision></dd></div>
+          <div><dt>Outcome</dt><dd class="runner-selected" data-outcome></dd></div>
+        </dl>
+        <p data-explanation></p>
+        <p data-exercise hidden>Try removing the buyer. Does the decision change?</p>
+      </div>
+    </div>
+
+    <details class="model-details">
+      <summary>How this model works</summary>
+      <h3>What the seller values</h3>
+      <p>Keeping the card has a personal value. Selling has a value based on what the seller expects to receive.</p>
+      <p>Both are expressed in dollars so they can be compared. This does not mean attachment has an objective price. It is an explicit simplifying assumption that lets us investigate the decision.</p>
+
+      <h3>What the seller believes</h3>
+      <p>The seller believes the expected sale price is attainable. The model selects selling when that amount equals or exceeds the value of keeping the card. Otherwise, it selects keeping.</p>
+      <p>Choosing to sell when the values are equal is a rule of this example, not a claim about how everyone behaves.</p>
+
+      <h3>What actually happens</h3>
+      <p>The buyer control changes actual conditions without changing the seller’s belief.</p>
+      <p>If the seller chooses to sell and a buyer is available at that price, the card changes hands and the seller receives the money. If no buyer is available, the sale fails. The seller still owns the card and receives no cash.</p>
+      <p>The intention was to sell in both cases. Reality determines whether that intention becomes a completed transaction.</p>
+
+      <h3>What this example helps us examine</h3>
+      <p>The same card can have different personal values for different people. The same person can make a different choice when the expected offer changes. And the same choice can produce different outcomes when actual conditions change.</p>
+      <p>TER makes these distinctions explicit: what someone values, what they believe, what they choose, and what actually happens.</p>
+      <p>You can explore those distinctions yourself, discuss them in a classroom, or inspect the executable model and challenge its assumptions.</p>
+
+      <h3>Where the example stops</h3>
+      <p>This is one decision about an already owned card. The original pack price has already been paid and is excluded from the current comparison.</p>
+      <p>The model does not include bargaining, selling fees, future appreciation, or learning after a failed sale. The buyer is represented as an actual condition, rather than as another agent making a decision.</p>
+      <p>The card and dollar amounts are illustrative assumptions. This simulation explains the consequences of those assumptions; it does not estimate card prices or establish how real collectors behave.</p>
+      <dl class="model-mapping">
+        {mapping.map(([symbol, label, description]) => (
+          <div><dt><TerSymbol symbol={symbol} />, {label}</dt><dd>{description}</dd></div>
+        ))}
+      </dl>
+      <p class="field-helper" data-provenance hidden></p>
+    </details>
+  </div>
+  <div class="source-links">
+    <a href={`${repository}/research/scenarios/pokemon_card_choice.py`}>View the model</a>
+    <a href={`${repository}/research/tests/test_27_pokemon_card_choice.py`}>View the tests</a>
+  </div>
+</section>
+
+<script>
+  import { runScenario } from "./run-scenario";
+
+  type Inputs = { keep_value: number; expected_sale_price: number; buyer_available: boolean };
+  type RunResponse = {
+    inputs: Inputs;
+    action_values: { keep: number; sell: number };
+    values_equal: boolean;
+    selected_action: "keep" | "sell";
+    outcome: { status: "kept" | "sold" | "sale_failed"; owns_card: boolean; cash_received: number };
+    ter_version: string;
+    scenario_revision: number;
+  };
+  const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+  const STALE = "Inputs changed. Run the simulation to see the result.";
+
+  const initRunner = async () => {
+    const root = document.querySelector<HTMLElement>("[data-pokemon-runner]");
+    if (!root || root.dataset.bound) return;
+    root.dataset.bound = "true";
+    const form = root.querySelector("form")!;
+    const keep = form.querySelector<HTMLInputElement>("[data-keep-value]")!;
+    const price = form.querySelector<HTMLInputElement>("[data-sale-price]")!;
+    const buyers = [...form.querySelectorAll<HTMLInputElement>("[data-buyer]")];
+    const buttons = [...form.querySelectorAll<HTMLButtonElement>("button")];
+    const reset = form.querySelector<HTMLButtonElement>("[data-reset]")!;
+    const results = root.querySelector<HTMLElement>("[data-results]")!;
+    const status = root.querySelector<HTMLElement>("[data-status]")!;
+    const decision = root.querySelector<HTMLElement>("[data-decision]")!;
+    const outcome = root.querySelector<HTMLElement>("[data-outcome]")!;
+    const explanation = root.querySelector<HTMLElement>("[data-explanation]")!;
+    const exercise = root.querySelector<HTMLElement>("[data-exercise]")!;
+    const details = root.querySelector<HTMLDetailsElement>("details")!;
+    const provenance = root.querySelector<HTMLElement>("[data-provenance]")!;
+    const moneyFields = [
+      [keep, root.querySelector<HTMLElement>("[data-keep-error]")!],
+      [price, root.querySelector<HTMLElement>("[data-price-error]")!],
+    ] as const;
+    let busy = false;
+    let revision = 0;
+    let defaults: Inputs | undefined;
+
+    const setStatus = (message: string, announcementOnly = false) => {
+      status.classList.toggle("sr-only", announcementOnly);
+      status.textContent = message;
+    };
+    const formInputs = (): Inputs => ({
+      keep_value: keep.valueAsNumber,
+      expected_sale_price: price.valueAsNumber,
+      buyer_available: buyers.find((option) => option.checked)!.value === "yes",
+    });
+    const setInputs = (inputs: Inputs) => {
+      keep.value = String(inputs.keep_value);
+      price.value = String(inputs.expected_sale_price);
+      for (const option of buyers) option.checked = (option.value === "yes") === inputs.buyer_available;
+    };
+    const clearErrors = () => {
+      for (const [input, error] of moneyFields) {
+        input.removeAttribute("aria-invalid");
+        error.hidden = true;
+      }
+    };
+    const validateForm = () => {
+      let firstInvalid: HTMLInputElement | undefined;
+      for (const [input, error] of moneyFields) {
+        const valid = Number.isFinite(input.valueAsNumber) && input.valueAsNumber >= 0;
+        input.setAttribute("aria-invalid", String(!valid));
+        error.hidden = valid;
+        if (!valid) firstInvalid ??= input;
+      }
+      firstInvalid?.focus();
+      return !firstInvalid;
+    };
+
+    // All branches describe the engine's returned C, O, and valuation relation.
+    const show = (result: RunResponse) => {
+      const keepValue = money.format(result.action_values.keep);
+      const salePrice = money.format(result.action_values.sell);
+      const sold = result.outcome.status === "sold";
+      decision.textContent = result.selected_action === "keep" ? "Keep" : "Try to sell";
+      outcome.textContent = sold
+        ? `Card sold for ${money.format(result.outcome.cash_received)}.`
+        : result.outcome.status === "kept"
+          ? "You keep the card and receive $0."
+          : "Sale failed. You keep the card and receive $0.";
+      explanation.textContent = result.selected_action === "keep"
+        ? "Your value of keeping the card exceeds the expected sale price."
+        : result.values_equal
+          ? `Keeping and selling both have a value of ${keepValue}. This model chooses selling when values are equal. ` +
+            (sold ? "A buyer is available, so the sale succeeds." : "No buyer is available, so the sale fails.")
+          : sold
+            ? `You value keeping the card at ${keepValue} and expect ${salePrice} from selling. A buyer is available, so the sale succeeds.`
+            : `You value keeping the card at ${keepValue} and expect ${salePrice} from selling, but no buyer is available at that price.`;
+      exercise.hidden = !sold;
+      provenance.textContent = `TER ${result.ter_version} · scenario revision ${result.scenario_revision}`;
+      provenance.hidden = false;
+      results.hidden = false;
+      setStatus(`${decision.textContent}. ${outcome.textContent}`, true);
+    };
+
+    const run = async (inputs: Partial<Inputs>, initial = false) => {
+      if (busy) return;
+      busy = true;
+      const startedAt = revision;
+      for (const button of buttons) button.disabled = true;
+      results.hidden = true;
+      setStatus("Running…");
+      try {
+        const result = await runScenario<RunResponse>("pokemon-card-choice", inputs);
+        if (startedAt !== revision || !root.isConnected) return;
+        if (result.scenario_revision !== 1) throw new Error("Unsupported scenario revision.");
+        if (Object.keys(inputs).length === 0) defaults = { ...result.inputs };
+        setInputs(result.inputs);
+        show(result);
+      } catch {
+        if (startedAt === revision && root.isConnected) {
+          setStatus(initial
+            ? "Unable to load the simulation. Try Run simulation again."
+            : "Unable to run the simulation. Check your inputs and try again.");
+        }
+      } finally {
+        busy = false;
+        for (const button of buttons) button.disabled = false;
+      }
+    };
+
+    form.addEventListener("input", () => {
+      revision += 1;
+      clearErrors();
+      results.hidden = true;
+      setStatus(STALE);
+    });
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (busy) return;
+      if (!validateForm()) return;
+      run(formInputs());
+    });
+    reset.addEventListener("click", () => {
+      if (busy) return;
+      revision += 1;
+      details.open = false;
+      clearErrors();
+      if (defaults) setInputs(defaults);
+      run({});
+    });
+    await run({}, true);
+  };
+  initRunner();
+  document.addEventListener("astro:page-load", initRunner);
+</script>
+
+<style>
+  [hidden] { display: none; }
+  .card-controls { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 2rem; }
+  .card-context p { margin: 0.75rem 0 0; }
+  .runner-form { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .runner-buttons { grid-column: 1; }
+  .runner-field input { max-width: 20rem; }
+  .field-helper { margin: 0; color: var(--muted); font-size: 0.78rem; }
+  .buyer-control { min-width: 0; margin: 0; padding: 0; border: 0; }
+  .buyer-control legend { margin-bottom: 0.5rem; font-size: 0.78rem; font-weight: 650; }
+  .buyer-control .field-helper { margin-top: 0.5rem; }
+  .buyer-segments { display: flex; width: fit-content; padding: 0.25rem; gap: 0.25rem; border: 1px solid var(--line); border-radius: var(--radius-sm); }
+  .buyer-segments label { position: relative; cursor: pointer; }
+  .buyer-segments input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .buyer-segments span { display: block; padding: 0.65rem 1rem; border-radius: var(--radius-sm); font-weight: 650; }
+  .buyer-segments input:checked + span { background: var(--ink); color: var(--bg); }
+  .buyer-segments input:focus-visible + span { outline: 2px solid var(--ink); outline-offset: 3px; }
+  .decision-results { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 1rem; margin: 0; }
+  .decision-results dt { color: var(--muted); font-size: 0.78rem; font-weight: 650; }
+  .decision-results dd { margin: 0.5rem 0 0; overflow-wrap: anywhere; }
+  [data-explanation], [data-exercise] { margin: 1rem 0 0; }
+  .model-details { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+  .model-details summary { cursor: pointer; font-weight: 650; }
+  .model-details p { margin: 1rem 0; }
+  .model-mapping { margin: 1rem 0; }
+  .model-mapping > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 1rem; padding: 0.5rem 0; border-top: 1px solid var(--line); }
+  .model-mapping dt { font-weight: 650; }
+  .model-mapping dd { margin: 0; }
+  .source-links { display: flex; flex-wrap: wrap; gap: 1.5rem; margin: 1.5rem 0; }
+  .source-links a { text-decoration: underline; text-underline-offset: 0.2em; }
+  @media (max-width: 720px) {
+    .card-controls, .decision-results, .model-mapping > div { grid-template-columns: minmax(0, 1fr); }
+  }
+</style>

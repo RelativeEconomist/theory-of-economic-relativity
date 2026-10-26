@@ -1,4 +1,5 @@
 ---
+import PokemonTradeLesson from "../../components/learn/PokemonTradeLesson.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import ScenarioSelector from "../../components/learn/ScenarioSelector.astro";
 import ScenarioHeader from "../../components/learn/ScenarioHeader.astro";
@@ -47,6 +48,7 @@ const isMultiAgent = scenario.slug === "asymmetric-information";
       <ScenarioSelector slot="selector" currentSlug={scenario.slug} />
     </ScenarioHeader>
 
+    {scenario.slug === "pokemon-card-choice" ? <><PokemonTradeLesson /><ScenarioReference scenario={scenario} /></> : <>
     <section class="scenario-overview doc-section">
       <h2 class="doc-heading">Scenario</h2>
       <dl class="overview-list">
@@ -95,6 +97,7 @@ const isMultiAgent = scenario.slug === "asymmetric-information";
     </section>
 
     <ScenarioReference scenario={scenario} />
+    </>}
 
     <section class="section-sm scenario-nav doc-section">
       <div class="scenario-nav-links hairline-grid">

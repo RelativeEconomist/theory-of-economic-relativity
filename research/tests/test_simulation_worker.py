@@ -21,7 +21,7 @@ from http.client import HTTPMessage
 from unittest.mock import patch
 
 from applications.api.endpoint import MAX_BODY_BYTES, PATH
-from research.adapters import asymmetric_information, feasible_set_learning
+from research.adapters import asymmetric_information, feasible_set_learning, pokemon_card_choice
 from research.adapters.basic_agent_choice import SCENARIO_ID, run
 
 PRODUCTION_ORIGIN = "https://www.theoryofeconomicrelativity.com"
@@ -150,6 +150,16 @@ class TestSimulationWorker(unittest.TestCase):
                 self.assertEqual(response.status, 200)
                 self.assertEqual(response.headers["Content-Type"], "application/json")
                 self.assertEqual(response.json(), run({"scenario": SCENARIO_ID, **inputs}))
+
+    def test_pokemon_reaches_the_registered_adapter(self):
+        for inputs in ({}, {"buyer_available": False}, {"keep_value": 300}):
+            with self.subTest(inputs=inputs):
+                request = {"scenario": pokemon_card_choice.SCENARIO_ID, "inputs": inputs}
+                response = fetch(FakeRequest(json.dumps(request).encode()))
+                self.assertEqual(response.status, 200)
+                self.assertEqual(response.json(), pokemon_card_choice.run({"scenario": pokemon_card_choice.SCENARIO_ID, **inputs}))
+        invalid = {"scenario": pokemon_card_choice.SCENARIO_ID, "inputs": {"buyer_available": 1}}
+        self.assert_json_error(fetch(FakeRequest(json.dumps(invalid).encode())), 400, "boolean")
 
     def test_rejected_requests_return_the_endpoint_or_adapter_error(self):
         for request, expected in (

@@ -18,7 +18,7 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from applications.api.simulation import PATH, SimulationHandler, allowed_origins
-from research.adapters import asymmetric_information, bounded_rationality, feasible_set_learning
+from research.adapters import asymmetric_information, bounded_rationality, feasible_set_learning, pokemon_card_choice
 from research.adapters.basic_agent_choice import SCENARIO_ID, run
 
 DEV_ORIGIN = "http://localhost:4321"
@@ -119,6 +119,16 @@ class TestSimulationHttp(unittest.TestCase):
                 self.assertEqual(status, 200)
                 self.assertEqual(headers["Content-Type"], "application/json")
                 self.assertEqual(body, run({"scenario": SCENARIO_ID, **inputs}))
+
+    def test_pokemon_envelopes_reach_its_adapter(self):
+        for inputs in ({}, {"buyer_available": False}, {"keep_value": 300, "expected_sale_price": 220.50}):
+            with self.subTest(inputs=inputs):
+                status, _, body = self.post_json({"scenario": pokemon_card_choice.SCENARIO_ID, "inputs": inputs})
+                self.assertEqual(status, 200)
+                self.assertEqual(body, pokemon_card_choice.run({"scenario": pokemon_card_choice.SCENARIO_ID, **inputs}))
+        status, _, body = self.post_json({"scenario": pokemon_card_choice.SCENARIO_ID, "inputs": {"keep_value": True}})
+        self.assertEqual(status, 400)
+        self.assertIn("number", body["error"])
 
     def test_bounded_rationality_envelopes_reach_its_adapter(self):
         for inputs in (
