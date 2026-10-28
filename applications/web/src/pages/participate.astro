@@ -1,22 +1,46 @@
 ---
-import { getCollection, render } from "astro:content";
-import DocPage from "../components/DocPage.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PageHero from "../components/PageHero.astro";
+import Button from "../components/ui/Button.astro";
 
-const [entry] = await getCollection("contribute");
-if (!entry) {
-  throw new Error(
-    'Content collection "contribute" has no entries. Expected it to load CONTRIBUTING.md ' +
-      "(see the loader pattern/base for \"contribute\" in src/content.config.ts). If you're running " +
-      "astro dev, this usually means the content store is stale -- restart the dev server."
-  );
-}
-const { Content } = await render(entry);
+const REPO_URL = "https://github.com/RelativeEconomist/theory-of-economic-relativity";
 ---
-<DocPage
-  title="Participate"
-  eyebrow="Contributing to TER"
-  description="How to test and extend the Theory of Economic Relativity, rendered directly from CONTRIBUTING.md."
-  sourceUrl="https://github.com/RelativeEconomist/theory-of-economic-relativity/blob/main/CONTRIBUTING.md"
->
-  <Content />
-</DocPage>
+<BaseLayout title="Participate — Theory of Economic Relativity" description="Discuss or contribute to the Theory of Economic Relativity on GitHub.">
+  <PageHero title="Participate" description="Economics is something we can all explore, question, model, and test. TER invites students, researchers, and curious minds to learn and contribute through open science." />
+  <section class="section-sm divider">
+    <div class="shell participate-grid">
+      <article class="card participate-card" data-reveal>
+        <div class="participate-heading">
+          <svg class="participate-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12Z" />
+            <path d="M8.5 11h.01M12.5 11h.01M16.5 11h.01" stroke-width="2.4" />
+          </svg>
+          <h2>Discuss</h2>
+        </div>
+        <p>Ask a question, share an idea, or challenge an assumption. You do not need to write code or agree with TER to join.</p>
+        <Button href={`${REPO_URL}/issues`} label="Discuss on GitHub" target="_blank" rel="noreferrer" />
+      </article>
+      <article class="card participate-card" data-reveal>
+        <div class="participate-heading">
+          <svg class="participate-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m8 7-5 5 5 5M16 7l5 5-5 5M13.5 4l-3 16" />
+          </svg>
+          <h2>Contribute</h2>
+        </div>
+        <p>Improve a lesson, test a model, fix an error, or contribute code. Small contributions are welcome.</p>
+        <Button href={`${REPO_URL}/blob/main/CONTRIBUTING.md`} label="Contribute on GitHub" target="_blank" rel="noreferrer" />
+      </article>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .participate-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(1rem,2.5vw,2rem)}
+  .participate-card{display:flex;flex-direction:column;align-items:flex-start;gap:1.25rem;padding:clamp(1.75rem,4vw,3rem)}
+  .participate-heading{display:flex;align-items:center;gap:1rem}
+  .participate-icon{flex:none;width:3.25rem;height:3.25rem;padding:.8rem;border-radius:var(--radius-sm);background:var(--accent);color:var(--accent-ink)}
+  .participate-card h2{font-size:clamp(1.9rem,3vw,2.6rem)}
+  .participate-card p{flex:1;max-width:32rem;margin:0;color:var(--muted);font-size:1.05rem;line-height:1.6}
+  .participate-card :global(.button){margin-top:.75rem}
+  @media(max-width:800px){.participate-grid{grid-template-columns:1fr}.participate-card :global(.button){width:100%}}
+</style>
