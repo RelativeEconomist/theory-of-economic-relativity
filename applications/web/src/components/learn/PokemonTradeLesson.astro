@@ -89,7 +89,7 @@ const mapping = [
 
   <fieldset class="lesson-step" aria-labelledby="reason-question" data-reason-step hidden>
     <h2 class="step-heading" id="reason-question">What mattered most to you?</h2>
-    <div class="reason-list">
+    <div class="choice-grid">
       {reasons.map((reason) => (
         <label class="choice">
           <input type="radio" name="reason" value={reason} data-reason />
@@ -131,21 +131,23 @@ const mapping = [
   </div>
 
   <div class="lesson-step" data-reveal-step hidden>
-    <h2 class="step-heading">What changed?</h2>
+    <h2 class="step-heading">Your result</h2>
+    <p data-changed hidden>You changed your choice.</p>
+    <p data-unchanged hidden>You kept the same choice.</p>
     <dl class="answer-comparison">
       <div>
-        <dt>Completes your collection</dt>
+        <dt>Before</dt>
         <dd data-first-answer></dd>
       </div>
       <div>
-        <dt>Already in your collection</dt>
+        <dt>Now</dt>
         <dd data-second-answer></dd>
       </div>
     </dl>
-    <p data-changed hidden>Your choice changed even though the estimated prices stayed the same. Whether the offered card completed your collection made a difference to your decision.</p>
-    <p data-unchanged hidden>Your choice stayed the same. Removing the collection benefit did not change which option you preferred. Someone else might respond differently.</p>
-    <p>A market price does not tell us everything about what an option is worth to someone. Completing a collection, receiving money, and accepting uncertainty can matter differently to different people.
-      TER helps make those differences explicit by separating objectives, beliefs, valuations, choices, and realized outcomes.</p>
+    <p data-changed hidden>The prices stayed the same. The offered card no longer completed your collection, and you chose differently.</p>
+    <p data-unchanged hidden>The offered card no longer completed your collection, but you still preferred <span data-kept-choice></span>. That change was not enough to change your choice.</p>
+    <p>Same prices. Different circumstances. A choice that could change or stay the same.</p>
+    <p>TER helps us describe what changed and examine how it affects a decision. Your choice alone does not reveal everything you valued.</p>
     <div class="lesson-buttons">
       <button class="button button-ghost" type="button" data-restart>Start again</button>
       <button class="button button-primary" type="button" data-explore>Explore the TER mapping</button>
@@ -191,8 +193,9 @@ const mapping = [
     const revealStep = $("[data-reveal-step]");
     const firstAnswer = $("[data-first-answer]");
     const secondAnswer = $("[data-second-answer]");
-    const changed = $("[data-changed]");
-    const unchanged = $("[data-unchanged]");
+    const changed = [...root.querySelectorAll<HTMLElement>("[data-changed]")];
+    const unchanged = [...root.querySelectorAll<HTMLElement>("[data-unchanged]")];
+    const keptChoice = $("[data-kept-choice]");
     const details = $<HTMLDetailsElement>("[data-ter-details]");
     const summary = $("[data-ter-summary]");
     const announcer = $("[data-announcer]");
@@ -215,8 +218,9 @@ const mapping = [
       if (!first || !second) return;
       firstAnswer.textContent = CHOICE_LABELS[first];
       secondAnswer.textContent = CHOICE_LABELS[second];
-      changed.hidden = first === second;
-      unchanged.hidden = first !== second;
+      for (const element of changed) element.hidden = first === second;
+      for (const element of unchanged) element.hidden = first !== second;
+      keptChoice.textContent = second === "sell" ? "trying to sell" : "trading";
     };
 
     const finishReasonStep = () => {
@@ -347,13 +351,6 @@ const mapping = [
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1rem;
-    margin-top: 1.25rem;
-  }
-
-  .reason-list {
-    display: grid;
-    gap: 0.75rem;
-    max-width: 40rem;
     margin-top: 1.25rem;
   }
 

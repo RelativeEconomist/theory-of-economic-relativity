@@ -1,0 +1,67 @@
+---
+/**
+ * Lottery Tickets entries for the Deeper reference section: detailed
+ * assumptions and the calculations behind research/scenarios/lottery_tickets.py.
+ */
+const assumptions = [
+  "Alex knows the ticket price, jackpot, and available funds correctly.",
+  "Disclosed odds are accepted as credible. Actual odds remain unchanged.",
+  "The lottery has one prize and no other payouts. Taxes, shared prizes, and annuity options are omitted.",
+  "Enjoyment is valued at $15 regardless of price, jackpot, or odds. Realized enjoyment is not modeled.",
+  "Each configuration represents one decision about one draw. Repeated purchases and learning from outcomes are not modeled.",
+  "Each configuration’s rules and parameters stay fixed as conditions change.",
+  "Different configurations may remain indistinguishable under some conditions.",
+];
+
+const calculations = [
+  "Expected payout = believed chance of winning × jackpot.",
+  "Overestimates his chances: buying is valued at expected payout − price; skipping at $0.",
+  "Enjoys playing: buying is valued at expected payout + $15 − price; skipping at $0.",
+  "Both choose the option with the higher valuation and skip when the valuations are tied.",
+  "Follows a routine: buys when the price is $30 or less and within his $50, without valuing the options.",
+  "A ticket costing more than $50 is not an available choice, so every configuration skips.",
+  "Expected monetary return = sum of probability × net money over the actual outcomes: jackpot ÷ 1,000,000 − price for a ticket, $0 for skipping. Enjoyment is not money and is excluded.",
+];
+const tests = "https://github.com/RelativeEconomist/theory-of-economic-relativity/blob/main/research/tests/test_28_lottery_tickets.py";
+---
+<details class="disclosure">
+  <summary>Detailed assumptions</summary>
+  <ul class="reference-items">
+    {assumptions.map((assumption) => <li>{assumption}</li>)}
+  </ul>
+</details>
+
+<details class="disclosure">
+  <summary>Calculations and tests</summary>
+  <ul class="reference-items">
+    {calculations.map((calculation) => <li>{calculation}</li>)}
+  </ul>
+  <p class="reference-tests">
+    <a href={tests} target="_blank" rel="noreferrer">View the tests on GitHub ↗</a>
+  </p>
+</details>
+
+<style>
+  .reference-items {
+    display: grid;
+    gap: 0.5rem;
+    max-width: 960px;
+    margin: 0;
+    padding-left: 1.2rem;
+    color: var(--muted);
+    font-size: 0.95rem;
+    line-height: 1.55;
+    list-style: disc;
+  }
+
+  .reference-tests {
+    margin: 1.25rem 0 0;
+  }
+
+  .reference-tests a {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 3px;
+    text-underline-offset: 3px;
+  }
+</style>

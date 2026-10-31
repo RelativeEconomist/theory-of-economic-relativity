@@ -10,6 +10,8 @@
  * disagree, the executable code wins.
  */
 
+import { lotteryTerComponents } from "./lottery-tickets";
+
 /** One row of the core TER decision architecture, as it applies to a scenario. */
 export interface TerComponentMapping {
   /** Stable identifier for the variable, independent of display formatting. */
@@ -47,13 +49,14 @@ export interface Scenario {
   sourceLabel?: string;
   economicQuestion?: string;
   /** One or two sentences for the page's Scenario section. Falls back to `summary`. */
-  context?: string;
+  /** Scenario text; an array renders as separate paragraphs. */
+  context?: string | string[];
   /** Concrete description of how this test's market/agents are set up. */
   economicSetup?: string;
   /** Short statement of what varies across this test's cases vs. what is held fixed. */
   whatChanges?: string;
-  /** Text for the page's Interpretation section. */
-  interpretation?: string;
+  /** Text for the page's Interpretation section; an array renders as separate paragraphs. */
+  interpretation?: string | string[];
   /** Short TER-terms restatement of `whatChanges`, shown below it in Interpretation. */
   terNote?: string;
   terComponents?: TerComponentMapping[];
@@ -333,6 +336,46 @@ export const scenarios: Scenario[] = [
     sourceLabel: "Trade or sell?",
     category: "Individual choice",
     summary: "Would you complete your collection or try to sell for more?",
+  },
+  {
+    slug: "lottery-tickets",
+    runner: "simulator",
+    title: "Lottery Tickets",
+    sourceLabel: "Test 28",
+    category: "Individual choice",
+    summary: "Three explanations predict the same ticket purchase. Which conditions tell them apart?",
+    economicQuestion: "Would you spend $20 for a one in a million chance to win $10 million?",
+    context: [
+      "Imagine you have $50 available. The ticket costs $20. If it wins, you receive $10 million. Otherwise, you lose the $20.",
+      "Your friend Alex buys a ticket. Would you?",
+      "Alex might think the odds are better than they really are, enjoy playing, or simply buy out of habit. The purchase alone does not tell us why. TER lets us model each explanation and test how Alex’s choice changes."
+    ],
+    scope:
+      "One fictional buyer and one decision. These explanations illustrate possible mechanisms; they do not establish why real lottery players buy tickets.",
+    assumptions: [
+      "Alex has $50 and can buy at most one ticket.",
+      "The actual chance of winning stays at one in a million.",
+      "Each explanation uses a fixed rule described below.",
+    ],
+    interpretation: [
+      "Alex’s purchase alone does not reveal why he bought the ticket.",
+      "Try showing him the actual odds. In the mistaken odds configuration, he stops buying. The enjoyment and habit configurations still predict a purchase.",
+      "These differences give us something to investigate. They do not establish which explanation describes a real person.",
+    ],
+    hypotheses: [
+      "The configurations produce the same initial choice but different choices under some changes in conditions.",
+    ],
+    // The default configuration; the simulator's selector swaps the mapping text.
+    terComponents: lotteryTerComponents("alex_mistaken_odds"),
+    configuration: [
+      { label: "Actual odds", value: "1 in 1,000,000" },
+      { label: "Baseline price and jackpot", value: "$20 ticket, $10,000,000 prize" },
+      { label: "Available funds", value: "$50" },
+      { label: "Mistaken believed odds", value: "1 in 250,000" },
+      { label: "Enjoyment value", value: "$15" },
+      { label: "Habit price limit", value: "$30" },
+    ],
+    sourcePath: "research/scenarios/lottery_tickets.py",
   },
   {
     slug: "supply-and-demand",

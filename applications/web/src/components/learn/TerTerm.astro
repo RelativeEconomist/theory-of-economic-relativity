@@ -8,7 +8,7 @@ import type { TerComponentMapping } from "../../data/learn/scenarios";
 import TerSymbol from "./TerSymbol.astro";
 
 interface Props {
-  component: TerComponentMapping;
+  component: Pick<TerComponentMapping, "key" | "symbol" | "name" | "definition">;
   /** Show only the symbol, for inline use in a sentence. */
   symbolOnly?: boolean;
 }

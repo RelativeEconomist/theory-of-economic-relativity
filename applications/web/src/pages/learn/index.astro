@@ -26,7 +26,7 @@ import { scenarios } from "../../data/learn/scenarios";
           <div class="scenario-card-top">
             {scenario.sourceLabel && <span class="test-number">{scenario.sourceLabel}</span>}
             {scenario.runner && (
-              <span class="runner-badge">
+              <span class:list={["runner-badge", { "is-simulator": scenario.runner === "simulator" }]}>
                 {scenario.runner === "simulator" ? "Simulator" : "Simulation"}
               </span>
             )}
@@ -113,6 +113,12 @@ import { scenarios } from "../../data/learn/scenarios";
     font-weight: 650;
     letter-spacing: 0.08em;
     text-transform: uppercase;
+  }
+
+  .runner-badge.is-simulator {
+    border-color: transparent;
+    background: var(--accent);
+    color: var(--accent-ink);
   }
 
   .scenario-card h3 {

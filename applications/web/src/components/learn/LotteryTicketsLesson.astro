@@ -1,0 +1,445 @@
+---
+/**
+ * Lottery Tickets simulator, laid out like BasicAgentChoiceRunner. Every
+ * belief, perceived option, valuation, choice, outcome distribution, and
+ * price-chart cell comes from the Python scenario through /simulate
+ * (research/adapters/lottery_tickets.py); this component only displays them.
+ * The selector also swaps the TER model rows (TerArchitecture) to the
+ * selected configuration.
+ */
+import "./runner.css";
+import { lotteryConfigurations } from "../../data/learn/lottery-tickets";
+
+const jackpots = [1_000_000, 2_000_000, 5_000_000, 10_000_000, 20_000_000, 50_000_000];
+const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+---
+<section class="lottery-runner doc-section" data-lottery-lesson>
+  <h2 class="doc-heading">Simulator</h2>
+
+  <div class="runner-card">
+    <form class="runner-form" novalidate>
+      <div class="runner-values">
+        <div class="runner-field">
+          <label for="explanation">Alex buys because…</label>
+          <select id="explanation" data-preset>
+            {lotteryConfigurations.map((configuration) => <option value={configuration.id}>{configuration.reason}</option>)}
+          </select>
+        </div>
+        <div class="runner-field">
+          <label for="jackpot">Jackpot</label>
+          <select id="jackpot" data-jackpot>
+            {jackpots.map((amount) => (
+              <option value={amount} selected={amount === 10_000_000}>{money.format(amount)}</option>
+            ))}
+          </select>
+        </div>
+        <div class="runner-field">
+          <label for="ticket-price">Ticket price: <output for="ticket-price" data-price-output>$20</output></label>
+          <input id="ticket-price" type="range" min="1" max="60" step="1" value="20" data-price />
+        </div>
+        <label class="disclose-control">
+          <input type="checkbox" data-disclose />
+          <span>Tell Alex the actual chance of winning</span>
+        </label>
+      </div>
+      <div class="runner-buttons">
+        <button class="button button-primary" type="submit" data-run>Run</button>
+        <button class="button button-ghost" type="button" data-reset>Reset</button>
+      </div>
+    </form>
+
+    <div class="runner-result">
+      <p class="runner-label">Alex’s choice</p>
+      <p class="runner-outcome">
+        <span class="runner-selected" data-choice>—</span>
+        <span class="runner-status" data-status role="status" aria-live="polite" aria-atomic="true">Loading the simulation…</span>
+      </p>
+      <p class="runner-why" data-why></p>
+      <p class="runner-odds">Alex believes: <strong data-believed-odds>—</strong> · Actual chance: <strong data-actual-odds>—</strong></p>
+    </div>
+  </div>
+
+  <div class="details-group">
+    <details class="disclosure">
+      <summary>Possible outcomes and expected monetary return</summary>
+      <p class="muted" data-outcomes-pending>Run the simulation to see the possible outcomes.</p>
+      <div data-outcomes-live hidden>
+        <table class="lesson-table">
+          <caption data-outcomes-caption></caption>
+          <thead><tr><th scope="col">Outcome</th><th scope="col">Probability</th><th scope="col">Net money</th></tr></thead>
+          <tbody data-outcomes></tbody>
+        </table>
+        <p>Expected monetary return: <strong data-expected>—</strong></p>
+        <p class="muted">An average across possible outcomes, not the result of one draw. If Alex skips, it is $0.</p>
+        <p class="muted" data-enjoyment-note hidden></p>
+        <p class="muted" data-provenance></p>
+      </div>
+    </details>
+
+    <details class="disclosure">
+      <summary>Compare all three explanations</summary>
+      <p class="muted" data-compare-pending>Run the simulation to update the comparison.</p>
+      <div data-compare-live hidden>
+        <ul class="current-choices" data-current-choices></ul>
+        <figure class="price-chart">
+          <figcaption data-chart-caption></figcaption>
+          <ul class="chart-legend" aria-hidden="true">
+            <li><span class="swatch is-buy"></span>Buys</li>
+            <li><span class="swatch"></span>Skips</li>
+          </ul>
+          <div class="chart-body" data-chart-body aria-hidden="true"></div>
+          <details class="chart-table">
+            <summary>View data table</summary>
+            <div class="table-scroll"><table class="lesson-table" data-chart-table></table></div>
+          </details>
+        </figure>
+      </div>
+    </details>
+  </div>
+</section>
+
+<script>
+  import { runScenario } from "./run-scenario";
+  import { lotteryConfigurations } from "../../data/learn/lottery-tickets";
+
+  type Action = "buy" | "skip";
+  type Odds = { numerator: number; denominator: number };
+  type Inputs = { ticket_price: number; jackpot: number; odds_disclosed: boolean };
+  type Outcome = { probability: Odds; status: string; spent: number; prize: number; net_return: number };
+  type Report = {
+    id: string;
+    believed_win_probability: Odds;
+    perceived_feasible_set: Action[];
+    action_values: Record<Action, number> | null;
+    entertainment_value: number | null;
+    maximum_price: number | null;
+    selected_action: Action;
+    expected_net_return: number;
+    outcomes: Outcome[];
+  };
+  type RunResponse = {
+    inputs: Inputs;
+    baseline: Inputs;
+    available_funds: number;
+    actual_win_probability: Odds;
+    hypothetical_ticket_expected_net_return: number;
+    specifications: Report[];
+    price_sweep: { prices: number[]; choices: Record<string, Action[]> };
+    ter_version: string;
+    scenario_revision: number;
+  };
+
+  // Short names for the chart, data table, and announcements.
+  const TITLES: Record<string, string> = {
+    alex_mistaken_odds: "Overestimates chances",
+    alex_entertainment_value: "Enjoys playing",
+    alex_habit: "Follows a routine",
+  };
+  const OUTCOME_LABELS: Record<string, string> = { won: "Win", lost: "Lose", purchase_failed: "Purchase fails", skipped: "No purchase" };
+  const PENDING = "—";
+  const dollars = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  const money = (value: number) => (value < 0 ? `−${dollars.format(-value)}` : dollars.format(value));
+  const signed = (value: number) => (value > 0 ? `+${money(value)}` : money(value));
+  const odds = ({ numerator, denominator }: Odds) =>
+    denominator === 1 ? "Certain" : `${numerator.toLocaleString("en-US")} in ${denominator.toLocaleString("en-US")}`;
+
+  // Explains the engine's selected action using the values it reported. It
+  // never decides: ties are identified from the reported valuations.
+  const why = (report: Report, live: RunResponse) => {
+    const buys = report.selected_action === "buy";
+    const price = money(live.inputs.ticket_price);
+    if (!report.perceived_feasible_set.includes("buy")) {
+      return `The ${price} ticket costs more than his ${money(live.available_funds)}, so skipping is his only option.`;
+    }
+    if (report.action_values === null) {
+      const limit = money(report.maximum_price!);
+      return buys ? `The ${price} ticket is affordable and within his ${limit} limit.` : `The ${price} ticket is over his ${limit} limit.`;
+    }
+    const { numerator, denominator } = report.believed_win_probability;
+    const payout = money((numerator * live.inputs.jackpot) / denominator);
+    const tied = !buys && report.action_values.buy === report.action_values.skip;
+    const comparison = tied ? "equal to" : buys ? "more than" : "less than";
+    const ending = tied ? " When tied, he skips." : "";
+    if (report.entertainment_value) {
+      return `The ${payout} expected payout plus ${money(report.entertainment_value)} of enjoyment is ${comparison} the ${price} price.${ending}`;
+    }
+    return `Alex believes the expected payout is ${payout}, ${comparison} the ${price} price.${ending}`;
+  };
+
+  // Shows the selected configuration in the TER model rows above the simulator.
+  const showConfiguration = (id: string) => {
+    const { mappings } = lotteryConfigurations.find((configuration) => configuration.id === id)!;
+    for (const [key, mapping] of Object.entries(mappings)) {
+      const cell = document.querySelector(`.ter-architecture [data-key="${key}"] .mapping`);
+      if (cell) cell.textContent = mapping;
+    }
+  };
+
+  const initLesson = async () => {
+    const root = document.querySelector<HTMLElement>("[data-lottery-lesson]");
+    if (!root || root.dataset.bound) return;
+    root.dataset.bound = "true";
+
+    const $ = <T extends HTMLElement>(selector: string, scope: ParentNode = root) => scope.querySelector<T>(selector)!;
+    const price = $<HTMLInputElement>("[data-price]");
+    const priceOutput = $<HTMLOutputElement>("[data-price-output]");
+    const jackpot = $<HTMLSelectElement>("[data-jackpot]");
+    const form = $<HTMLFormElement>("form");
+    const disclose = $<HTMLInputElement>("[data-disclose]");
+    const reset = $<HTMLButtonElement>("[data-reset]");
+    const status = $("[data-status]");
+    const presetSelect = $<HTMLSelectElement>("[data-preset]");
+    const chartBody = $("[data-chart-body]");
+    const chartTable = $("[data-chart-table]");
+    const controls: Element[] = [price, jackpot, disclose];
+    let revision = 0;
+    let edits = 0;
+    let latest: RunResponse | undefined;
+    let stale = false;
+    let preset = presetSelect.value;
+    // A restored form value may differ from the server-rendered default.
+    showConfiguration(preset);
+
+    const inputs = (): Inputs => ({
+      ticket_price: price.valueAsNumber,
+      jackpot: Number(jackpot.value),
+      odds_disclosed: disclose.checked,
+    });
+    const setInputs = (values: Inputs) => {
+      price.value = String(values.ticket_price);
+      priceOutput.value = money(values.ticket_price);
+      jackpot.value = String(values.jackpot);
+      disclose.checked = values.odds_disclosed;
+    };
+    const setStatus = (message: string, visible: boolean) => {
+      status.classList.toggle("sr-only", !visible);
+      status.textContent = message;
+    };
+    const reportFor = (result: RunResponse, id: string) => result.specifications.find((r) => r.id === id)!;
+    const announce = (result: RunResponse) =>
+      setStatus(`${TITLES[preset]}: Alex ${reportFor(result, preset).selected_action === "buy" ? "buys" : "skips"}.`, false);
+
+    const renderChoice = (report: Report, live: RunResponse | undefined) => {
+      $("[data-believed-odds]").textContent = live ? odds(report.believed_win_probability) : PENDING;
+      const choice = $("[data-choice]");
+      choice.hidden = !live;
+      choice.textContent = live ? (report.selected_action === "buy" ? "Buy the ticket" : "Skip the ticket") : PENDING;
+      $("[data-why]").textContent = live ? why(report, live) : "";
+    };
+
+    const renderOutcomes = (report: Report, live: RunResponse | undefined) => {
+      $("[data-outcomes-live]").hidden = !live;
+      $("[data-outcomes-pending]").hidden = Boolean(live);
+      if (!live) return;
+      $("[data-outcomes-caption]").textContent =
+        `Possible outcomes if Alex ${report.selected_action === "buy" ? "buys" : "skips"} the ${money(live.inputs.ticket_price)} ticket`;
+      $("[data-outcomes]").innerHTML = report.outcomes.map((outcome) =>
+        `<tr><th scope="row">${OUTCOME_LABELS[outcome.status] ?? outcome.status}</th><td>${odds(outcome.probability)}</td><td>${signed(outcome.net_return)}</td></tr>`,
+      ).join("");
+      $("[data-expected]").textContent = money(report.expected_net_return);
+      const note = $("[data-enjoyment-note]");
+      note.hidden = !report.entertainment_value;
+      note.textContent = report.entertainment_value
+        ? `The ${money(report.entertainment_value)} of enjoyment is part of Alex’s valuation, not money received, so it is not included here.`
+        : "";
+    };
+
+    const renderComparison = (live: RunResponse | undefined) => {
+      $("[data-compare-live]").hidden = !live;
+      $("[data-compare-pending]").hidden = Boolean(live);
+      if (!live) return;
+      $("[data-current-choices]").innerHTML = live.specifications.map((r) =>
+        `<li>${TITLES[r.id]}: <strong>${r.selected_action === "buy" ? "Buys" : "Skips"}</strong></li>`,
+      ).join("");
+      const { prices, choices } = live.price_sweep;
+      const first = prices[0];
+      const span = prices[prices.length - 1] - first + 1;
+      const at = (value: number) => `${((value - first + 0.5) / span) * 100}%`;
+      const current = live.inputs.ticket_price;
+      const rows = live.specifications.map((report) => {
+        const row = choices[report.id];
+        const buys = prices.filter((_, index) => row[index] === "buy");
+        const summary = buys.length === 0 ? "Skips at every price" : `Buys up to ${money(buys[buys.length - 1])}`;
+        const cells = row.map((action, index) =>
+          `<span class="cell${action === "buy" ? " is-buy" : ""}" title="${TITLES[report.id]} at ${money(prices[index])}: ${action === "buy" ? "buys" : "skips"}"></span>`,
+        ).join("");
+        return `<div class="chart-row"><p class="row-label">${TITLES[report.id]} <span>${summary}</span></p><div class="cells">${cells}</div></div>`;
+      }).join("");
+      const ticks = [1, 20, 40, 60]
+        .map((tick) => `<span class="tick" style="left:${at(tick)}">${money(tick)}</span>`).join("");
+      chartBody.innerHTML = `
+        <div class="chart-plot">${rows}
+          <div class="current-marker" style="left:${at(current)}"><span>${money(current)}</span></div>
+        </div>
+        <div class="chart-axis">${ticks}</div>`;
+      $("[data-chart-caption]").textContent =
+        `Choices at each ticket price with a ${money(live.inputs.jackpot)} jackpot. Actual chance ${live.inputs.odds_disclosed ? "told" : "not told"} to Alex. The marked line is the current price.`;
+      chartTable.innerHTML = `
+        <thead><tr><th scope="col">Price</th>${live.specifications.map((r) => `<th scope="col">${TITLES[r.id]}</th>`).join("")}</tr></thead>
+        <tbody>${prices.map((p, index) => `<tr${p === current ? ' class="is-current"' : ""}><th scope="row">${money(p)}</th>${live.specifications
+          .map((r) => `<td>${choices[r.id][index] === "buy" ? "Buys" : "Skips"}</td>`).join("")}</tr>`).join("")}</tbody>`;
+    };
+
+    // Values that depend on the inputs are never shown beside inputs they were not computed from.
+    const render = () => {
+      if (!latest) return;
+      const live = stale ? undefined : latest;
+      const report = reportFor(latest, preset);
+      renderChoice(report, live);
+      renderOutcomes(report, live);
+      renderComparison(live);
+    };
+
+    const run = async (request: Partial<Inputs>) => {
+      const startedAt = ++revision;
+      const editsAtStart = edits;
+      setStatus("Running…", true);
+      try {
+        const result = await runScenario<RunResponse>("lottery-tickets", request);
+        if (startedAt !== revision || !root.isConnected) return;
+        if (result.scenario_revision !== 1) throw new Error("Unsupported scenario revision.");
+        latest = result;
+        // Inputs edited while this ran stay pending until the next run.
+        stale = edits !== editsAtStart;
+        if (!stale) setInputs(result.inputs);
+        $("[data-actual-odds]").textContent = odds(result.actual_win_probability);
+        $("[data-provenance]").textContent = `Computed by TER ${result.ter_version} · scenario revision ${result.scenario_revision}.`;
+        render();
+        if (stale) setStatus("Inputs changed. Run the simulation to apply them.", true);
+        else announce(result);
+      } catch (error) {
+        if (startedAt !== revision || !root.isConnected) return;
+        // Never leave earlier results on screen as if they matched these inputs.
+        stale = true;
+        render();
+        const reason = error instanceof Error ? error.message : "Unknown error.";
+        setStatus(`Unable to run the simulation. ${reason}`, true);
+      }
+    };
+
+    // Changing a condition marks every input-dependent value pending until
+    // the simulation runs again: the production API is rate limited.
+    const edited = (event: Event) => {
+      if (!controls.includes(event.target as Element)) return;
+      priceOutput.value = money(price.valueAsNumber);
+      edits++;
+      if (!latest) return;
+      stale = true;
+      render();
+      setStatus("Inputs changed. Run the simulation to apply them.", true);
+    };
+    form.addEventListener("input", edited);
+    form.addEventListener("change", edited);
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      run(inputs());
+    });
+    reset.addEventListener("click", () => {
+      // Reset restores the conditions, not the explanation being explored.
+      form.reset();
+      presetSelect.value = preset;
+      priceOutput.value = money(price.valueAsNumber);
+      edits++;
+      run({});
+    });
+    // Every run reports all three configurations, so switching needs no new run.
+    presetSelect.addEventListener("change", () => {
+      preset = presetSelect.value;
+      showConfiguration(preset);
+      render();
+      if (latest && !stale) announce(latest);
+    });
+
+    await run({});
+  };
+
+  initLesson();
+  document.addEventListener("astro:page-load", initLesson);
+</script>
+
+<style>
+  /* Matches BasicAgentChoiceRunner's result label and outcome. */
+  .runner-label {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 650;
+  }
+
+  .runner-outcome {
+    display: grid;
+    gap: 0.25rem;
+    margin: 0.2rem 0 0;
+    overflow-wrap: anywhere;
+  }
+
+  .runner-why,
+  .runner-odds {
+    max-width: 960px;
+    margin: 0.5rem 0 0;
+    line-height: 1.55;
+  }
+
+  .runner-odds { color: var(--muted); }
+  .runner-odds strong { color: var(--ink); }
+
+  .runner-field output { color: var(--ink); }
+  .runner-field input[type="range"] { min-height: 3.25rem; padding: 0; border: 0; background: transparent; accent-color: var(--ink); }
+  .disclose-control { display: flex; grid-column: 1 / -1; align-items: center; gap: 0.6rem; min-height: 2.5rem; cursor: pointer; font-weight: 650; }
+  .disclose-control input { width: 1.2rem; height: 1.2rem; margin: 0; accent-color: var(--ink); }
+
+  .details-group { margin-top: 1.5rem; }
+  .details-group p { max-width: 960px; margin: 0.6rem 0 0; line-height: 1.55; }
+  .disclosure > p:first-of-type { margin-top: 0; }
+  .muted { color: var(--muted); }
+
+  .lesson-table { width: 100%; margin-top: 1rem; border-collapse: collapse; }
+  .lesson-table caption { margin-bottom: 0.5rem; color: var(--muted); text-align: left; }
+  .lesson-table th, .lesson-table td, .lesson-table :global(th), .lesson-table :global(td) { padding: 0.55rem 0.75rem 0.55rem 0; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  .lesson-table thead th, .lesson-table :global(thead th) { font-weight: 650; }
+  .lesson-table :global(tbody th) { font-weight: 600; }
+  [data-outcomes-live][hidden], [data-compare-live][hidden], [data-enjoyment-note][hidden], [data-choice][hidden] { display: none; }
+
+  .current-choices { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; margin: 0; padding: 0; list-style: none; }
+  .price-chart { margin: 1.25rem 0 0; }
+  .price-chart figcaption { color: var(--muted); }
+  .chart-legend { display: flex; gap: 1.25rem; margin: 0.75rem 0 0; padding: 0; list-style: none; }
+  .chart-legend li { display: flex; align-items: center; gap: 0.4rem; }
+  .swatch { width: 0.9rem; height: 0.9rem; border: 1px solid var(--muted); border-radius: 2px; }
+  .swatch.is-buy { border-color: var(--ink); background: var(--ink); }
+  .chart-body { margin-top: 2.25rem; }
+  .chart-body :global(.chart-plot) { position: relative; display: grid; gap: 1rem; }
+  .chart-body :global(.row-label) { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 1rem; margin: 0 0 0.4rem; font-weight: 650; }
+  .chart-body :global(.row-label span) { color: var(--muted); font-weight: 400; }
+  .chart-body :global(.cells) { display: grid; grid-template-columns: repeat(60, minmax(0, 1fr)); gap: 2px; }
+  .chart-body :global(.cell) { height: 1.75rem; border: 1px solid var(--line); border-radius: 2px; background: var(--bg); }
+  .chart-body :global(.cell.is-buy) { border-color: var(--ink); background: var(--ink); }
+  .chart-body :global(.current-marker) { position: absolute; top: -0.25rem; bottom: -0.25rem; width: 0; border-left: 2px solid var(--violet); pointer-events: none; }
+  .chart-body :global(.current-marker span) {
+    position: absolute;
+    top: -1.9rem;
+    transform: translateX(-50%);
+    padding: 0 0.4rem;
+    border-radius: 4px;
+    background: var(--violet);
+    color: #fff;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .chart-body :global(.chart-axis) { position: relative; height: 1.75rem; margin-top: 0.5rem; }
+  .chart-body :global(.tick) { position: absolute; transform: translateX(-50%); color: var(--muted); }
+  /* End labels align inward so they never extend past the chart. */
+  .chart-body :global(.tick:first-child) { transform: translateX(-0.5rem); }
+  .chart-body :global(.tick:last-child) { transform: translateX(calc(-100% + 0.5rem)); }
+  .chart-table { margin-top: 1rem; }
+  .chart-table > summary { cursor: pointer; font-weight: 650; }
+  .table-scroll { max-height: 22rem; overflow: auto; }
+  .chart-table :global(tr.is-current) { background: var(--surface-2); font-weight: 650; }
+
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
+
+  @media (max-width: 640px) {
+    .chart-body :global(.cell) { height: 1.4rem; }
+    .chart-body :global(.cells) { gap: 1px; }
+  }
+</style>

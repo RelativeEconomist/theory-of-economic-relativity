@@ -72,7 +72,7 @@ const systemOutcomeEquation = katex.renderToString(
 
   <ul class:list={["mapping-list", { compact }]} role="list">
     {rows.map((component) => (
-      <li class="mapping-row">
+      <li class="mapping-row" data-key={component.key}>
         <span class="term"><TerTerm component={component} /></span>
         <span class="mapping">{component.mapping}</span>
         {compact ? (
