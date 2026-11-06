@@ -4,8 +4,8 @@
  * belief, perceived option, valuation, choice, outcome distribution, and
  * price-chart cell comes from the Python scenario through /simulate
  * (research/adapters/lottery_tickets.py); this component only displays them.
- * The selector also swaps the TER model rows (TerArchitecture) to the
- * selected configuration.
+ * The selector also swaps the TER model rows (TerArchitecture) and the
+ * explanation named above them in the formal model to the selected configuration.
  */
 import "./runner.css";
 import { lotteryConfigurations } from "../../data/learn/lottery-tickets";
@@ -13,10 +13,9 @@ import { lotteryConfigurations } from "../../data/learn/lottery-tickets";
 const jackpots = [1_000_000, 2_000_000, 5_000_000, 10_000_000, 20_000_000, 50_000_000];
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 ---
-<section class="lottery-runner doc-section" data-lottery-lesson>
-  <h2 class="doc-heading">Simulator</h2>
-
+<div class="lottery-runner" data-lottery-lesson>
   <div class="runner-card">
+    <p class="runner-context">Alex has $50. The actual chance of winning stays at one in a million.</p>
     <form class="runner-form" novalidate>
       <div class="runner-values">
         <div class="runner-field">
@@ -96,7 +95,7 @@ const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD
       </div>
     </details>
   </div>
-</section>
+</div>
 
 <script>
   import { runScenario } from "./run-scenario";
@@ -129,12 +128,8 @@ const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD
     scenario_revision: number;
   };
 
-  // Short names for the chart, data table, and announcements.
-  const TITLES: Record<string, string> = {
-    alex_mistaken_odds: "Overestimates chances",
-    alex_entertainment_value: "Enjoys playing",
-    alex_habit: "Follows a routine",
-  };
+  // Short names for the chart, data table, announcements, and formal model.
+  const TITLES = Object.fromEntries(lotteryConfigurations.map(({ id, title }) => [id, title]));
   const OUTCOME_LABELS: Record<string, string> = { won: "Win", lost: "Lose", purchase_failed: "Purchase fails", skipped: "No purchase" };
   const PENDING = "—";
   const dollars = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 2 });
@@ -166,9 +161,11 @@ const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD
     return `Alex believes the expected payout is ${payout}, ${comparison} the ${price} price.${ending}`;
   };
 
-  // Shows the selected configuration in the TER model rows above the simulator.
+  // Shows the selected configuration in the formal model: its name and TER model rows.
   const showConfiguration = (id: string) => {
-    const { mappings } = lotteryConfigurations.find((configuration) => configuration.id === id)!;
+    const { title, mappings } = lotteryConfigurations.find((configuration) => configuration.id === id)!;
+    const explanation = document.querySelector("[data-lottery-explanation]");
+    if (explanation) explanation.textContent = `Explanation: ${title}`;
     for (const [key, mapping] of Object.entries(mappings)) {
       const cell = document.querySelector(`.ter-architecture [data-key="${key}"] .mapping`);
       if (cell) cell.textContent = mapping;

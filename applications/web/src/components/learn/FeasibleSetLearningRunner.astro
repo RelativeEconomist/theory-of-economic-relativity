@@ -7,33 +7,16 @@
  */
 import "./runner.css";
 ---
-<section class="learning-runner doc-section" data-learning-runner>
-  <h2 class="doc-heading">Simulator</h2>
-  <p class="lede">
-    Python runs the fixed Test 22 specification and returns both decision
-    points as recorded. There are no inputs to change.
-  </p>
-
+<div class="learning-runner" data-learning-runner>
   <div class="runner-card">
     <div role="status" aria-live="polite" aria-atomic="true">
-      <p class="runner-status" data-status>
-        Not run yet. The simulator needs JavaScript and the Python endpoint.
-      </p>
+      <p class="runner-status" data-status>Results have not loaded.</p>
       <div class="learning-output" data-output hidden>
-        <p class="learning-explanation">
-          Both actions are available throughout, but the agent initially
-          perceives only the ordinary action.
-        </p>
         <table class="learning-table" data-comparison></table>
-        <p class="learning-explanation">
-          <strong>What changed?</strong> After observing its first outcome,
-          the agent's update rule adds the better action to its perceived
-          feasible set.
-        </p>
       </div>
     </div>
   </div>
-</section>
+</div>
 
 <script>
   import { runScenario } from "./run-scenario";
@@ -108,7 +91,7 @@ import "./runner.css";
     const output = root.querySelector<HTMLElement>("[data-output]")!;
     const comparison = root.querySelector<HTMLElement>("[data-comparison]")!;
 
-    status.textContent = "Loading Test 22 from Python…";
+    status.textContent = "Loading…";
     try {
       const { action_values: values, periods } = await runScenario<RunResponse>(SCENARIO_ID, {});
       if (!values) {
@@ -131,23 +114,8 @@ import "./runner.css";
     display: none;
   }
 
-  .learning-explanation {
-    margin: 1rem 0 0;
-    font-size: 0.95rem;
-    line-height: 1.55;
-  }
-
-  .learning-explanation:first-child {
-    margin-top: 0;
-  }
-
-  .learning-explanation strong {
-    font-weight: 650;
-  }
-
   .learning-table {
     width: 100%;
-    margin-top: 0.75rem;
     table-layout: fixed;
     border-collapse: collapse;
     font-size: 0.95rem;

@@ -5,21 +5,23 @@
  */
 import type { TerComponentMapping } from "./scenarios";
 
-type Row = Omit<TerComponentMapping, "mapping">;
+// No treatment badges: the actual chance is fixed, and M changes only
+// through the disclosure checkbox.
+type Row = Omit<TerComponentMapping, "mapping" | "testTreatment">;
 type Key = TerComponentMapping["key"];
 
 // Canonical names and definitions, in Model 5.1 order followed by realization.
 const ROWS: Row[] = [
-  { key: "G", symbol: "G", name: "Objective", definition: "Result or condition that provides the reference for valuation when valuation is used.", testTreatment: "Fixed" },
-  { key: "M", symbol: "M", name: "Model of reality", definition: "The agent's model of reality, including information, beliefs, assumptions, expectations, and interpretations.", testTreatment: "Editable" },
-  { key: "F_hat", symbol: "F̂", name: "Perceived feasible set", definition: "Actions the agent perceives as available to attempt.", testTreatment: "Fixed" },
-  { key: "V", symbol: "V", name: "Valuation", definition: "Valuation of actions relative to the agent's objective.", testTreatment: "Fixed" },
-  { key: "H", symbol: "H", name: "Time horizon", definition: "Which future consequences the agent considers relevant to valuation.", testTreatment: "Fixed" },
-  { key: "D", symbol: "D", name: "Decision process", definition: "Process through which the agent selects among perceived feasible actions. It may condition directly on the model of reality and may use valuation when applicable.", testTreatment: "Fixed" },
-  { key: "C", symbol: "C", name: "Selected action", definition: "Action selected by the agent.", testTreatment: "Output" },
-  { key: "F", symbol: "F_t", name: "Objective feasible state of reality", definition: "The objectively realized conditions and constraints relevant when the selected action(s) at decision point t are realized. Not agent specific, and not an input to the decision process.", testTreatment: "Editable" },
-  { key: "R", symbol: "R", name: "Reality function", definition: "Maps the selected action(s) and the relevant objectively realized state F_t to the realized outcome; its arguments depend on model scope.", testTreatment: "Fixed" },
-  { key: "O", symbol: "O", name: "Realized outcome", definition: "Realized outcome associated with the selected action.", testTreatment: "Output" },
+  { key: "G", symbol: "G", name: "Objective", definition: "Result or condition that provides the reference for valuation when valuation is used." },
+  { key: "M", symbol: "M", name: "Model of reality", definition: "The agent's model of reality, including information, beliefs, assumptions, expectations, and interpretations." },
+  { key: "F_hat", symbol: "F̂", name: "Perceived feasible set", definition: "Actions the agent perceives as available to attempt." },
+  { key: "V", symbol: "V", name: "Valuation", definition: "Valuation of actions relative to the agent's objective." },
+  { key: "H", symbol: "H", name: "Time horizon", definition: "Which future consequences the agent considers relevant to valuation." },
+  { key: "D", symbol: "D", name: "Decision process", definition: "Process through which the agent selects among perceived feasible actions. It may condition directly on the model of reality and may use valuation when applicable." },
+  { key: "C", symbol: "C", name: "Selected action", definition: "Action selected by the agent." },
+  { key: "F", symbol: "F_t", name: "Objective feasible state of reality", definition: "The objectively realized conditions and constraints relevant when the selected action(s) at decision point t are realized. Not agent specific, and not an input to the decision process." },
+  { key: "R", symbol: "R", name: "Reality function", definition: "Maps the selected action(s) and the relevant objectively realized state F_t to the realized outcome; its arguments depend on model scope." },
+  { key: "O", symbol: "O", name: "Realized outcome", definition: "Realized outcome associated with the selected action." },
 ];
 
 const SHARED: Partial<Record<Key, string>> = {
@@ -40,6 +42,7 @@ const NOT_CONSULTED = "Not consulted by the routine.";
 export const lotteryConfigurations = [
   {
     id: "alex_mistaken_odds",
+    title: "Overestimates chances",
     reason: "He overestimates his chances",
     mappings: {
       ...SHARED,
@@ -51,6 +54,7 @@ export const lotteryConfigurations = [
   },
   {
     id: "alex_entertainment_value",
+    title: "Enjoys playing",
     reason: "He enjoys playing",
     mappings: {
       ...SHARED,
@@ -62,6 +66,7 @@ export const lotteryConfigurations = [
   },
   {
     id: "alex_habit",
+    title: "Follows a routine",
     reason: "He follows a routine",
     mappings: {
       ...SHARED,
@@ -72,7 +77,7 @@ export const lotteryConfigurations = [
       D: "Buy if the ticket is affordable and costs $30 or less. Otherwise skip.",
     },
   },
-] satisfies { id: string; reason: string; mappings: Partial<Record<Key, string>> }[];
+] satisfies { id: string; title: string; reason: string; mappings: Partial<Record<Key, string>> }[];
 
 /** TER model rows for one configuration, for TerArchitecture. */
 export const lotteryTerComponents = (id: string): TerComponentMapping[] => {

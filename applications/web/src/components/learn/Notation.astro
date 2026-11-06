@@ -1,0 +1,28 @@
+---
+/**
+ * Lesson text with inline TER notation. A symbol written in braces, e.g.
+ * "{V}" or "{F̂}", renders as notation in the same monospace treatment as the
+ * TER model's symbols, where the F̂ hat sits on its letter. Text without
+ * braces renders unchanged.
+ */
+import TerSymbol from "./TerSymbol.astro";
+
+interface Props {
+  text: string;
+}
+
+// Split keeps the captured symbol at every odd index.
+const parts = Astro.props.text.split(/\{([^{}]+)\}/);
+---
+{parts.map((part, index) =>
+  index % 2 === 0 ? part : <span class="ter-notation"><TerSymbol symbol={part} /></span>,
+)}
+
+<style>
+  .ter-notation {
+    font-family: ui-monospace, "SF Mono", "Menlo", monospace;
+    font-size: 0.95em;
+    font-weight: 650;
+    white-space: nowrap;
+  }
+</style>

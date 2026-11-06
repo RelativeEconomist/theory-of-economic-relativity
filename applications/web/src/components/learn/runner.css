@@ -1,8 +1,9 @@
 /*
  * Card, form, and result layout shared by the Learn simulators
  * (BasicAgentChoiceRunner, BoundedRationalityRunner,
- * AsymmetricInformationRunner, FeasibleSetLearningRunner). Fieldsets fill
- * the first column; Run and Reset sit at the bottom of the second.
+ * AsymmetricInformationRunner, FeasibleSetLearningRunner,
+ * LotteryTicketsLesson). Fieldsets fill the first column; Run and Reset sit
+ * at the bottom of the second.
  */
 .runner-card {
   margin-top: 2.5rem;
@@ -10,6 +11,15 @@
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: var(--surface);
+}
+
+/* Fixed facts the reader needs before changing the controls. */
+.runner-context {
+  max-width: 960px;
+  margin: 0 0 1.5rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.55;
 }
 
 .runner-form {

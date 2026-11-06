@@ -3,6 +3,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import PageHero from "../../components/PageHero.astro";
 import Button from "../../components/ui/Button.astro";
 import { scenarios } from "../../data/learn/scenarios";
+import { reproductions } from "../../data/reproductions/krugman-1980";
 ---
 <BaseLayout
   title="Learn — Theory of Economic Relativity"
@@ -38,6 +39,32 @@ import { scenarios } from "../../data/learn/scenarios";
       ))}
     </div>
   </div></section>
+  <section class="section-sm reproductions">
+    <div class="shell">
+      <h2 class="doc-heading" data-reveal>Reproductions</h2>
+      <p class="lede" data-reveal>
+        Published economic models reproduced in TER from their stated assumptions and checked against an independent mathematical benchmark.
+      </p>
+      <div class="scenario-grid reproduction-grid hairline-grid" role="list">
+        {reproductions.map((reproduction) => (
+          <a
+            href={`/reproductions/${reproduction.slug}/`}
+            class="scenario-card"
+            role="listitem"
+            data-reveal
+          >
+            <div class="scenario-card-top">
+              <span class="test-number">Status: {reproduction.status}</span>
+            </div>
+            <h3>{reproduction.title}</h3>
+            <p>{reproduction.summary}</p>
+            <p>{reproduction.evidence}</p>
+            <span class="category">View reproduction →</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
   <section class="section-sm">
     <div class="shell" data-reveal>
   <p class="eyebrow">For researchers and programmers</p>
@@ -142,6 +169,15 @@ import { scenarios } from "../../data/learn/scenarios";
     font-weight: 650;
     letter-spacing: 0.06em;
     text-transform: uppercase;
+  }
+
+  .reproduction-grid {
+    grid-template-columns: 1fr;
+    margin-top: 2rem;
+  }
+
+  .reproduction-grid .scenario-card p {
+    max-width: 46rem;
   }
 
   @media (max-width: 720px) {

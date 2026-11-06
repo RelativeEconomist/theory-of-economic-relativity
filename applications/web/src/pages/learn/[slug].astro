@@ -1,5 +1,6 @@
 ---
 import PokemonTradeLesson from "../../components/learn/PokemonTradeLesson.astro";
+import CollectionBinder from "../../components/learn/CollectionBinder.astro";
 import LotteryTicketsLesson from "../../components/learn/LotteryTicketsLesson.astro";
 import LotteryTicketsReference from "../../components/learn/LotteryTicketsReference.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
@@ -10,12 +11,14 @@ import ScenarioAssumptions from "../../components/learn/ScenarioAssumptions.astr
 import ScenarioHypotheses from "../../components/learn/ScenarioHypotheses.astro";
 import ScenarioResults from "../../components/learn/ScenarioResults.astro";
 import ScenarioReference from "../../components/learn/ScenarioReference.astro";
+import Notation from "../../components/learn/Notation.astro";
 import BasicAgentChoiceRunner from "../../components/learn/BasicAgentChoiceRunner.astro";
 import BoundedRationalityRunner from "../../components/learn/BoundedRationalityRunner.astro";
 import AsymmetricInformationRunner from "../../components/learn/AsymmetricInformationRunner.astro";
 import FeasibleSetLearningRunner from "../../components/learn/FeasibleSetLearningRunner.astro";
 import { scenarios } from "../../data/learn/scenarios";
 import type { Scenario } from "../../data/learn/scenarios";
+import { lotteryConfigurations } from "../../data/learn/lottery-tickets";
 
 export async function getStaticPaths() {
   return scenarios.map((scenario) => ({
@@ -36,10 +39,48 @@ const nextScenario =
     ? scenarios[scenarioIndex + 1]
     : undefined;
 
+// Each lesson's scripted activity. Fixed demonstrations show their
+// workedExample instead; every lesson shares the layout around it.
+const activities: Partial<Record<string, typeof BasicAgentChoiceRunner>> = {
+  "basic-agent-choice": BasicAgentChoiceRunner,
+  "bounded-rationality": BoundedRationalityRunner,
+  "pokemon-card-choice": PokemonTradeLesson,
+  "lottery-tickets": LotteryTicketsLesson,
+  "asymmetric-information": AsymmetricInformationRunner,
+  "feasible-set-learning": FeasibleSetLearningRunner,
+};
+const Activity = activities[scenario.slug];
+const isPokemon = scenario.slug === "pokemon-card-choice";
+const isLottery = scenario.slug === "lottery-tickets";
+// Pokémon reveals its takeaway and TER interpretation after the second choice.
+const revealsAfterActivity = isPokemon;
 // Scenarios with a runner pair it with the compact model view.
 const isInteractive = scenario.runner !== undefined;
 // Multi-agent scenarios also show the Model 5.3 system outcome equation.
 const isMultiAgent = scenario.slug === "asymmetric-information";
+const modelParagraphs = [scenario.scope, ...(scenario.modelDetails ?? [])].filter(
+  (paragraph): paragraph is string => Boolean(paragraph),
+);
+// Model details link this phrase to the model in the theory.
+const MODEL_LINK = "TER Model 5.1";
+// A formal model's opening sentence also links later models it names.
+const FORMAL_LINKS: Record<string, string> = {
+  [MODEL_LINK]: "/theory/#51-agent-decision-model",
+  "Model 5.2": "/theory/#52-action-to-outcome-model",
+  "Model 5.3": "/theory/#53-multi-agent-model",
+  "Model 5.5": "/theory/#55-dynamic-feedback-model",
+};
+// Split keeps each linked phrase at every odd index.
+const splitFormalLinks = (text: string) =>
+  text.split(new RegExp(`(${Object.keys(FORMAL_LINKS).join("|").replaceAll(".", "\\.")})`));
+// The formal model is visible after the takeaway; the disclosures hold
+// assumptions and scope, then implementation and verification references.
+const formalModel = scenario.formalModel;
+const showEquations = formalModel.equations !== false;
+// Text around each MODEL_LINK, which the markup renders as a link.
+const splitModelLink = (text: string) => text.split(MODEL_LINK);
+const takeawayLink = scenario.takeawayLink;
+const splitTakeawayLink = (text: string) => (takeawayLink ? text.split(takeawayLink.text) : [text]);
 ---
 <BaseLayout
   title={`${scenario.title} — Learn TER`}
@@ -50,63 +91,98 @@ const isMultiAgent = scenario.slug === "asymmetric-information";
       <ScenarioSelector slot="selector" currentSlug={scenario.slug} />
     </ScenarioHeader>
 
-    {scenario.slug === "pokemon-card-choice" ? <><PokemonTradeLesson /><ScenarioReference scenario={scenario} /></> : <>
-    <section class="scenario-overview doc-section">
-      <h2 class="doc-heading">Scenario</h2>
-      <dl class="overview-list">
-        {scenario.economicQuestion && (
-          <div>
-            <dt>Question</dt>
-            <dd>{scenario.economicQuestion}</dd>
-          </div>
-        )}
+    <section class="scenario-introduction doc-section">
+      <div class:list={{ illustrated: isPokemon }}>
         <div>
-          <dt>Scenario</dt>
-          <dd>
-            {Array.isArray(scenario.context)
-              ? scenario.context.map((paragraph) => <p>{paragraph}</p>)
-              : scenario.context ?? scenario.summary}
-          </dd>
+          {scenario.introduction.map((paragraph) => <p class="lede">{paragraph}</p>)}
         </div>
-        {scenario.scope && (
-          <div>
-            <dt>Scope</dt>
-            <dd>{scenario.scope}</dd>
+        {isPokemon && (
+          <div class="illustration">
+            <CollectionBinder label="A binder page with one empty slot, beside the card your friend offers to fill it." />
           </div>
         )}
-      </dl>
+      </div>
     </section>
 
-    {scenario.assumptions && <ScenarioAssumptions assumptions={scenario.assumptions} />}
+    {scenario.configuration && (
+      <section class="scenario-configuration doc-section">
+        <h2 class="doc-heading">TER configuration</h2>
+        <ScenarioResults table={scenario.configuration.table} fit />
+        <p class="body-text"><Notation text={scenario.configuration.note} /></p>
+      </section>
+    )}
 
-    {scenario.slug === "basic-agent-choice" && <BasicAgentChoiceRunner />}
-    {scenario.slug === "bounded-rationality" && <BoundedRationalityRunner />}
-    {scenario.slug === "asymmetric-information" && <AsymmetricInformationRunner />}
-    {scenario.slug === "feasible-set-learning" && <FeasibleSetLearningRunner />}
-    {scenario.slug === "lottery-tickets" && <LotteryTicketsLesson />}
-
-    <section class="scenario-interpretation doc-section">
-      <h2 class="doc-heading">Interpretation</h2>
-      {[scenario.interpretation ?? []].flat().map((paragraph) => <p class="lede">{paragraph}</p>)}
-      {scenario.terNote && <p class="ter-note">{scenario.terNote}</p>}
-      {scenario.hypotheses && <ScenarioHypotheses hypotheses={scenario.hypotheses} />}
-      {(scenario.results || scenario.resultsTable) && (
-        <ScenarioResults results={scenario.results} table={scenario.resultsTable} />
+    <section class="scenario-activity doc-section">
+      <h2 class="doc-heading" id="activity-heading" tabindex="-1">{scenario.activityHeading}</h2>
+      {scenario.instruction && <p class="lede">{scenario.instruction}</p>}
+      {Activity && <noscript><p class="script-required">Enable JavaScript to load this example.</p></noscript>}
+      {Activity ? <Activity /> : scenario.workedExample && (
+        <>
+          <ScenarioResults table={scenario.workedExample.table} />
+          {scenario.workedExample.note && <p class="ter-note">{scenario.workedExample.note}</p>}
+        </>
       )}
     </section>
 
+    <section class="scenario-interpretation doc-section" data-lesson-takeaway hidden={revealsAfterActivity}>
+      <h2 class="doc-heading">What this shows</h2>
+      {scenario.takeaway.map((paragraph) => (
+        <p class="lede">
+          {splitTakeawayLink(paragraph).map((part, index) => (
+            <>{index > 0 && takeawayLink && <a href={takeawayLink.href}>{takeawayLink.text}</a>}<Notation text={part} /></>
+          ))}
+        </p>
+      ))}
+    </section>
+
     {scenario.terComponents && (
-      <TerArchitecture
-        components={scenario.terComponents}
-        compact={isInteractive}
-        multiAgent={isMultiAgent}
-      />
+      <section class="scenario-formal doc-section" data-formal hidden={revealsAfterActivity}>
+        <h2 class="doc-heading" id="formal-heading" tabindex="-1">{formalModel.heading ?? "Formal model"}</h2>
+        <p class="body-text">
+          {splitFormalLinks(formalModel.introduction).map((part, index) =>
+            index % 2 === 1 ? <a href={FORMAL_LINKS[part]}>{part}</a> : part,
+          )}
+        </p>
+        {showEquations && (
+          <TerArchitecture components={scenario.terComponents} part="equations" multiAgent={isMultiAgent} agentOutcome={formalModel.outcomeModel} />
+        )}
+        {formalModel.explanation.map((paragraph) => <p class="body-text"><Notation text={paragraph} /></p>)}
+        {/* LotteryTicketsLesson keeps this label and the mapping on the selected explanation. */}
+        {isLottery && <p class="body-text" data-lottery-explanation>Explanation: {lotteryConfigurations[0].title}</p>}
+        <TerArchitecture components={scenario.terComponents} part="mapping" compact={isInteractive} />
+        <p class="body-text">{formalModel.closing}</p>
+      </section>
     )}
 
-    <ScenarioReference scenario={scenario}>
-      {scenario.slug === "lottery-tickets" && <LotteryTicketsReference />}
+    <ScenarioReference scenario={scenario} summary="Implementation and verification">
+      <Fragment slot="verification">
+        {isLottery && <LotteryTicketsReference />}
+        {scenario.referenceResults && (
+          <>
+            <ScenarioResults
+              heading={scenario.referenceResults.heading}
+              intro={scenario.referenceResults.intro}
+              table={scenario.referenceResults.table}
+              results={scenario.referenceResults.results}
+            />
+            {scenario.referenceResults.checks && <ScenarioHypotheses hypotheses={scenario.referenceResults.checks} />}
+          </>
+        )}
+        {scenario.hypotheses && <ScenarioHypotheses heading="Checks in this example" hypotheses={scenario.hypotheses} />}
+      </Fragment>
+      <details class="disclosure model-details" data-model-details>
+        <summary>Assumptions and scope</summary>
+        {modelParagraphs.map((paragraph) => (
+          <p class="ter-note">
+            {splitModelLink(paragraph).map((part, index) => (
+              <>{index > 0 && <a href="/theory/#51-agent-decision-model">{MODEL_LINK}</a>}<Notation text={part} /></>
+            ))}
+          </p>
+        ))}
+        {scenario.terNote && <p class="ter-note">{scenario.terNote}</p>}
+        {scenario.assumptions && <ScenarioAssumptions assumptions={scenario.assumptions} />}
+      </details>
     </ScenarioReference>
-    </>}
 
     <section class="section-sm scenario-nav doc-section">
       <div class="scenario-nav-links hairline-grid">
@@ -143,47 +219,31 @@ const isMultiAgent = scenario.slug === "asymmetric-information";
 </BaseLayout>
 
 <style>
-  .overview-list {
-    margin: 2rem 0 0;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .overview-list > div {
-    display: grid;
-    grid-template-columns: 7rem 1fr;
-    align-items: baseline;
-    gap: 1rem;
-    padding: 0.9rem 0;
-    border-top: 1px solid var(--line);
-  }
-
-  .overview-list dt {
-    color: var(--muted);
-    font-size: 0.68rem;
-    font-weight: 650;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .overview-list dd {
-    max-width: 960px;
-    margin: 0;
-    font-size: 1.05rem;
-    line-height: 1.55;
-    text-wrap: pretty;
-  }
-
-  .overview-list dd p {
-    margin: 0;
-  }
-
-  .overview-list dd p + p {
-    margin-top: 0.75rem;
-  }
-
   .scenario-interpretation .lede {
     max-width: 960px;
     margin-top: 1rem;
+  }
+
+  /* Artwork sits beside the introduction (PokemonTradeLesson's layout). */
+  .illustrated {
+    display: grid;
+    grid-template-columns: minmax(0, 46rem) 15rem;
+    gap: 2.5rem;
+    align-items: center;
+  }
+
+  .illustrated > div {
+    min-width: 0;
+  }
+
+  #activity-heading:focus:not(:focus-visible),
+  #formal-heading:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  .script-required {
+    margin: 1.5rem 0 0;
+    color: var(--muted);
   }
 
   .ter-note {
@@ -192,6 +252,38 @@ const isMultiAgent = scenario.slug === "asymmetric-information";
     color: var(--muted);
     font-size: 0.95rem;
     line-height: 1.55;
+  }
+
+  .model-details > summary + .ter-note {
+    margin-top: 0;
+  }
+
+  /* Configuration and formal model text: standard body copy, not lede. */
+  .body-text {
+    max-width: 960px;
+    margin: 1rem 0 0;
+  }
+
+  .scenario-formal > .body-text:first-of-type {
+    margin-top: 1.5rem;
+  }
+
+  .scenario-formal :global(.equation) {
+    margin-top: 1.5rem;
+  }
+
+  .scenario-interpretation a,
+  .scenario-formal a,
+  .model-details a {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 3px;
+    text-underline-offset: 3px;
+  }
+
+  /* An equation that opens Model details sits under the summary. */
+  .model-details > summary + :global(.ter-architecture) > :global(.equation:first-child) {
+    margin-top: 0;
   }
 
   .scenario-nav {
@@ -245,12 +337,18 @@ const isMultiAgent = scenario.slug === "asymmetric-information";
     text-align: right;
   }
 
-  @media (max-width: 640px) {
-    .overview-list > div {
-      grid-template-columns: 1fr;
-      gap: 0.35rem;
+  @media (max-width: 720px) {
+    .illustrated {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1.25rem;
     }
 
+    .illustration {
+      width: min(100%, 12rem);
+    }
+  }
+
+  @media (max-width: 640px) {
     .scenario-nav-links {
       grid-template-columns: 1fr;
     }

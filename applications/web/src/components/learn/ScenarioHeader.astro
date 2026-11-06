@@ -6,11 +6,15 @@ interface Props {
 }
 
 const { scenario } = Astro.props;
+// A source label the title already repeats, as in "Pokémon: Trade or sell?", is left out.
+const sourceLabel = scenario.sourceLabel && !scenario.title.includes(scenario.sourceLabel)
+  ? scenario.sourceLabel
+  : undefined;
 ---
 <header class="scenario-header">
   <div class="scenario-header-top">
     <p class="eyebrow">
-      {scenario.sourceLabel && <span>{scenario.sourceLabel}</span>}
+      {sourceLabel && <span>{sourceLabel}</span>}
       <span>{scenario.category}</span>
     </p>
     <slot name="selector" />

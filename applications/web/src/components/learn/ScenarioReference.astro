@@ -1,61 +1,55 @@
 ---
-/** Collapsed reference material: configuration, implementation, and theory links. */
+/**
+ * The lesson's collapsed reference material: its slotted Model details, then
+ * one disclosure with the implementation mapping, source and test links, and
+ * theory links.
+ */
 import type { Scenario } from "../../data/learn/scenarios";
 
 interface Props {
   scenario: Scenario;
+  /** Label of the implementation disclosure. */
+  summary?: string;
 }
 
-const { scenario } = Astro.props;
-const sourceUrl = `https://github.com/RelativeEconomist/theory-of-economic-relativity/blob/main/${scenario.sourcePath}`;
+const { scenario, summary = "Implementation and references" } = Astro.props;
+const githubUrl = (path: string) =>
+  `https://github.com/RelativeEconomist/theory-of-economic-relativity/blob/main/${path}`;
 ---
 <section class="scenario-reference doc-section">
-  <h2 class="doc-heading">Deeper reference</h2>
-
   <div class="reference-list">
     <slot />
-    {scenario.configuration && (
-      <details class="disclosure">
-        <summary>Test configuration</summary>
-        <dl class="field-grid hairline-grid hairline-grid-cols-2">
-          {scenario.configuration.map((field) => (
-            <div>
-              <dt>{field.label}</dt>
-              <dd>{field.value}</dd>
-            </div>
-          ))}
-        </dl>
-      </details>
-    )}
-
-    {(scenario.implementationMapping || scenario.sourcePath) && (
-      <details class="disclosure">
-        <summary>Implementation and source</summary>
-        {scenario.implementationMapping && (
-          <>
-            <p class="reference-note">Python fields in the scenario module and the TER variable each specifies.</p>
-            <dl class="field-grid hairline-grid hairline-grid-cols-2">
-              {scenario.implementationMapping.map((field) => (
-                <div>
-                  <dt><code>{field.label}</code></dt>
-                  <dd>{field.value}</dd>
-                </div>
-              ))}
-            </dl>
-          </>
-        )}
-        {scenario.sourcePath && (
-          <p class="scenario-source">
-            <a href={sourceUrl} target="_blank" rel="noreferrer">View executable source on GitHub ↗</a>
-            <code>{scenario.sourcePath}</code>
-          </p>
-        )}
-      </details>
-    )}
 
     <details class="disclosure">
-      <summary>Theory reference</summary>
-      <p class="reference-note">
+      <summary>{summary}</summary>
+      {scenario.implementationNote && <p class="reference-note implementation-note">{scenario.implementationNote}</p>}
+      {scenario.implementationMapping && (
+        <>
+          <p class="reference-note">Python fields in the scenario module and the TER variable each specifies.</p>
+          <dl class="field-grid hairline-grid hairline-grid-cols-2">
+            {scenario.implementationMapping.map((field) => (
+              <div>
+                <dt><code>{field.label}</code></dt>
+                <dd>{field.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </>
+      )}
+      {scenario.sourcePath && (
+        <p class="scenario-source">
+          <a href={githubUrl(scenario.sourcePath)} target="_blank" rel="noreferrer">View executable source on GitHub ↗</a>
+          <code>{scenario.sourcePath}</code>
+        </p>
+      )}
+      {scenario.testPath && (
+        <p class="scenario-source">
+          <a href={githubUrl(scenario.testPath)} target="_blank" rel="noreferrer">View the tests on GitHub ↗</a>
+          <code>{scenario.testPath}</code>
+        </p>
+      )}
+      <slot name="verification" />
+      <p class="reference-note reference-theory">
         Variables are defined in{" "}
         <a href="/theory/#3-core-definitions">Section 3</a>{" "}
         and models in{" "}
@@ -84,6 +78,24 @@ const sourceUrl = `https://github.com/RelativeEconomist/theory-of-economic-relat
     text-decoration-color: var(--accent);
     text-decoration-thickness: 3px;
     text-underline-offset: 3px;
+  }
+
+  .reference-theory {
+    margin-top: 1.5rem;
+  }
+
+  /* Whichever item opens the disclosure sits directly under its summary. */
+  .implementation-note + .reference-theory {
+    margin-top: 1rem;
+  }
+
+  summary + .reference-theory,
+  summary + .scenario-source {
+    margin-top: 0;
+  }
+
+  .scenario-source + .scenario-source {
+    margin-top: 0.75rem;
   }
 
   .field-grid {
