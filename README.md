@@ -2,11 +2,11 @@
 
 > **Economic outcomes emerge from agent decisions interacting with reality.**
 
-The **Theory of Economic Relativity (TER)** is an open, testable economic theory and analytical framework for studying how agent decisions, interactions, constraints, and realized outcomes combine to produce economic behavior and change over time.
+The **Theory of Economic Relativity (TER)** is an open, testable economic theory and framework for studying how agent decisions, interactions, constraints, and realized outcomes combine to produce economic behavior and change over time.
 
 At its core, TER asks a simple question: **can many economic phenomena be understood as different configurations of a common agent centered architecture?** Agents act in relation to objectives, make decisions using the information and possibilities they perceive, encounter reality and other agents, and experience outcomes that may change future decisions.
 
-TER builds on established economics rather than claiming its underlying mechanisms are new. Its contribution is to organize those mechanisms within a shared, open, versioned framework for specification, testing, and reproduction.
+TER builds on established economics rather than claiming its underlying mechanisms are new. Its contribution is to organize those mechanisms within a shared, open, framework.
 
 > **Many economic phenomena traditionally described through separate models and theories can be understood as different configurations and dynamics of a common agent centered economic architecture.**
 
