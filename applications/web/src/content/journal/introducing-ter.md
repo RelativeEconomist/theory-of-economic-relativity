@@ -2,7 +2,7 @@
 title: "Introducing the Theory of Economic Relativity"
 description: "An open research initiative for making economic models more accessible, explicit, and reproducible."
 author: "Relative Economist"
-publishedAt: 2026-11-05
+publishedAt: 2026-11-17
 cover:
   src: "./images/introducing-ter.png"
   alt: "TER logo beside a triangular network mesh with colored nodes."
