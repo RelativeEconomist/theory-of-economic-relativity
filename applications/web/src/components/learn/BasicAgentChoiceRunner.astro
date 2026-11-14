@@ -13,38 +13,34 @@ const actions = [
   { id: "coffee_c", label: "Coffee C" },
 ];
 ---
-<section class="agent-choice-runner doc-section" data-agent-choice-runner>
-  <h2 class="doc-heading">Simulator</h2>
-  <p class="lede">Set V, the value of each coffee, and run the scenario in Python.</p>
-
+<div class="agent-choice-runner" data-agent-choice-runner>
   <div class="runner-card">
     <form class="runner-form">
       <fieldset class="runner-values">
-        <legend><span class="runner-symbol">V</span> Valuation: value of each coffee</legend>
+        <legend>Value scores</legend>
         {actions.map((action) => (
           <div class="runner-field">
-            <label for={`value-${action.id}`}>V({action.label})</label>
+            <label for={`value-${action.id}`}>{action.label}</label>
             <input id={`value-${action.id}`} name={action.id} data-label={action.label} type="number" step="any" />
           </div>
         ))}
       </fieldset>
       <div class="runner-buttons">
         <button class="button button-primary" type="submit" disabled>Run</button>
-        <button class="button button-ghost" type="button" data-reset disabled>Reset to defaults</button>
+        <button class="button button-ghost" type="button" data-reset disabled>Reset</button>
       </div>
     </form>
 
     <div class="runner-result">
-      <p class="runner-label">Selected action</p>
-      <p class="runner-outcome" role="status" aria-live="polite" aria-atomic="true">
-        <span class="runner-selected" data-selected-action hidden></span>
-        <span class="runner-status" data-status>
-          Not run yet. The simulator needs JavaScript and the Python endpoint.
-        </span>
-      </p>
+      <p class="runner-label">Agent’s choice</p>
+      <div class="runner-outcome" role="status" aria-live="polite" aria-atomic="true">
+        <p class="runner-selected" data-selected-action hidden></p>
+        <p class="runner-status" data-explanation hidden></p>
+        <p class="runner-status" data-status>Results have not loaded.</p>
+      </div>
     </div>
   </div>
-</section>
+</div>
 
 <script>
   import { runScenario } from "./run-scenario";
@@ -66,23 +62,40 @@ const actions = [
     const buttons = [...form.querySelectorAll<HTMLButtonElement>("button")];
     const resetButton = form.querySelector<HTMLButtonElement>("[data-reset]")!;
     const selected = root.querySelector<HTMLElement>("[data-selected-action]")!;
+    const explanation = root.querySelector<HTMLElement>("[data-explanation]")!;
     const status = root.querySelector<HTMLElement>("[data-status]")!;
     const labelFor = (action: string) =>
       inputs.find((input) => input.name === action)?.dataset.label ?? action;
+
+    // Explains Python's choice from the values it returned, listed in its
+    // perceived-feasible-set order (A, C, B); the choice itself is Python's.
+    const explain = ({ selected_action, action_values }: RunResponse) => {
+      const value = action_values[selected_action];
+      const tied = Object.keys(action_values).filter((action) => action_values[action] === value);
+      if (tied.length === 1) return `Its score of ${value} is the highest.`;
+      const selectedCoffee = labelFor(selected_action);
+      if (tied.length === inputs.length) {
+        return `All three coffees have the same score. The rule selects ${selectedCoffee} first in the option order.`;
+      }
+      const [coffeeX, coffeeY] = tied.map(labelFor);
+      return `${coffeeX} and ${coffeeY} share the highest score of ${value}. The rule selects ${selectedCoffee} first in the option order.`;
+    };
 
     // Inputs stay editable throughout; only the buttons wait for Python.
     const show = async (scenarioInputs: object, pendingMessage: string) => {
       for (const button of buttons) button.disabled = true;
       selected.hidden = true;
+      explanation.hidden = true;
       status.hidden = false;
       status.textContent = pendingMessage;
       try {
         const result = await runScenario<RunResponse>(SCENARIO_ID, scenarioInputs);
         for (const input of inputs) input.value = String(result.action_values[input.name]);
-        selected.textContent =
-          `${labelFor(result.selected_action)} · V = ${result.action_values[result.selected_action]}`;
+        selected.textContent = labelFor(result.selected_action);
+        explanation.textContent = explain(result);
         status.hidden = true;
         selected.hidden = false;
+        explanation.hidden = false;
       } catch (error) {
         status.textContent = `Error: ${(error as Error).message}`;
       } finally {
@@ -96,15 +109,15 @@ const actions = [
       const action_values = Object.fromEntries(
         inputs.map((input) => [input.name, input.valueAsNumber]),
       );
-      show({ action_values }, "Running in Python…");
+      show({ action_values }, "Running…");
     });
 
     // With empty inputs, Python runs its own defaults.
     resetButton.addEventListener("click", () =>
-      show({}, "Resetting to Python defaults…"),
+      show({}, "Resetting…"),
     );
 
-    await show({}, "Loading Python defaults…");
+    await show({}, "Loading…");
   };
   initRunner();
   document.addEventListener("astro:page-load", initRunner);
@@ -121,5 +134,13 @@ const actions = [
   .runner-outcome {
     margin: 0.2rem 0 0;
     overflow-wrap: anywhere;
+  }
+
+  .runner-outcome > p {
+    margin: 0;
+  }
+
+  .runner-selected + .runner-status {
+    margin-top: 0.35rem;
   }
 </style>

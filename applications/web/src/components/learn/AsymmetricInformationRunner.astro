@@ -8,19 +8,17 @@
  */
 import "./runner.css";
 ---
-<section class="asymmetric-runner doc-section" data-asymmetric-runner>
-  <h2 class="doc-heading">Simulator</h2>
-  <p class="lede">
-    Sellers know their own car's quality; buyers may not. Choose what the
-    offered price reflects and run the market in Python. Each seller weighs
-    the price in its M<sub>i</sub> against its reservation value, and all six
-    selected actions meet the same F<sub>t</sub> through one R.
-  </p>
-
+<div class="asymmetric-runner" data-asymmetric-runner>
   <div class="runner-card">
+    <p class="runner-context">
+      High quality cars are valued at 10, and their sellers require at least 8
+      to sell. Low quality cars are valued at 4, and their sellers require at
+      least 2. Changing the believed share does not change the actual mix of
+      cars.
+    </p>
     <form class="runner-form">
       <fieldset class="runner-values">
-        <legend><span class="runner-symbol">M</span> Information in the offered price</legend>
+        <legend>Information in the offered price</legend>
         <div class="runner-field">
           <label for="pricing">Pricing</label>
           <select id="pricing" data-pricing>
@@ -36,22 +34,18 @@ import "./runner.css";
 
       <div class="runner-buttons">
         <button class="button button-primary" type="submit" disabled>Run</button>
-        <button class="button button-ghost" type="button" data-reset disabled>Reset to defaults</button>
+        <button class="button button-ghost" type="button" data-reset disabled>Reset</button>
       </div>
     </form>
 
     <div class="runner-result" role="status" aria-live="polite" aria-atomic="true">
-      <p class="runner-status" data-status>
-        Not run yet. The simulator needs JavaScript and the Python endpoint.
-      </p>
+      <p class="runner-status" data-status>Results have not loaded.</p>
       <div class="market-output" data-output hidden>
         <p class="market-information" data-information></p>
 
         <p class="seller-explanation">
-          Offered price is what buyers offer. Reservation value is the minimum
-          price at which selling is worthwhile relative to holding. Python returns
-          the gain from selling: the seller sells when it is zero or positive
-          (including ties), otherwise holds.
+          A seller chooses to sell when the offer meets or exceeds its
+          reservation value: the minimum price at which it is willing to sell.
         </p>
         <table class="seller-table">
           <thead>
@@ -60,7 +54,7 @@ import "./runner.css";
               <th scope="col">Quality</th>
               <th scope="col">Offered price</th>
               <th scope="col">Reservation value</th>
-              <th scope="col">Gain from selling</th>
+              <th scope="col">Value of selling vs holding</th>
               <th scope="col">Decision</th>
             </tr>
           </thead>
@@ -70,14 +64,8 @@ import "./runner.css";
         <dl class="system-outcome">
           <dt>R(C<sub>1</sub>, …, C<sub>6</sub>, F<sub>t</sub>) → O<sub>t</sub></dt>
           <dd class="outcome-summaries">
-            <div>
-              <strong>Sold</strong>
-              <p data-sold></p>
-            </div>
-            <div>
-              <strong>Held</strong>
-              <p data-held></p>
-            </div>
+            <strong>Sold</strong>
+            <p data-sold></p>
           </dd>
         </dl>
         <p class="market-note">
@@ -88,7 +76,7 @@ import "./runner.css";
       </div>
     </div>
   </div>
-</section>
+</div>
 
 <script>
   import { runScenario } from "./run-scenario";
@@ -144,7 +132,6 @@ import "./runner.css";
     const information = root.querySelector<HTMLElement>("[data-information]")!;
     const sellerRows = root.querySelector<HTMLElement>("[data-sellers]")!;
     const soldSummary = root.querySelector<HTMLElement>("[data-sold]")!;
-    const heldSummary = root.querySelector<HTMLElement>("[data-held]")!;
     const interpretation = root.querySelector<HTMLElement>("[data-interpretation]")!;
 
     // The believed share sets the pooled price only.
@@ -174,7 +161,7 @@ import "./runner.css";
         cell("Quality", capitalize(seller.actual_quality)),
         cell("Offered price", price),
         cell("Reservation value", number.format(seller.reservation_value)),
-        cell("Gain from selling", sell),
+        cell("Value of selling vs holding", sell),
         cell("Decision", capitalize(seller.selected_action), "seller-action"),
       );
       return row;
@@ -197,14 +184,20 @@ import "./runner.css";
       return reasons.join(" ");
     };
 
+    // Each request and each input edit takes a new revision. A response or
+    // error updates the page only while its revision is still current.
+    let revision = 0;
+
     // Inputs stay editable throughout; only the buttons wait for Python.
     const show = async (scenarioInputs: object, pendingMessage: string) => {
+      const current = ++revision;
       for (const button of buttons) button.disabled = true;
       output.hidden = true;
       status.hidden = false;
       status.textContent = pendingMessage;
       try {
         const result = await runScenario<RunResponse>(SCENARIO_ID, scenarioInputs);
+        if (current !== revision) return;
         pricingSelect.value = result.pricing;
         if (result.believed_share_high !== undefined) {
           shareInput.value = String(result.believed_share_high);
@@ -213,28 +206,35 @@ import "./runner.css";
         information.textContent = describeInformation(result);
         sellerRows.replaceChildren(...result.sellers.map(sellerRow));
         const { sold_high, sold_low, total_sold } = result.system_outcome;
-        const held = result.sellers.filter((seller) => seller.selected_action === "hold");
         soldSummary.textContent =
           `Total: ${total_sold} · High-quality: ${sold_high} · Low-quality: ${sold_low}`;
-        heldSummary.textContent =
-          `Total: ${held.length} · High-quality: ${held.filter((seller) => seller.actual_quality === "high").length}` +
-          ` · Low-quality: ${held.filter((seller) => seller.actual_quality === "low").length}`;
         interpretation.textContent = describeParticipation(result);
         status.hidden = true;
         output.hidden = false;
       } catch (error) {
+        if (current !== revision) return;
         status.textContent = `Error: ${(error as Error).message}`;
       } finally {
-        for (const button of buttons) button.disabled = false;
+        if (current === revision) {
+          for (const button of buttons) button.disabled = false;
+        }
       }
+    };
+
+    // An edit supersedes any shown or pending result without running.
+    const invalidate = () => {
+      revision++;
+      output.hidden = true;
+      status.hidden = false;
+      status.textContent = "Inputs changed. Run to see results.";
+      for (const button of buttons) button.disabled = false;
     };
 
     pricingSelect.addEventListener("change", () => {
       showShareControl();
-      output.hidden = true;
-      status.hidden = false;
-      status.textContent = "Pricing changed. Run to see results.";
+      invalidate();
     });
+    shareInput.addEventListener("input", invalidate);
 
     form.addEventListener("submit", (event) => {
       event.preventDefault();
@@ -243,15 +243,15 @@ import "./runner.css";
       if (pricingSelect.value === POOLED) {
         scenarioInputs.believed_share_high = shareInput.valueAsNumber;
       }
-      show(scenarioInputs, "Running in Python…");
+      show(scenarioInputs, "Running…");
     });
 
     // With empty inputs, Python runs its own defaults.
     resetButton.addEventListener("click", () =>
-      show({}, "Resetting to Python defaults…"),
+      show({}, "Resetting…"),
     );
 
-    await show({}, "Loading Python defaults…");
+    await show({}, "Loading…");
   };
   initRunner();
   document.addEventListener("astro:page-load", initRunner);
@@ -323,22 +323,10 @@ import "./runner.css";
     overflow-wrap: anywhere;
   }
 
-  .outcome-summaries {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
-  }
-
   .outcome-summaries p {
     margin: 0.25rem 0 0;
     font-size: 0.95rem;
     line-height: 1.55;
-  }
-
-  @media (max-width: 480px) {
-    .outcome-summaries {
-      grid-template-columns: 1fr;
-    }
   }
 
   .market-note {

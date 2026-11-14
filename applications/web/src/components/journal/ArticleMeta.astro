@@ -1,0 +1,33 @@
+---
+import { formatDate, type JournalArticle } from "../../data/journal";
+
+interface Props {
+  article: JournalArticle;
+  showUpdated?: boolean;
+}
+
+const { article, showUpdated = false } = Astro.props;
+const { publishedAt, updatedAt, author, draft } = article.data;
+---
+<p class="fine-print article-meta">
+  {publishedAt && <time datetime={publishedAt.toISOString()}>{formatDate(publishedAt)}</time>}
+  {author && <span>{author}</span>}
+  {showUpdated && updatedAt && (
+    <span>Updated <time datetime={updatedAt.toISOString()}>{formatDate(updatedAt)}</time></span>
+  )}
+  {draft && <span>Draft</span>}
+</p>
+
+<style>
+  .article-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.5rem;
+    margin: 0;
+  }
+
+  .article-meta > * + *::before {
+    margin-right: 0.5rem;
+    content: "·";
+  }
+</style>

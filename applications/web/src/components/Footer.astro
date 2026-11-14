@@ -1,5 +1,6 @@
 ---
 import Logo from "./ui/Logo.astro";
+import SocialLinks from "./ui/SocialLinks.astro";
 import { siteConfig } from "../config/site";
 
 interface Props {
@@ -24,6 +25,7 @@ const year = new Date().getFullYear();
       <div class="footer-grid">
         <div class="brand-col">
           <Logo variant="white" />
+          <SocialLinks />
         </div>
         <div>
           <h3>Explore</h3>
@@ -72,6 +74,7 @@ const year = new Date().getFullYear();
   .circle-link svg { width: 1.6rem; }
   .footer-grid { display: grid; grid-template-columns: 2fr repeat(4,1fr); gap: 3rem; padding: 3rem 0; border-top: 1px solid #30342c; }
   .footer-grid h3 { margin: 0 0 1.1rem; color: #777d71; font-size: .7rem; font-family: inherit; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  .brand-col { display: flex; flex-direction: column; align-items: flex-start; gap: 1.5rem; }
   .footer-grid > div:not(.brand-col) { display: flex; flex-direction: column; align-items: flex-start; gap: .65rem; }
   .footer-grid a { color: #cdd1c8; font-size: .9rem; transition: color .2s; }
   .footer-grid a:hover { color: var(--accent); }

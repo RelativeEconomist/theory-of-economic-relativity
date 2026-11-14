@@ -1,0 +1,95 @@
+---
+import { Image } from "astro:assets";
+import { render } from "astro:content";
+import BaseLayout from "./BaseLayout.astro";
+import ArticleMeta from "../components/journal/ArticleMeta.astro";
+import Button from "../components/ui/Button.astro";
+import { articleTitle, type JournalArticle } from "../data/journal";
+
+interface Props {
+  article: JournalArticle;
+}
+
+const { article } = Astro.props;
+const { description, cover, draft } = article.data;
+const title = articleTitle(article);
+const { Content } = await render(article);
+---
+<BaseLayout title={`${title} — Journal`} description={description} noindex={draft}>
+  <article>
+    <header class="page-hero article-header">
+      <div class="shell">
+        <ArticleMeta article={article} showUpdated />
+        <h1 class="doc-heading">{title}</h1>
+        {description && <p class="lede article-description">{description}</p>}
+      </div>
+    </header>
+
+    {cover && (
+      <div class="shell doc-section">
+        <Image class="article-cover" src={cover.src} alt={cover.alt} widths={[640, 736, 1472]} sizes="(max-width: 768px) 100vw, 736px" />
+      </div>
+    )}
+
+    <section class="section-sm doc-section">
+      <div class="shell">
+        <div class="prose article-prose"><Content /></div>
+        <div class="button-row">
+          <Button href="/journal/" label="Back to Journal" variant="dark" />
+        </div>
+      </div>
+    </section>
+  </article>
+</BaseLayout>
+
+<style>
+  /* The page-hero top spacing, without its bottom padding: the following
+     .doc-section supplies the single gap between the header and what
+     follows it (the cover when there is one, otherwise the body). */
+  .article-header {
+    padding-bottom: 0;
+  }
+
+  /* .doc-heading: the site's smaller section-heading scale, so the title
+     leads without overpowering the reading column. */
+  .article-header h1 {
+    margin-top: 1.5rem;
+    overflow-wrap: break-word;
+  }
+
+  /* Lede scale, in ink rather than muted, so it stays slightly more
+     prominent than the muted body text at every width. */
+  .article-description {
+    color: var(--ink);
+  }
+
+  /* Body headings one step down from the global prose scale: h2 takes the
+     h3 scale and h3 the lede's largest size, with the prose h3 spacing. */
+  .article-prose :global(h2) {
+    margin-top: 2.5rem;
+    font-size: clamp(1.45rem, 2.4vw, 2rem);
+    line-height: 1.08;
+  }
+
+  .article-prose :global(h3) {
+    margin-top: 2.5rem;
+    font-size: 1.3rem;
+    line-height: 1.08;
+  }
+
+  .article-prose :global(:is(h2, h3)) {
+    overflow-wrap: break-word;
+  }
+
+  /* The Journal index's landscape frame, so any cover crops the same way,
+     at the reading column's width (the .prose measure) so it aligns with
+     the text rather than spanning the full page. */
+  .article-cover {
+    width: 100%;
+    max-width: 46rem;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+  }
+</style>

@@ -12,38 +12,31 @@ const actions = [
   { id: "office_coffee", label: "Office Coffee" },
   { id: "best_coffee", label: "Best Coffee" },
 ];
-const searchPositions = ["1st", "2nd", "3rd"];
+const searchPositions = ["First", "Second", "Third"];
 ---
-<section class="bounded-runner doc-section" data-bounded-runner>
-  <h2 class="doc-heading">Simulator</h2>
-  <p class="lede">
-    Same G, M, F̂, V, and H. Different D → potentially different C. Set the
-    values, choose D, and run the scenario in Python.
-  </p>
-
+<div class="bounded-runner" data-bounded-runner>
   <div class="runner-card">
     <form class="runner-form">
       <fieldset class="runner-values">
-        <legend><span class="runner-symbol">V</span> Valuation: value of each coffee</legend>
+        <legend>Value scores</legend>
         {actions.map((action) => (
           <div class="runner-field">
-            <label for={`value-${action.id}`}>V({action.label})</label>
+            <label for={`value-${action.id}`}>{action.label}</label>
             <input id={`value-${action.id}`} name={action.id} data-value type="number" step="any" />
           </div>
         ))}
       </fieldset>
 
-      <fieldset class="runner-values">
-        <legend><span class="runner-symbol">D</span> Decision process</legend>
+      <div class="runner-values">
         <div class="runner-field">
           <label for="decision-process">Decision process</label>
           <select id="decision-process" data-decision-process>
-            <option value="maximize_value">Maximize value</option>
+            <option value="maximize_value">Check all coffees</option>
             <option value="limited_search">Limited search</option>
           </select>
         </div>
         <div class="runner-field" data-limited-only hidden>
-          <label for="search-limit">Search limit: coffees checked</label>
+          <label for="search-limit">Number of coffees to check</label>
           <input id="search-limit" data-search-limit type="number" min="1" max={actions.length} step="1" />
         </div>
         <fieldset class="runner-order" data-limited-only hidden>
@@ -57,35 +50,40 @@ const searchPositions = ["1st", "2nd", "3rd"];
             </div>
           ))}
         </fieldset>
-      </fieldset>
+        <p class="runner-help fine-print" data-limited-only hidden>
+          The agent chooses the highest score among the coffees it checks. Changing the search order can change which coffees a limited search reaches.
+        </p>
+      </div>
 
       <div class="runner-buttons">
         <button class="button button-primary" type="submit" disabled>Run</button>
-        <button class="button button-ghost" type="button" data-reset disabled>Reset to defaults</button>
+        <button class="button button-ghost" type="button" data-reset disabled>Reset</button>
       </div>
     </form>
 
     <div class="runner-result" role="status" aria-live="polite" aria-atomic="true">
-      <p class="runner-status" data-status>
-        Not run yet. The simulator needs JavaScript and the Python endpoint.
-      </p>
+      <p class="runner-status" data-status>Results have not loaded.</p>
       <dl class="runner-output" data-output hidden>
         <div>
-          <dt>Selected action</dt>
+          <dt>Agent’s choice</dt>
           <dd class="runner-selected" data-selected-action></dd>
         </div>
         <div>
-          <dt>Considered</dt>
+          <dt>Score</dt>
+          <dd class="runner-selected" data-selected-value></dd>
+        </div>
+        <div>
+          <dt>Checked</dt>
           <dd data-considered></dd>
         </div>
         <div>
-          <dt>Not considered</dt>
+          <dt>Not checked</dt>
           <dd data-not-considered></dd>
         </div>
       </dl>
     </div>
   </div>
-</section>
+</div>
 
 <script>
   import { runScenario } from "./run-scenario";
@@ -121,6 +119,7 @@ const searchPositions = ["1st", "2nd", "3rd"];
     const status = root.querySelector<HTMLElement>("[data-status]")!;
     const output = root.querySelector<HTMLElement>("[data-output]")!;
     const selected = root.querySelector<HTMLElement>("[data-selected-action]")!;
+    const selectedValue = root.querySelector<HTMLElement>("[data-selected-value]")!;
     const considered = root.querySelector<HTMLElement>("[data-considered]")!;
     const notConsidered = root.querySelector<HTMLElement>("[data-not-considered]")!;
 
@@ -151,7 +150,8 @@ const searchPositions = ["1st", "2nd", "3rd"];
           result.search_order.forEach((action, index) => (orderSelects[index].value = action));
         }
         showSearchControls();
-        selected.textContent = `${labelFor(result.selected_action)} · V = ${result.selected_value}`;
+        selected.textContent = labelFor(result.selected_action);
+        selectedValue.textContent = String(result.selected_value);
         considered.textContent = listLabels(result.considered_actions);
         notConsidered.textContent = listLabels(result.not_considered_actions);
         status.hidden = true;
@@ -178,15 +178,15 @@ const searchPositions = ["1st", "2nd", "3rd"];
         scenarioInputs.search_limit = limitInput.valueAsNumber;
         scenarioInputs.search_order = orderSelects.map((select) => select.value);
       }
-      show(scenarioInputs, "Running in Python…");
+      show(scenarioInputs, "Running…");
     });
 
     // With empty inputs, Python runs its own defaults.
     resetButton.addEventListener("click", () =>
-      show({}, "Resetting to Python defaults…"),
+      show({}, "Resetting…"),
     );
 
-    await show({}, "Loading Python defaults…");
+    await show({}, "Loading…");
   };
   initRunner();
   document.addEventListener("astro:page-load", initRunner);
@@ -217,9 +217,14 @@ const searchPositions = ["1st", "2nd", "3rd"];
     display: none;
   }
 
+  .runner-help {
+    grid-column: 1 / -1;
+    margin: 0;
+  }
+
   .runner-output {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 1rem;
     margin: 0;
   }

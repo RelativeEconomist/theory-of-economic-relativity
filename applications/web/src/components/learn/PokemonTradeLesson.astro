@@ -1,11 +1,12 @@
 ---
 /**
- * Trade-or-sell choice exercise. It records the reader's own answers in page
- * memory only: nothing is stored, sent, or run through the TER engine, and no
- * choice is turned into an outcome or recommendation.
+ * Trade-or-sell choice exercise, the activity under the lesson's first
+ * question. It records the reader's own answers in page memory only: nothing
+ * is stored, sent, or run through the TER engine, and no choice is turned
+ * into an outcome or recommendation. After the second choice it reveals the
+ * lesson's takeaway and Model details, which the page renders hidden.
  */
 import CollectionBinder from "./CollectionBinder.astro";
-import TerSymbol from "./TerSymbol.astro";
 
 const TRADE = "trade";
 const SELL = "sell";
@@ -26,53 +27,9 @@ const reasons = [
   "Having a confirmed trade instead of an uncertain sale.",
   "Something else.",
 ];
-
-// Symbols only where the TER variable matches the explanation.
-const mapping = [
-  {
-    symbol: "G",
-    label: "Objectives",
-    text: "Completing a collection and obtaining money are possible objectives. The same opportunity can matter differently depending on what someone wants to accomplish.",
-  },
-  {
-    symbol: "M",
-    label: "Beliefs",
-    text: "The estimated market prices and the possibility of finding a buyer inform expectations. Listing a card for $115 does not guarantee receiving $115.",
-  },
-  {
-    symbol: "V",
-    label: "Valuation",
-    text: "The value someone places on the trade can include completing the collection. The value they place on attempting a sale can reflect money, uncertainty, and effort. Market prices alone do not specify either valuation.",
-  },
-  {
-    symbol: "C",
-    label: "Choice",
-    text: "You selected an action in each situation. We recorded those choices without imposing a decision rule.",
-  },
-  {
-    symbol: "O",
-    label: "Outcome",
-    text: "A choice is not a completed transaction. Under the stated scenario, the friend is ready to trade. Attempting a sale produces money only if a buyer completes it.",
-  },
-  {
-    label: "Scope",
-    text: "This is a hypothetical choice exercise. It does not model bargaining, fees, buying another card after a sale, or the friend’s decision process. Differences in responses can motivate investigation, but they do not establish why people behave as they do.",
-  },
-];
 ---
-<section class="pokemon-lesson doc-section" data-pokemon-lesson>
-  <div class="lesson-copy illustrated">
-    <div>
-      <p>You have a spare Pokémon card with an estimated market price of $100. A friend offers you a card with an estimated market price of $90. It is the last card you need to complete your collection.</p>
-      <p>You could make the trade now, or try to sell your spare card for $115. Finding a buyer at that price is not guaranteed.</p>
-    </div>
-    <div class="illustration">
-      <CollectionBinder label="A binder page with one empty slot, beside the card your friend offers to fill it." />
-    </div>
-  </div>
-
-  <fieldset class="lesson-step" aria-labelledby="first-question">
-    <h2 class="step-heading" id="first-question" tabindex="-1">Would you complete your collection or try to sell for more?</h2>
+<div class="pokemon-lesson" data-pokemon-lesson>
+  <fieldset class="choice-fieldset" aria-labelledby="activity-heading">
     <div class="choice-grid">
       {firstChoices.map((choice) => (
         <label class="choice">
@@ -89,7 +46,7 @@ const mapping = [
 
   <fieldset class="lesson-step" aria-labelledby="reason-question" data-reason-step hidden>
     <h2 class="step-heading" id="reason-question">What mattered most to you?</h2>
-    <div class="reason-list">
+    <div class="choice-grid">
       {reasons.map((reason) => (
         <label class="choice">
           <input type="radio" name="reason" value={reason} data-reason />
@@ -131,42 +88,29 @@ const mapping = [
   </div>
 
   <div class="lesson-step" data-reveal-step hidden>
-    <h2 class="step-heading">What changed?</h2>
+    <h2 class="step-heading">Your result</h2>
+    <p data-changed hidden>You changed your choice.</p>
+    <p data-unchanged hidden>You kept the same choice.</p>
     <dl class="answer-comparison">
       <div>
-        <dt>Completes your collection</dt>
+        <dt>Before</dt>
         <dd data-first-answer></dd>
       </div>
       <div>
-        <dt>Already in your collection</dt>
+        <dt>Now</dt>
         <dd data-second-answer></dd>
       </div>
     </dl>
-    <p data-changed hidden>Your choice changed even though the estimated prices stayed the same. Whether the offered card completed your collection made a difference to your decision.</p>
-    <p data-unchanged hidden>Your choice stayed the same. Removing the collection benefit did not change which option you preferred. Someone else might respond differently.</p>
-    <p>A market price does not tell us everything about what an option is worth to someone. Completing a collection, receiving money, and accepting uncertainty can matter differently to different people.
-      TER helps make those differences explicit by separating objectives, beliefs, valuations, choices, and realized outcomes.</p>
+    <p data-changed hidden>The prices stayed the same. The offered card no longer completed your collection, and you chose differently.</p>
+    <p data-unchanged hidden>The offered card no longer completed your collection, but you still preferred <span data-kept-choice></span>. That change was not enough to change your choice.</p>
     <div class="lesson-buttons">
       <button class="button button-ghost" type="button" data-restart>Start again</button>
-      <button class="button button-primary" type="button" data-explore>Explore the TER mapping</button>
+      <button class="button button-primary" type="button" data-explore>Explore the TER interpretation</button>
     </div>
   </div>
 
-  <details class="disclosure ter-details" data-ter-details hidden>
-    <summary data-ter-summary>How TER describes this choice</summary>
-    <p>Your answers are your own choices. This lesson does not calculate what you should choose or infer a complete model of your preferences.</p>
-    <dl class="ter-mapping">
-      {mapping.map((item) => (
-        <div>
-          <dt>{item.symbol && <><TerSymbol symbol={item.symbol} />, </>}{item.label}</dt>
-          <dd>{item.text}</dd>
-        </div>
-      ))}
-    </dl>
-  </details>
-
   <p class="sr-only" role="status" aria-live="polite" data-announcer></p>
-</section>
+</div>
 
 <script>
   const CHOICE_LABELS: Record<string, string> = {
@@ -191,12 +135,15 @@ const mapping = [
     const revealStep = $("[data-reveal-step]");
     const firstAnswer = $("[data-first-answer]");
     const secondAnswer = $("[data-second-answer]");
-    const changed = $("[data-changed]");
-    const unchanged = $("[data-unchanged]");
-    const details = $<HTMLDetailsElement>("[data-ter-details]");
-    const summary = $("[data-ter-summary]");
+    const changed = [...root.querySelectorAll<HTMLElement>("[data-changed]")];
+    const unchanged = [...root.querySelectorAll<HTMLElement>("[data-unchanged]")];
+    const keptChoice = $("[data-kept-choice]");
+    // The page's shared takeaway and TER interpretation, outside this activity.
+    const takeaway = document.querySelector<HTMLElement>("[data-lesson-takeaway]")!;
+    const interpretation = document.querySelector<HTMLElement>("[data-formal]")!;
+    const interpretationHeading = document.querySelector<HTMLElement>("#formal-heading")!;
     const announcer = $("[data-announcer]");
-    const firstQuestion = $("#first-question");
+    const firstQuestion = document.querySelector<HTMLElement>("#activity-heading")!;
 
     // The reader's answers, kept in page memory only. The first and second
     // choices answer different situations and are never merged; reason is
@@ -215,8 +162,9 @@ const mapping = [
       if (!first || !second) return;
       firstAnswer.textContent = CHOICE_LABELS[first];
       secondAnswer.textContent = CHOICE_LABELS[second];
-      changed.hidden = first === second;
-      unchanged.hidden = first !== second;
+      for (const element of changed) element.hidden = first === second;
+      for (const element of unchanged) element.hidden = first !== second;
+      keptChoice.textContent = second === "sell" ? "trying to sell" : "trading";
     };
 
     const finishReasonStep = () => {
@@ -260,7 +208,8 @@ const mapping = [
         showComparison();
         if (revealStep.hidden) {
           reveal(revealStep);
-          details.hidden = false;
+          takeaway.hidden = false;
+          interpretation.hidden = false;
         }
       });
     }
@@ -270,15 +219,14 @@ const mapping = [
       for (const input of [...firstInputs, ...reasonInputs, ...secondInputs]) input.checked = false;
       continueButton.disabled = true;
       reasonActions.hidden = false;
-      for (const step of [reasonStep, variationStep, revealStep, details]) step.hidden = true;
-      details.open = false;
+      for (const step of [reasonStep, variationStep, revealStep, takeaway, interpretation]) step.hidden = true;
       announcer.textContent = "";
       firstQuestion.focus();
     });
 
     $("[data-explore]").addEventListener("click", () => {
-      details.open = true;
-      summary.focus();
+      interpretationHeading.scrollIntoView({ block: "start" });
+      interpretationHeading.focus({ preventScroll: true });
     });
   };
 
@@ -291,7 +239,6 @@ const mapping = [
     display: none !important;
   }
 
-  .lesson-copy p,
   .lesson-step p {
     max-width: 55rem;
     margin: 1rem 0 0;
@@ -327,10 +274,6 @@ const mapping = [
     line-height: 1.08;
   }
 
-  .step-heading:focus:not(:focus-visible) {
-    outline: none;
-  }
-
   .choice-fieldset {
     min-width: 0;
     margin: 1.5rem 0 0;
@@ -347,13 +290,6 @@ const mapping = [
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1rem;
-    margin-top: 1.25rem;
-  }
-
-  .reason-list {
-    display: grid;
-    gap: 0.75rem;
-    max-width: 40rem;
     margin-top: 1.25rem;
   }
 
@@ -409,8 +345,8 @@ const mapping = [
     color: inherit;
   }
 
-  .lesson-step .fine-print {
-    margin-top: 1rem;
+  .fine-print {
+    margin: 1rem 0 0;
   }
 
   .lesson-buttons {
@@ -429,17 +365,8 @@ const mapping = [
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     max-width: 55rem;
+    gap: 1rem 2rem;
     margin: 1.25rem 0 0;
-    border: 1px solid var(--line);
-    border-radius: var(--radius-sm);
-  }
-
-  .answer-comparison > div {
-    padding: 1rem 1.25rem;
-  }
-
-  .answer-comparison > div + div {
-    border-left: 1px solid var(--line);
   }
 
   .answer-comparison dt {
@@ -450,39 +377,6 @@ const mapping = [
 
   .answer-comparison dd {
     margin: 0.35rem 0 0;
-    font-weight: 650;
-  }
-
-  .ter-details {
-    margin-top: 2.5rem;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .ter-details > p {
-    max-width: 55rem;
-    margin: 0;
-    line-height: 1.55;
-  }
-
-  .ter-mapping {
-    margin: 1rem 0 0;
-  }
-
-  .ter-mapping > div {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
-    gap: 1rem;
-    padding: 0.75rem 0;
-    border-top: 1px solid var(--line);
-  }
-
-  .ter-mapping dt {
-    font-weight: 650;
-  }
-
-  .ter-mapping dd {
-    margin: 0;
-    line-height: 1.55;
   }
 
   .sr-only {
@@ -504,18 +398,8 @@ const mapping = [
     }
 
     .choice-grid,
-    .answer-comparison,
-    .ter-mapping > div {
+    .answer-comparison {
       grid-template-columns: minmax(0, 1fr);
-    }
-
-    .answer-comparison > div + div {
-      border-top: 1px solid var(--line);
-      border-left: 0;
-    }
-
-    .ter-mapping > div {
-      gap: 0.35rem;
     }
   }
 </style>

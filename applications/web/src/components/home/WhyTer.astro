@@ -1,17 +1,20 @@
----
-import SectionIntro from "../ui/SectionIntro.astro";
----
 <section class="intro-why section-sm">
   <div class="shell">
-    <SectionIntro
-      eyebrow="Why TER?"
-      title="One framework for studying many economic behaviors."
-      description="People, businesses, and organizations make decisions based on what they know, believe, value, and think is possible. Resources and reality constrain what is actually possible."
-    />
+    <div class="why-grid">
+      <div class="why-heading" data-reveal>
+        <p class="eyebrow">Why TER?</p>
+        <h2 class="doc-heading">One framework for studying many economic behaviors.</h2>
+      </div>
 
-    <p class="lede" data-reveal>
-      TER provides a common way to study how agent decisions are made, how they interact with other agents and reality, and what outcomes follow.
-    </p>
+      <div class="why-body" data-reveal>
+        <p class="lede">
+          People, businesses, and organizations make decisions based on what they know, believe, value, and think is possible. Resources and reality constrain what is actually possible.
+        </p>
+        <p class="lede">
+          TER provides a common way to study how agent decisions are made, how they interact with other agents and reality, and what outcomes follow.
+        </p>
+      </div>
+    </div>
 
     <div class="emphasis" data-reveal>
       <span class="emphasis-marker" aria-hidden="true"></span>
@@ -25,7 +28,7 @@ import SectionIntro from "../ui/SectionIntro.astro";
     background: var(--surface);
   }
 
-  .intro-why :global(.section-intro) {
+  .why-heading {
     max-width: 56rem;
   }
 
@@ -53,5 +56,35 @@ import SectionIntro from "../ui/SectionIntro.astro";
     font-weight: 620;
     line-height: 1.35;
     letter-spacing: -0.02em;
+  }
+
+  @media (min-width: 901px) {
+    .why-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: clamp(3rem, 6vw, 6rem);
+      align-items: start;
+    }
+
+    /* Start the paragraphs level with the headline: the eyebrow's height
+       plus its margin and the heading's top margin. */
+    .why-body {
+      padding-top: 3.1rem;
+    }
+
+    .why-body .lede:first-child {
+      margin-top: 0;
+    }
+
+    .emphasis {
+      max-width: none;
+      margin-top: clamp(2.5rem, 4.5vw, 3.5rem);
+      padding-top: clamp(1.75rem, 3vw, 2.25rem);
+      border-top: 1px solid var(--line);
+    }
+
+    .emphasis-line {
+      max-width: 55rem;
+    }
   }
 </style>

@@ -1,0 +1,38 @@
+---
+/**
+ * Lottery Tickets calculations for Implementation and verification, as computed
+ * by research/scenarios/lottery_tickets.py. Its assumptions are in the scenario
+ * data, under Assumptions and scope.
+ */
+const calculations = [
+  "Expected payout = believed chance of winning × jackpot.",
+  "Overestimates his chances: buying is valued at expected payout − price; skipping at $0.",
+  "Enjoys playing: buying is valued at expected payout + $15 − price; skipping at $0.",
+  "Both choose the option with the higher valuation and skip when the valuations are tied.",
+  "Follows a routine: buys when the price is $30 or less and within his $50, without valuing the options.",
+  "A ticket costing more than $50 is not an available choice, so every configuration skips.",
+  "Expected monetary return = sum of probability × net money over the actual outcomes: jackpot ÷ 1,000,000 − price for a ticket, $0 for skipping. Enjoyment is not money and is excluded.",
+];
+---
+<h3>Calculations</h3>
+<ul class="reference-items">
+  {calculations.map((calculation) => <li>{calculation}</li>)}
+</ul>
+
+<style>
+  h3 {
+    margin-top: 2.5rem;
+  }
+
+  .reference-items {
+    display: grid;
+    gap: 0.5rem;
+    max-width: 960px;
+    margin: 1.5rem 0 0;
+    padding-left: 1.2rem;
+    color: var(--muted);
+    font-size: 0.95rem;
+    line-height: 1.55;
+    list-style: disc;
+  }
+</style>

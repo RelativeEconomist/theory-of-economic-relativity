@@ -1,0 +1,323 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PageHero from "../../components/PageHero.astro";
+import Button from "../../components/ui/Button.astro";
+import ScenarioAssumptions from "../../components/learn/ScenarioAssumptions.astro";
+import TerArchitecture from "../../components/learn/TerArchitecture.astro";
+import ScenarioResults from "../../components/learn/ScenarioResults.astro";
+import { krugman1980 as reproduction } from "../../data/reproductions/krugman-1980";
+
+const totalTests = reproduction.testSuites.reduce((total, suite) => total + suite.count, 0);
+---
+<BaseLayout title={`${reproduction.title} — Reproductions`} description={reproduction.summary}>
+  <PageHero eyebrow="Reproduction" title={reproduction.title} description={reproduction.summary} />
+
+  <div class="shell reproduction">
+    <section class="doc-section">
+      <h2 class="doc-heading">Original paper</h2>
+      <dl class="overview-list">
+        <div>
+          <dt>Paper</dt>
+          <dd>{reproduction.paper.citation}</dd>
+        </div>
+        <div>
+          <dt>Scope</dt>
+          <dd>{reproduction.paper.scope}</dd>
+        </div>
+        <div>
+          <dt>Question</dt>
+          <dd>{reproduction.paper.question}</dd>
+        </div>
+        <div>
+          <dt>Status</dt>
+          <dd>
+            <span class="status-badge">{reproduction.status}</span>
+            <p>{reproduction.evidence}</p>
+          </dd>
+        </div>
+      </dl>
+    </section>
+
+    <ScenarioAssumptions assumptions={reproduction.assumptions} />
+
+    <TerArchitecture components={reproduction.terComponents} multiAgent />
+
+    <section class="doc-section">
+      <details class="disclosure">
+        <summary>Equilibrium derivation</summary>
+        <ol class="detail-list">
+          {reproduction.derivation.map((step) => <li>{step}</li>)}
+        </ol>
+      </details>
+      <details class="disclosure">
+        <summary>Modeling choices</summary>
+        <ul class="detail-list">
+          {reproduction.modelingChoices.map((choice) => <li>{choice}</li>)}
+        </ul>
+      </details>
+    </section>
+
+    <section class="doc-section">
+      <h2 class="doc-heading">Verification evidence</h2>
+      <p class="lede">
+        Krugman’s closed-form solution is implemented without TER as an independent benchmark. The TER configuration
+        is run through TER Core and compared against it. No closed-form answer is supplied to TER: the markup comes
+        from a TER firm decision, and the rest is derived from it with Krugman’s equilibrium conditions.
+      </p>
+
+      <ul class="suite-list hairline-grid">
+        {reproduction.testSuites.map((suite) => (
+          <li>
+            <span class="suite-count">{suite.count}</span>
+            <span class="suite-label">{suite.label} tests</span>
+            <p>{suite.description}</p>
+          </li>
+        ))}
+      </ul>
+      <p class="fine-print suite-total">{totalTests} tests in total, all passing.</p>
+
+      <ScenarioResults table={reproduction.resultsTable} />
+
+      <div class="evidence-details">
+        <details class="disclosure">
+          <summary>Fixtures</summary>
+          <p class="detail-note">Illustrative values for demonstration and testing, not empirical assumptions.</p>
+          <dl class="field-grid hairline-grid hairline-grid-cols-2">
+            {reproduction.fixtures.map((field) => (
+              <div>
+                <dt>{field.label}</dt>
+                <dd>{field.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </details>
+        <details class="disclosure">
+          <summary>Checks that must fail</summary>
+          <ul class="detail-list">
+            {reproduction.failureChecks.map((check) => <li>{check}</li>)}
+          </ul>
+        </details>
+      </div>
+    </section>
+
+    <section class="doc-section">
+      <h2 class="doc-heading">Limitations and open work</h2>
+      <h3>Open verification tasks</h3>
+      <ul class="detail-list open-tasks">
+        {reproduction.openTasks.map((task) => <li>{task}</li>)}
+      </ul>
+      <details class="disclosure limitations">
+        <summary>Limitations</summary>
+        <ul class="detail-list">
+          {reproduction.limitations.map((limitation) => <li>{limitation}</li>)}
+        </ul>
+      </details>
+    </section>
+
+    <section class="doc-section">
+      <h2 class="doc-heading">Source and documents</h2>
+      <ul class="link-list hairline-grid hairline-grid-cols-2">
+        {reproduction.links.map((item) => (
+          <li>
+            <a href={item.href} target="_blank" rel="noreferrer">{item.label} ↗</a>
+            <code>{item.path}</code>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section class="section-sm">
+      <div class="button-row">
+        <Button href="/learn/" label="Back to Learn" variant="dark" />
+        <Button href="/theory/" label="Read the theory" variant="ghost" />
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .overview-list {
+    margin: 2rem 0 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .overview-list > div {
+    display: grid;
+    grid-template-columns: 7rem 1fr;
+    align-items: baseline;
+    gap: 1rem;
+    padding: 0.9rem 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .overview-list dt {
+    color: var(--muted);
+    font-size: 0.68rem;
+    font-weight: 650;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .overview-list dd {
+    max-width: 960px;
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.55;
+    text-wrap: pretty;
+  }
+
+  .overview-list dd p {
+    margin: 0.75rem 0 0;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 0.3rem 0.6rem;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-size: 0.65rem;
+    font-weight: 650;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .detail-list {
+    max-width: 960px;
+    margin: 0;
+    padding-left: 1.5rem;
+    color: var(--muted);
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  ol.detail-list { list-style: decimal; }
+  ul.detail-list { list-style: disc; }
+  .detail-list li + li { margin-top: 0.6rem; }
+  .detail-list li::marker { color: var(--ink); }
+
+  .detail-note {
+    margin: 0 0 1rem;
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+
+  .suite-list {
+    grid-template-columns: repeat(2, 1fr);
+    margin: 2rem 0 0;
+    padding: 0;
+    list-style: none;
+    border: 1px solid var(--line);
+  }
+
+  .suite-list li {
+    padding: 1.5rem;
+  }
+
+  .suite-count {
+    display: block;
+    font-size: clamp(2rem, 3.5vw, 2.75rem);
+    font-weight: 580;
+    letter-spacing: -0.045em;
+    line-height: 1;
+  }
+
+  .suite-label {
+    display: block;
+    margin-top: 0.5rem;
+    font-weight: 650;
+  }
+
+  .suite-list p {
+    margin: 0.5rem 0 0;
+    color: var(--muted);
+    font-size: 0.95rem;
+    line-height: 1.55;
+  }
+
+  .suite-total {
+    margin: 0.75rem 0 0;
+  }
+
+  .evidence-details {
+    margin-top: 2.5rem;
+  }
+
+  .field-grid {
+    grid-template-columns: repeat(2, 1fr);
+    margin: 0;
+    border: 1px solid var(--line);
+  }
+
+  .field-grid > div {
+    padding: 1.1rem 1.5rem;
+  }
+
+  .field-grid dt {
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 650;
+    letter-spacing: 0.04em;
+  }
+
+  .field-grid dd {
+    margin: 0.4rem 0 0;
+    font-size: 0.95rem;
+  }
+
+  h3 {
+    margin-top: 2rem;
+  }
+
+  .open-tasks {
+    margin-top: 1rem;
+    font-size: 1.05rem;
+  }
+
+  .limitations {
+    margin-top: 2rem;
+  }
+
+  .link-list {
+    margin: 2rem 0 0;
+    padding: 0;
+    list-style: none;
+    border: 1px solid var(--line);
+  }
+
+  .link-list li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-width: 0;
+    padding: 1.1rem 1.5rem;
+  }
+
+  .link-list a {
+    font-weight: 650;
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 3px;
+    text-underline-offset: 3px;
+  }
+
+  .link-list code {
+    overflow-wrap: anywhere;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", "Menlo", monospace;
+    font-size: 0.85rem;
+  }
+
+  @media (max-width: 640px) {
+    .overview-list > div {
+      grid-template-columns: 1fr;
+      gap: 0.35rem;
+    }
+
+    .suite-list,
+    .field-grid,
+    .link-list {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

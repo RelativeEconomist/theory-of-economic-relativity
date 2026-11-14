@@ -1,16 +1,39 @@
 ---
-import type { ScenarioField } from "../../data/learn/scenarios";
+import type { ResultsTable, ScenarioField } from "../../data/learn/scenarios";
+import Notation from "./Notation.astro";
 
 interface Props {
+  /** Omitted when the results are the activity, under its own heading. */
+  heading?: string;
+  /** Sentence after the heading, before the results. */
+  intro?: string;
   results?: ScenarioField[];
-  /** Comparison table across multiple cases, shown instead of the label/value list. */
-  table?: { columns: string[]; rows: string[][] };
+  /** Comparison table across multiple cases, shown before any label/value list. */
+  table?: ResultsTable;
+  /** A short table that wraps to its container instead of scrolling. */
+  fit?: boolean;
 }
 
-const { results, table } = Astro.props;
+const { heading, intro, results, table, fit = false } = Astro.props;
 ---
 <div class="scenario-results">
-  <h3>Test result</h3>
+  {heading && <h3>{heading}</h3>}
+  {intro && <p class="results-intro">{intro}</p>}
+
+  {table && (
+    <div class="results-table-wrap">
+      <table class:list={["results-table", { fit }]}>
+        <thead>
+          <tr>{table.columns.map((column) => <th>{column}</th>)}</tr>
+        </thead>
+        <tbody>
+          {table.rows.map((row) => (
+            <tr>{row.map((cell) => <td><Notation text={cell} /></td>)}</tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
 
   {results && (
     <dl class="results-grid">
@@ -22,26 +45,19 @@ const { results, table } = Astro.props;
       ))}
     </dl>
   )}
-
-  {table && (
-    <div class="results-table-wrap">
-      <table class="results-table">
-        <thead>
-          <tr>{table.columns.map((column) => <th>{column}</th>)}</tr>
-        </thead>
-        <tbody>
-          {table.rows.map((row) => (
-            <tr>{row.map((cell) => <td>{cell}</td>)}</tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )}
 </div>
 
 <style>
   h3 {
     margin-top: 2.5rem;
+  }
+
+  .results-intro {
+    max-width: 960px;
+    margin: 1rem 0 0;
+    color: var(--muted);
+    font-size: 0.95rem;
+    line-height: 1.55;
   }
 
   /* Reuses the same table treatment as .prose table in global.css, so a
@@ -56,6 +72,10 @@ const { results, table } = Astro.props;
     min-width: 32rem;
     border-collapse: collapse;
     font-size: 0.95rem;
+  }
+
+  .results-table.fit {
+    min-width: 0;
   }
 
   .results-table th,
@@ -80,7 +100,6 @@ const { results, table } = Astro.props;
     gap: 0;
     margin: 1.5rem 0 0;
   }
-
   .results-grid > div {
     display: grid;
     grid-template-columns: 16rem 1fr;

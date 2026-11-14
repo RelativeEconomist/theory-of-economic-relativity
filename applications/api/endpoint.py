@@ -13,6 +13,7 @@ from research.adapters import (
     basic_agent_choice,
     bounded_rationality,
     feasible_set_learning,
+    lottery_tickets,
     pokemon_card_choice,
 )
 
@@ -25,6 +26,7 @@ ADAPTERS = (
     asymmetric_information,
     feasible_set_learning,
     pokemon_card_choice,
+    lottery_tickets,
 )
 
 ENVELOPE_KEYS = frozenset({"scenario", "inputs"})

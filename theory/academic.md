@@ -61,29 +61,17 @@ This hypothesis contains five core claims:
 The core TER symbols, their canonical names and roles, and the models that use them. Detailed definitions follow the table.
 
 | Symbol | Canonical name | Concept / role | Used in |
-
 |---|---|---|---|
-
 | $G_{i,t}$ | Objective | Result or condition that provides the reference for valuation when valuation is used | 5.1, 5.5 |
-
 | $M_{i,t}$ | Model of Reality | Agent $i$'s understanding of reality, including information, beliefs, assumptions, expectations, and interpretations | 5.1, 5.5 |
-
 | $F_t$ | Objective Feasible State of Reality | TER's representation of the objectively realized conditions and constraints relevant when selected action(s) at decision point $t$ are realized; not agent specific | 5.2, 5.3, 5.5 |
-
 | $\hat{F}_{i,t}$ | Perceived Feasible Set | Actions agent $i$ perceives as available to attempt at $t$ | 5.1, 5.2, 5.5 |
-
 | $V_{i,t}$ | Valuation | Evaluates actions relative to the agent's objective, given its model of reality and time horizon | 5.1, 5.5 |
-
 | $H_{i,t}$ | Time Horizon | Which future consequences agent $i$ considers relevant to valuation | 5.1, 5.5 |
-
 | $D_{i,t}$ | Decision Process | Process through which agent $i$ selects among perceived feasible actions; it may condition directly on the agent's model of reality and may use valuation when applicable | 5.1, 5.5 |
-
 | $C_{i,t}$ | Selected Action | Action agent $i$ selects from its perceived feasible set | 5.1, 5.2, 5.3, 5.5 |
-
 | $O_{i,t}$ | Realized Outcome | Realized outcome associated with agent $i$'s selected action; where explicit interaction matters, an interaction-dependent agent-level outcome is derived from the same joint $R$ as $O_t$ | 5.2, 5.3, 5.5 |
-
 | $O_t$ | System Outcome | Realized system outcome produced by interacting selected actions encountering $F_t$ | 5.3, 5.5 |
-
 | $R(\cdot)$ | Reality Function | Maps the selected action(s) and the relevant objectively realized state $F_t$ to the realized outcome; its arguments depend on model scope | 5.2, 5.3, 5.5 |
 
 Where:
@@ -295,31 +283,18 @@ Realized outcomes may alter subsequent conditions through their economically rel
 The axioms primarily supporting each formal component (Section 5) and each interpretive principle (Section 6).
 
 | Component | Primary supporting axioms |
-
 |---|---|
-
 | 5.1 Agent Decision Model | 1 ($M$), 2 ($\hat{F}$), 3 ($V$), 4 ($D$) |
-
 | 5.2 Action to Outcome Model | 2, 5, 7 |
-
 | 5.3 Multi Agent Model | 5, 6, 7 |
-
 | 5.4 State Persistence Constraint | 7, 8 |
-
 | 5.5 Dynamic Feedback Model | 1, 6, 7, 9 |
-
 | 5.6 Feedback Analysis and Stability | 5, 6, 7, 8, 9 |
-
 | 6.1 Agent Objective | 3, 4; Model 5.1 |
-
 | 6.2 Feasibility and Constraints | 1, 2, 4, 6, 7; Models 5.1, 5.2, 5.3 |
-
 | 6.3 Agent Model of Reality | 1, 2, 3, 7, 9; Models 5.1, 5.2, 5.5 |
-
 | 6.4 Action Selection | 1, 2, 3, 4, 7; Models 5.1, 5.2 |
-
 | 6.5 Outcomes and System Effects | 1, 5, 6, 7, 9; Models 5.2, 5.3, 5.5 |
-
 | 6.6 Persistence and Change Over Time | 1, 2, 5, 6, 7, 8, 9; Sections 5.3–5.6 |
 
 ## 5. Formal Architecture

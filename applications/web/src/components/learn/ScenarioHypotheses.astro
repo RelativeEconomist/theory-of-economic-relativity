@@ -1,11 +1,13 @@
 ---
 interface Props {
   hypotheses: string[];
+  /** Omitted when the list continues a section that already has a heading. */
+  heading?: string;
 }
 
-const { hypotheses } = Astro.props;
+const { hypotheses, heading } = Astro.props;
 ---
-<h3>{hypotheses.length === 1 ? "Hypothesis" : "Hypotheses"}</h3>
+{heading && <h3>{heading}</h3>}
 
 <ol class="hypotheses-list">
   {hypotheses.map((hypothesis) => <li>{hypothesis}</li>)}

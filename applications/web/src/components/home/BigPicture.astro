@@ -5,139 +5,152 @@ import SectionIntro from "../ui/SectionIntro.astro";
   <div class="shell">
     <SectionIntro title="Economic outcomes emerge from agent decisions." />
 
-    <div class="flow" role="list" aria-label="Agents, Decisions, Interactions, Outcomes, Feedback">
-      <div class="flow-step" role="listitem" data-reveal>
+    <ol class="flow" aria-label="Agents, Decisions, Interactions, Outcomes, Feedback">
+      <li class="flow-step" data-reveal>
         <span class="flow-index">01</span>
-        <h3>Agents</h3>
-        <p>Individuals, businesses, governments, and organizations act in relation to objectives.</p>
-      </div>
+        <div class="flow-text">
+          <h3>Agents</h3>
+          <p>Individuals, businesses, governments, and organizations act in relation to objectives.</p>
+        </div>
+      </li>
 
-      <div class="flow-connector" aria-hidden="true"></div>
-
-      <div class="flow-step" role="listitem" data-reveal>
+      <li class="flow-step" data-reveal>
         <span class="flow-index">02</span>
-        <h3>Decisions</h3>
-        <p>Agents choose from the actions they perceive as available.</p>
-      </div>
+        <div class="flow-text">
+          <h3>Decisions</h3>
+          <p>Agents choose from the actions they perceive as available.</p>
+        </div>
+      </li>
 
-      <div class="flow-connector" aria-hidden="true"></div>
-
-      <div class="flow-step" role="listitem" data-reveal>
+      <li class="flow-step" data-reveal>
         <span class="flow-index">03</span>
-        <h3>Interactions</h3>
-        <p>Selected actions encounter reality and other agents.</p>
-      </div>
+        <div class="flow-text">
+          <h3>Interactions</h3>
+          <p>Selected actions encounter reality and other agents.</p>
+        </div>
+      </li>
 
-      <div class="flow-connector" aria-hidden="true"></div>
-
-      <div class="flow-step" role="listitem" data-reveal>
+      <li class="flow-step" data-reveal>
         <span class="flow-index">04</span>
-        <h3>Outcomes</h3>
-        <p>Those interactions produce economic outcomes.</p>
-      </div>
+        <div class="flow-text">
+          <h3>Outcomes</h3>
+          <p>Those interactions produce economic outcomes.</p>
+        </div>
+      </li>
 
-      <div class="flow-connector" aria-hidden="true"></div>
-
-      <div class="flow-step" role="listitem" data-reveal>
+      <li class="flow-step" data-reveal>
         <span class="flow-index">05</span>
-        <h3>Feedback</h3>
-        <p>Outcomes can change the conditions shaping future decisions.</p>
-      </div>
-    </div>
+        <div class="flow-text">
+          <h3>Feedback</h3>
+          <p>Outcomes can change the conditions shaping future decisions.</p>
+        </div>
+      </li>
+    </ol>
   </div>
 </section>
 
 <style>
   .big-picture {
+    /* A stronger line than --line, so the timeline reads in both themes. */
+    --flow-line: color-mix(in srgb, var(--ink) 38%, transparent);
+    --marker: 2.25rem;
+    --flow-gap: clamp(1.25rem, 2.5vw, 2rem);
+
     background: var(--surface-2);
   }
 
-  /* Main TER flow */
+  .big-picture :global(.doc-heading) {
+    font-size: clamp(1.85rem, 3vw, 3rem);
+  }
+
+  /* Main TER flow: five markers joined by one line, text below each. */
 
   .flow {
-    display: flex;
-    align-items: stretch;
-    margin-top: clamp(3rem, 6vw, 5rem);
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: var(--flow-gap);
+    margin: clamp(2.25rem, 4.5vw, 3.5rem) 0 0;
+    padding: 0;
+    list-style: none;
   }
 
   .flow-step {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    min-height: 13rem;
-    padding: 1.75rem 1.5rem;
-    border: 1px solid var(--line);
-    border-radius: var(--radius-md);
-    background: var(--surface);
+    position: relative;
+    min-width: 0;
+  }
+
+  /* Each segment runs from this marker to the next; together they form
+     one continuous line. */
+  .flow-step:not(:last-child)::before {
+    position: absolute;
+    top: calc(var(--marker) / 2);
+    left: var(--marker);
+    width: calc(100% + var(--flow-gap) - var(--marker));
+    height: 1px;
+    background: var(--flow-line);
+    content: "";
   }
 
   .flow-index {
-    color: var(--muted);
-    font-size: 0.9rem;
+    display: inline-grid;
+    width: var(--marker);
+    height: var(--marker);
+    place-items: center;
+    border: 1px solid var(--flow-line);
+    border-radius: 50%;
+    background: var(--surface-2);
+    color: var(--ink);
+    font-size: 0.8rem;
     font-weight: 750;
     line-height: 1;
   }
 
+  .flow-text {
+    margin-top: 1rem;
+  }
+
   .flow-step h3 {
-    margin: 1rem 0 0;
+    margin: 0;
     font-size: clamp(1.35rem, 1.8vw, 1.65rem);
     line-height: 1.1;
     letter-spacing: -0.025em;
   }
 
   .flow-step p {
-    margin: 0.8rem 0 0;
+    margin: 0.5rem 0 0;
     color: var(--muted);
     font-size: 0.95rem;
     line-height: 1.5;
   }
 
-  .flow-connector {
-    position: relative;
-    flex: 0 0 2rem;
-    align-self: center;
-    height: 1px;
-    background: var(--line);
-  }
-
-  .flow-connector::after {
-    position: absolute;
-    top: 50%;
-    right: -1px;
-    width: 0;
-    height: 0;
-    border-top: 0.3rem solid transparent;
-    border-bottom: 0.3rem solid transparent;
-    border-left: 0.4rem solid var(--line);
-    content: "";
-    transform: translateY(-50%);
-  }
-
   @media (max-width: 900px) {
+    /* Vertical line, with each marker beside its text. */
     .flow {
-      flex-direction: column;
+      grid-template-columns: 1fr;
+      gap: 0;
     }
 
     .flow-step {
-      min-height: auto;
+      display: grid;
+      grid-template-columns: var(--marker) minmax(0, 1fr);
+      column-gap: 1rem;
+      padding-bottom: 1.5rem;
     }
 
-    .flow-connector {
+    .flow-step:last-child {
+      padding-bottom: 0;
+    }
+
+    .flow-step:not(:last-child)::before {
+      top: var(--marker);
+      bottom: 0;
+      left: calc(var(--marker) / 2);
       width: 1px;
-      height: 1.75rem;
-      flex-basis: 1.75rem;
-      align-self: center;
+      height: auto;
     }
 
-    .flow-connector::after {
-      top: auto;
-      right: 50%;
-      bottom: -1px;
-      border-top: 0.4rem solid var(--line);
-      border-right: 0.3rem solid transparent;
-      border-bottom: 0;
-      border-left: 0.3rem solid transparent;
-      transform: translateX(50%);
+    .flow-text {
+      margin-top: 0.4rem;
     }
   }
 </style>
