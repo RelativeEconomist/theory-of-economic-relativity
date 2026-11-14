@@ -1,0 +1,12 @@
+---
+import JournalArticleLayout from "../../layouts/JournalArticleLayout.astro";
+import { getJournalArticles } from "../../data/journal";
+
+export async function getStaticPaths() {
+  const articles = await getJournalArticles();
+  return articles.map((article) => ({ params: { slug: article.id }, props: { article } }));
+}
+
+const { article } = Astro.props;
+---
+<JournalArticleLayout article={article} />

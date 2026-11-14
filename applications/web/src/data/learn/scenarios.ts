@@ -123,8 +123,9 @@ export const scenarios: Scenario[] = [
       "A single agent chooses its highest-valued action among three coffees it perceives as available.",
     sourceLabel: "Test 1",
     introduction: [
-      "Three coffees are available. In this example, each has an assigned score representing how the agent values it. Higher scores mean higher value; they are not prices.",
-      "The agent uses a simple rule: choose the coffee with the highest score.",
+      "Imagine you are getting coffee and have three options to choose from. Which one would you pick?",
+      "In this example, each coffee has a score representing how much you value it. Higher scores mean you value that option more. These scores are not prices.",
+      "The simulator chooses the coffee with the highest score. Change the scores to see how the choice changes.",
     ],
     activityHeading: "Try it",
     instruction:
@@ -265,8 +266,9 @@ export const scenarios: Scenario[] = [
       "The same coffee buyer picks a different coffee once its decision process only searches part of its perceived feasible set — TER does not require universal optimization.",
     sourceLabel: "Test 3",
     introduction: [
-      "Three coffees are available. Each has a score representing how the agent values it. Higher scores mean higher value; they are not prices.",
-      "The agent can check every coffee or limit its search to the first few in a specified order. It chooses the highest score among the coffees it checks. Can the choice change without changing the scores?",
+      "Imagine you are getting coffee, but you only have time to consider a few options. Would you choose differently if you checked them all?",
+      "Each of the three coffees has a score representing how much you value it. These scores are not prices.",
+      "In this simulator, you can check every coffee or just the first few in a specified order. It chooses the highest scoring coffee among those checked. Try changing how many options you check while keeping the scores the same.",
     ],
     activityHeading: "Try it",
     instruction:
@@ -681,7 +683,7 @@ export const scenarios: Scenario[] = [
         name: "Objective feasible state of reality",
         definition:
           "The objectively realized conditions and constraints relevant when the selected action(s) at decision point t are realized. Not agent specific, and not an input to the decision process.",
-        mapping: "F_t and outcome realization are outside this scenario's scope.",
+        mapping: "{F_t} and outcome realization are outside this scenario's scope.",
         testTreatment: "Outside scope",
       },
       {
@@ -839,7 +841,7 @@ export const scenarios: Scenario[] = [
         definition:
           "The objectively realized conditions and constraints relevant when the selected action(s) at decision point t are realized. Not agent specific, and not an input to the decision process.",
         mapping:
-          "The reality rule reads each car's actual quality, a scenario-specified condition that represents one relevant aspect of {F_t}. It is not a complete representation of F_t.",
+          "The reality rule reads each car's actual quality, a scenario-specified condition that represents one relevant aspect of {F_t}. It is not a complete representation of {F_t}.",
         testTreatment: "Fixed",
       },
       {
@@ -1130,7 +1132,7 @@ export const scenarios: Scenario[] = [
       "A producer may select an action the scenario does not permit. The selected action stays the one the decision process chose; the realized outcome shows what the scenario allowed.",
     sourceLabel: "Model 5.2",
     introduction: [
-      "Choosing an action does not guarantee it can be carried out.",
+      "A producer decides to make 100 units, but the scenario only permits 60. How many units are actually produced?",
       "Three producers consider making nothing, 60 units, or 100 units. Each assigns those options scores of 0, 6, and 10 and chooses the highest score among the options it perceives.",
       "The producers differ in what they believe they can attempt and what the scenario permits. In this example, production is capped at the largest permitted quantity.",
     ],
@@ -1364,7 +1366,7 @@ export const scenarios: Scenario[] = [
         definition:
           "The objectively realized conditions and constraints relevant when the selected action(s) at decision point t are realized. Not agent specific, and not an input to the decision process.",
         mapping:
-          "Both actions are objectively permitted at both decision points. This is one relevant aspect of F_t, not all of it, and nothing changes it.",
+          "Both actions are objectively permitted at both decision points. This is one relevant aspect of {F_t}, not all of it, and nothing changes it.",
         testTreatment: "Fixed",
       },
       {
@@ -1425,7 +1427,7 @@ export const scenarios: Scenario[] = [
         name: "Realized outcome",
         definition: "Realized outcome associated with the selected action.",
         mapping:
-          "The action the agent experienced, returned by the simulator. This is a single-agent specification (Model 5.2), so no system outcome O_t is defined.",
+          "The action the agent experienced, returned by the simulator. This is a single-agent specification (Model 5.2), so no system outcome {O_t} is defined.",
         testTreatment: "Output",
       },
     ],

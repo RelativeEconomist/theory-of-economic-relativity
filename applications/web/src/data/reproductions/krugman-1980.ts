@@ -128,7 +128,7 @@ export const krugman1980 = {
       definition:
         "Maps the selected action(s) and the relevant objectively realized state F_t to the realized outcome; its arguments depend on model scope.",
       mapping:
-        "One joint R per scenario. It realizes the allocation only if F_t permits all of it; otherwise it reports the allocation infeasible and realizes nothing. It never rewrites a selected action.",
+        "One joint R per scenario. It realizes the allocation only if {F_t} permits all of it; otherwise it reports the allocation infeasible and realizes nothing. It never rewrites a selected action.",
       testTreatment: "Realization",
     },
     {
