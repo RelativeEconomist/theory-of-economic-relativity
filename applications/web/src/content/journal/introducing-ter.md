@@ -6,7 +6,7 @@ publishedAt: 2026-11-17
 cover:
   src: "./images/introducing-ter.png"
   alt: "TER logo beside a triangular network mesh with colored nodes."
-draft: false
+draft: true
 ---
 
 Economic models help us understand decisions, markets, and institutions. They make different assumptions about what people know, what they value, which actions they consider, and how their choices produce outcomes.
