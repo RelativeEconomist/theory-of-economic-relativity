@@ -1,0 +1,16 @@
+Healthy NE: ['WW', 'DD']
+WW patient expected: 8/5 8/5 public payout 0
+WD patient expected: 2/5 7/5 public payout 0
+DW patient expected: 7/5 2/5 public payout 0
+DD patient expected: 1 1 public payout 0
+Low long return NE: ['DD']
+WW patient expected: 22/25 22/25 public payout 0
+WD patient expected: 11/50 7/5 public payout 0
+DW patient expected: 7/5 11/50 public payout 0
+DD patient expected: 1 1 public payout 0
+Financed guarantee NE: ['WW']
+WW patient expected: 8/5 8/5 public payout 0
+WD patient expected: 8/5 7/5 public payout 6/5
+DW patient expected: 7/5 8/5 public payout 6/5
+DD patient expected: 7/5 7/5 public payout 6/5
+ALL ASSERTIONS PASS
