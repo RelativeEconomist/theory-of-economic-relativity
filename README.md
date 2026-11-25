@@ -73,7 +73,7 @@ This architecture can be applied from a single decision to interacting agents an
 
 ## The TER Architecture
 
-TER represents the selected action of agent $i$ at time $t$ as:
+When agent $i$ uses valuation, TER represents its selected action at time $t$ as
 
 $$
 C_{i,t} = D_{i,t}(\hat{F}_{i,t}, M_{i,t}, V_{i,t}(\cdot \mid G_{i,t}, M_{i,t}, H_{i,t}))
@@ -86,13 +86,14 @@ TER's core variables are:
 | $G$ | Objective |
 | $M$ | Model of reality, including information and beliefs |
 | $F_t$ | Objective feasible state of reality |
-| $\hat{F}$ | Possibilities the agent perceives as available |
+| $\hat{F}$ | Actions the agent perceives as available to attempt |
 | $V$ | Valuation of actions relative to the agent's objective |
 | $H$ | Time horizon |
 | $D$ | Decision process used to select among perceived feasible actions |
 | $C$ | Selected action |
 | $R$ | Reality function: maps selected action(s) and $F_t$ to realized outcomes |
-| $O$ | Realized outcome |
+| $O_{i,t}$ | Individual realized outcome |
+| $O_t$ | System outcome of joint realization |
 
 > **Quick reference:** the canonical definitions, with full notation and time indices, are in [`theory/academic.md`](theory/academic.md#3-core-definitions). Detailed variable placement and modeling boundaries are in [`research/ter-methodology-notes.md`](research/ter-methodology-notes.md).
 
@@ -106,7 +107,15 @@ $$
 O_{i,t} = R(C_{i,t}, F_t)
 $$
 
-Outcomes depend on selected actions encountering the objective feasible state of reality. Where interactions are explicitly modeled, one joint $R$ produces the system outcome; external effects are part of realized outcomes. Those outcomes can then change future information, beliefs, feasible actions, valuations, time horizons, decision processes, and subsequent actions.
+In Model 5.3, the selected actions $\mathbf C_t$ enter one joint realization $Y_t$.
+
+$$
+Y_t=R(\mathbf C_t,F_t),\qquad
+O_t=P_{\mathrm{sys}}(Y_t),\qquad
+O_{i,t}=P_i(Y_t)\ \text{where an individual outcome is specified}.
+$$
+
+The readouts $P_{\mathrm{sys}}$ and $P_i$ obtain system and individual outcomes from the same result. Realized outcomes can include external effects and shape later decisions and objective conditions.
 
 For the formal definitions, axioms, and equations, see [`theory/academic.md`](theory/academic.md).
 
@@ -120,6 +129,7 @@ TER develops this architecture through five components and optional analytical m
 4. **State Persistence Constraint** — the boundary condition for when an existing state can no longer persist unchanged under reality's constraints.
 5. **Dynamic Feedback** — how outcomes alter the subsequent conditions shaping later decisions.
 6. **Feedback Analysis and Stability** (optional) — how feedback may amplify, damp, propagate, persist, oscillate, or change across regimes.
+7. **Equilibrium Consistency** (optional) — which configurations satisfy the specified equilibrium conditions.
 
 These are layers of one framework, not separate theories.
 

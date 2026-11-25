@@ -10,11 +10,13 @@ Check every box before you submit a new or changed TER test. If something here s
 - [ ] `F̂` lists the actions the agent thinks it can try, not what reality allows. An action that may fail stays in `F̂`.
 - [ ] `F_t` holds the actual conditions (for example, the actual price), set in the `Scenario`, never on the agent.
 - [ ] `R` turns the chosen actions and `F_t` into outcomes. A failed or partly filled action shows up in `O`, not as a different `C`.
+- [ ] Where the model has objective constraints, assertions check the realized result against independently specified limits or accounting identities.
+- [ ] In a dynamic test, the objective transition uses realized consequences and each agent receives only the information delivered before its next choice.
 
 ## Economic validity
 
 - [ ] Test-specific assumptions are listed in the docstring, key numbers are named constants, and no assumption is presented as part of TER.
-- [ ] Established economics keeps its standard meaning. Any equilibrium concept used is named.
+- [ ] Established economics keeps its standard meaning. Any equilibrium concept used has stated consistency conditions.
 - [ ] The setup was chosen for economic reasons before seeing the result, not tuned backward to make the hypothesis pass.
 
 ## Test quality

@@ -3,8 +3,8 @@
  * Scenario mapping onto Model 5.1, inside a lesson's Model details: the
  * decision equation and, per variable, its symbol, plain name, role in this
  * test, and any treatment. Single-agent outcome scenarios add the Model 5.2
- * outcome equation; multi-agent scenarios add the Model 5.3 system
- * outcome equation. Each equation links to its model in the theory. The
+ * outcome equation; multi-agent scenarios add the Model 5.3 joint
+ * realization equation. Each equation links to its model in the theory. The
  * compact view shows treatments as status badges and lists "Not modeled"
  * variables after the rows. Each symbol and name reveals its definition
  * (TerTerm).
@@ -33,7 +33,7 @@ const showMapping = part !== "equations";
 const NOT_MODELED = "Not modeled";
 const notModeled = compact ? components.filter((component) => component.testTreatment === NOT_MODELED) : [];
 const rows = compact ? components.filter((component) => component.testTreatment !== NOT_MODELED) : components;
-// Model 5.1 as written in theory/academic.md, rendered at build time. Outer
+// The valuation-using case of Model 5.1, rendered at build time. Outer
 // parentheses stay at text size so they do not dominate the inline formula.
 const decisionEquation = katex.renderToString(
   String.raw`C_{i,t} = D_{i,t}(\hat{F}_{i,t}, M_{i,t}, V_{i,t}(\cdot \mid G_{i,t}, M_{i,t}, H_{i,t}))`,
@@ -42,8 +42,8 @@ const decisionEquation = katex.renderToString(
 // Model 5.2's outcome equation as written in theory/academic.md.
 const agentOutcomeEquation = katex.renderToString(String.raw`O_{i,t} = R(C_{i,t}, F_t)`, { throwOnError: true });
 // Model 5.3 as written in theory/academic.md.
-const systemOutcomeEquation = katex.renderToString(
-  String.raw`O_t = R(C_{1,t}, C_{2,t}, \ldots, C_{n,t}, F_t)`,
+const jointOutcomeEquation = katex.renderToString(
+  String.raw`Y_t = R(\mathbf{C}_t, F_t),\qquad O_t = P_{\mathrm{sys}}(Y_t),\qquad O_{i,t} = P_i(Y_t)\ \text{where specified}`,
   { throwOnError: true },
 );
 ---
@@ -70,9 +70,9 @@ const systemOutcomeEquation = katex.renderToString(
     <a
       class="equation equation-system card"
       href="/theory/#53-multi-agent-model"
-      aria-label="Model 5.3, the Multi Agent Model: O sub t equals R of C sub 1,t, C sub 2,t, through C sub n,t, and F sub t"
+      aria-label="Model 5.3, the Multi Agent Model. R takes the selected action profile and F sub t to produce the joint result Y sub t. P sys and P i read out the system and any specified individual outcomes."
     >
-      <span class="formula" set:html={systemOutcomeEquation} aria-hidden="true" />
+      <span class="formula" set:html={jointOutcomeEquation} aria-hidden="true" />
     </a>
   )}
 

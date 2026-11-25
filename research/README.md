@@ -8,7 +8,7 @@ In short: this file is *how to use the software* — the API, test structure, an
 
 ## Start Here
 
-1. Read the core architecture — [root README](../README.md) or [`theory/academic.md`](../theory/academic.md) §5 for the formal models.
+1. Read the [formal architecture](../theory/academic.md#5-formal-architecture) or the [v0.6.0 release notes draft](proposals/ter-v0.6.0-release-notes.md).
 2. Review the modeling guidance in [`ter-methodology-notes.md`](ter-methodology-notes.md) before writing a new specification.
 3. Run the suite and read [`test_01_basic_agent_choice.py`](tests/test_01_basic_agent_choice.py) — the simplest scenario, and the clearest map from a plain economic question to the API below.
 4. Modify an existing test.
@@ -65,17 +65,17 @@ The one deliberate exception is [`test_07_supply_and_demand.py`](tests/test_07_s
 
 ## The TER Components, in Plain Language
 
-Every TER agent decision can be described with nine components. Full formal definitions live in [`theory/academic.md`](../theory/academic.md) §3; boundary distinctions between components (e.g. `M` vs. `F̂`, `G` vs. `V`) live in [`ter-methodology-notes.md`](ter-methodology-notes.md) (Variable Placement). Notation is given for reference; you don't need to know it to read or write a test.
+The symbols below describe selection, realization, and their inputs. [Canonical definitions](../theory/academic.md#3-core-definitions) · [Variable placement](ter-methodology-notes.md#variable-placement)
 
 - **Objective (G)** — what the agent is trying to achieve.
 - **Model of reality (M)** — what the agent believes or knows, right or wrong.
-- **Objective feasible state of reality (F_t)** — what reality permits, regardless of belief. It is not agent specific: it is one state that every action taken at time `t` encounters. It is never an input to `D`.
-- **Perceived feasible set (F̂)** — what the agent believes is possible.
-- **Valuation (V)** — how the agent scores a possible action.
-- **Horizon (H)** — how far ahead the agent looks when it decides.
-- **Decision process (D)** — how the agent picks among what it believes is feasible.
+- **Objective feasible state of reality (F_t)** — the objective conditions and constraints relevant when selected actions are realized. The specification may approximate them.
+- **Perceived feasible set (F̂)** — the actions the agent perceives as available to attempt.
+- **Valuation (V)** — how the agent evaluates an action when it uses valuation.
+- **Time horizon (H)** — which future consequences it considers in valuation.
+- **Decision process (D)** — how the agent selects from `F̂` using its own inputs.
 - **Selected action (C)** — the action the agent actually chose.
-- **Outcome (O)** — what happened once the choice met reality: `O_{i,t}` in an agent-level specification, `O_t` where contemporaneous interactions among agents are explicitly modeled. `R` is the reality function that produces it.
+- **Outcome (O)** — what the reality function `R` delivers. `O_{i,t}` is an individual outcome. `O_t` is the system outcome of joint realization.
 
 A test's docstring should name only the components that matter for *that* test, in this plain-language-first style — not repeat this whole list every time. See `test_01`'s or `test_08`'s "TER instantiation" table for the pattern.
 
@@ -83,7 +83,7 @@ A test's docstring should name only the components that matter for *that* test, 
 
 - **`AgentSpec`** — one agent's G, M, F̂, V, H, D, declared as data: `objective`, `model_of_reality`, `perceived_feasible_set`, `valuation`, `valuation_rule`, `decision_process`, `decision_parameters`, `horizon` — plus `update_rule`, how the agent turns what it observes into changed beliefs or perceptions (Model 5.5).
 - **`AgentGroup`** — a convenience for declaring several structurally identical agents at once: `AgentGroup(base=BASE_AGENT, count=3, name_prefix="seller", model_of_reality={...})` produces `seller_1`, `seller_2`, `seller_3` as ordinary `AgentSpec`s. It's sugar for a loop over `AgentSpec.variant()`, not a TER primitive — reach for it only when a test would otherwise repeat the same agent construction several times (see `test_04_asymmetric_information.py`, `test_09_bank_run.py`).
-- **`Scenario`** — the agents, the initial objective state `F_0` (`initial_state`) and `parameters` (fixed scenario conditions), and (optionally) the `reality`, `transition`, and `observation` rules and the `schedule` that govern interaction and change over time.
+- **`Scenario`** — the agents, `initial_state`, fixed `parameters`, and optional reality, transition, observation, and scheduling rules.
 - **Shared rule functions** — reusable D/V/R/transition/observation/update implementations in `research.ter.rules`, such as `maximize_value`, `satisfice`, `net_value`, and `social_value_reality`. Import and pass the function directly.
 - **`run_scenario(scenario)`** — executes it and returns a `ScenarioResult`.
 - **`AgentResult`** — what `result.agent(name)` gives you back: one agent's final state and outcome, addressed by name.
@@ -98,7 +98,7 @@ The canonical architecture is defined in `theory/academic.md` §3 and §5; this 
 | --- | --- | --- |
 | `G` | `AgentSpec.objective` / `AgentState.objective` | the objective value itself |
 | `M` | `AgentSpec.model_of_reality` / `AgentState.model_of_reality` | a dict of beliefs; changes only through the agent's own `update_rule`, applied to what it observes |
-| `F_t` | no dedicated field: the objective state (`Scenario.initial_state` as `F_0`, advanced only by the `transition`) and `Scenario.parameters` may encode conditions and constraints relevant to what `F_t` permits | implementation fields, not TER primitives; no single field is identical to `F_t`. Not an `AgentSpec`/`AgentState` field; never read by a decision process |
+| `F_t` | The objective conditions relevant to `R`, represented by scenario state and parameters | The runner advances objective state through the `transition`. `D` receives the agent's own inputs. |
 | `F̂` | `AgentSpec.perceived_feasible_set` / `AgentState.perceived_feasible_set` | agent-side; what the decision process selects from. Not a copy of what the scenario permits. A list, or an `Interval` / `Region` from `research.ter.feasible` for continuous or multidimensional actions; `C ∈ F̂` is checked by membership |
 | `V` | `AgentSpec.valuation` (data) + `AgentSpec.valuation_rule` (a callable) | `valuation` is declarative data (e.g. a value map); `valuation_rule` is the function that reads it and returns a score. Together they implement `V`. |
 | `H` | `AgentSpec.horizon` / `AgentState.horizon` | carried as data; no shared rule currently reads it |
@@ -126,12 +126,12 @@ In practice: `objective`, `model_of_reality`, `valuation`, `valuation_rule`, `de
 
 1. **Schedule** (`Schedule.simultaneous()` — the default — or `Schedule.sequential("a", "b")`) names the actors. Inactive agents do not decide and contribute no action. Sequential schedules cycle over `periods`.
 2. Every actor selects `C_i,t` from a frozen copy of its own state (Model 5.1), before anything at `t` is realized.
-3. **`reality`** — `R(actions, objective_state, parameters) -> RealityResult`. `actions` maps actor name to action; `objective_state` is `F_t`, frozen. `RealityResult.system` is `O_t`; `RealityResult.agents[name]` is `O_i,t`, derived from the same joint realization where it depends on the interaction. R never changes `F`. Without a reality rule, nothing is realized.
-4. **`transition`** — `(objective_state, reality, parameters) -> objective_state`: `F_t → F_t+1`. Without one, `F` carries forward unchanged.
-5. **`observation`** — `(agents, actions, reality, objective_state, parameters) -> {name: data}`: what each agent learns (it sees `F_t+1`). An agent with no entry learns nothing.
+3. **`reality`** — `R(actions, objective_state, parameters) -> RealityResult`. It reads selected actions and the relevant objective conditions from frozen inputs. `RealityResult.system` and `.agents[name]` carry the system and individual outcomes of that realization.
+4. **`transition`** — `(objective_state, reality, parameters) -> objective_state`. It advances objective state from the realized result. Without one, the objective state carries forward.
+5. **`observation`** — `(agents, actions, reality, objective_state, parameters) -> {name: data}`. The callback receives the post-transition state. Each agent receives only its own entry.
 6. **`AgentSpec.update_rule`** — `(agent, observation) -> {component: new value}`: the agent's own rule for turning its `Observation` into a new `M`, `F̂`, `G`, `V` data, `H`, or `decision_parameters`. It sees only its own `UpdateView` and that observation — never `F` or `O` — and cannot replace the agent's decision or valuation rule. This is the only way agent state changes.
 
-`initial_state` is `F_0` and nothing else — no `"period"` or other bookkeeping. Initial beliefs belong in each agent's `model_of_reality` (`M_0`): an update only ever follows an observed outcome. Every rule must be deterministic; there is no randomness source yet.
+Initialize `model_of_reality` with information available before the first choice. Use an earlier stage to deliver information for a later choice. The runner supplies no random stream. For replayable scenarios, record resolved draws as part of the relevant realization conditions.
 
 ### Result API
 
@@ -143,11 +143,11 @@ result.trace[t].actions[name]           # C_i,t
 result.trace[t].reality.system          # O_t
 result.trace[t].reality.agent(name)     # O_i,t
 result.trace[t].observations[name]      # what that agent received
-result.trace[t].objective_state         # F_t+1
+result.trace[t].objective_state         # objective state after the transition
 result.trace[t].agents[name]            # that agent's state after its update
-result.trace.objective_state_before(t)  # F_t
+result.trace.objective_state_before(t)  # recorded objective state for realization
 result.trace.agents_before(t)           # every agent's state when t's actors decided
-result.history                          # [F_0, F_1, ..., F_T]; result.initial is F_0, result.final is F_T
+result.history                          # recorded objective states, from result.initial to result.final
 
 result.agent(name)                      # AgentResult from that agent's last decision point
 result.agent(name).outcome_for(action)  # counterfactual re-run of R there, this agent's action replaced

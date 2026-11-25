@@ -44,11 +44,7 @@ TER itself is not an omniscient prediction system: it does not assume an observe
 
 ## Does TER make irrational behavior secretly rational?
 
-No. TER does not require optimization, exhaustive comparison, or objectively rational behavior.
-
-`D` may represent satisficing, heuristics, habits, intuition, reflexive responses, strategic reasoning, or other decision processes — Axiom 3 explicitly states that evaluation "need not be conscious, exhaustive, or perfectly optimizing," and Axiom 4 that the selected action "need not be objectively optimal or result from exhaustive comparison among alternatives."
-
-A poor decision remains a poor decision if the evidence supports that interpretation — TER only requires that the selected action results from the agent's specified decision process acting on its perceived feasible set and model of reality, using valuation relative to its objective and time horizon where valuation applies, not that the result be good. See [Axiom 3](../theory/academic.md#axiom-3-valuation-is-relative-to-objectives), [Axiom 4](../theory/academic.md#axiom-4-agents-select-actions-through-a-decision-process), and [§5.1](../theory/academic.md#51-agent-decision-model).
+`D` can model heuristics, habits, and other processes that produce poor decisions. It selects from the perceived feasible set and can use valuation when the specification calls for it. [Agent Selection](../theory/academic.md#axiom-1-agent-selection) · [Agent Decision Model](../theory/academic.md#51-agent-decision-model)
 
 ## Why distinguish `F_t` from `F̂`?
 

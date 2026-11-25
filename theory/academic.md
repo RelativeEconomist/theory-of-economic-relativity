@@ -1,6 +1,6 @@
 # Theory of Economic Relativity
 
-**Version:** 0.5.0
+**Version:** 0.6.0
 
 ## Abstract
 
@@ -70,7 +70,7 @@ The core TER symbols, their canonical names and roles, and the models that use t
 | $H_{i,t}$ | Time Horizon | Which future consequences agent $i$ considers relevant to valuation | 5.1, 5.5 |
 | $D_{i,t}$ | Decision Process | Process through which agent $i$ selects among perceived feasible actions; it may condition directly on the agent's model of reality and may use valuation when applicable | 5.1, 5.5 |
 | $C_{i,t}$ | Selected Action | Action agent $i$ selects from its perceived feasible set | 5.1, 5.2, 5.3, 5.5 |
-| $O_{i,t}$ | Realized Outcome | Realized outcome associated with agent $i$'s selected action; where explicit interaction matters, an interaction-dependent agent-level outcome is derived from the same joint $R$ as $O_t$ | 5.2, 5.3, 5.5 |
+| $O_{i,t}$ | Realized Outcome | Agent $i$'s realized outcome at $t$, which may follow an earlier selected action. Interaction-dependent outcomes come from the same joint $R$ as $O_t$. | 5.2, 5.3, 5.5 |
 | $O_t$ | System Outcome | Realized system outcome produced by interacting selected actions encountering $F_t$ | 5.3, 5.5 |
 | $R(\cdot)$ | Reality Function | Maps the selected action(s) and the relevant objectively realized state $F_t$ to the realized outcome; its arguments depend on model scope | 5.2, 5.3, 5.5 |
 
@@ -82,41 +82,7 @@ Where:
 
 - $a$ represents a potential action.
 
-The core decision and outcome structure, formalized in Models 5.1 and 5.2, can be summarized as:
-
-$$
-
-C_{i,t}
-
-=
-
-D_{i,t}
-
-\left(
-
-\hat{F}_{i,t},
-
-M_{i,t},
-
-V_{i,t}(\cdot \mid G_{i,t}, M_{i,t}, H_{i,t})
-
-\right)
-
-$$
-
-while the objective feasible state of reality constrains the realized outcome:
-
-$$
-
-(C_{i,t},F_t)
-
-\rightarrow
-
-O_{i,t}
-
-$$
-
-The perceived feasible set $\hat{F}_{i,t}$ contains the actions agent $i$ perceives as available to attempt, while $F_t$ represents the objective conditions relevant when the selected action is realized.
+Model 5.1 specifies selection from the perceived feasible set, with valuation when used. Models 5.2 and 5.3 specify what the selected actions realize under objective conditions.
 
 ### Agent
 
@@ -170,7 +136,7 @@ $F_t$ represents the objective feasible state of reality relevant when the selec
 
 It includes prevailing conditions, resources, capabilities, institutions, market and environmental conditions, shocks, and other objective constraints. These are aspects of $F_t$, not separate core variables.
 
-$F_t$ is not agent specific, may be perceived imperfectly, and may only be approximated in empirical or computational specifications. Conditions objectively realized by the point of realization belong to the relevant $F_t$. Expectations or predictions about unresolved conditions belong in $M_{i,t}$; if uncertainty resolves after selection but before realization, the realized condition belongs in the relevant $F_t$. Conditions produced by modeled actions or interactions are realized as outcomes and may become part of a later $F$.
+$F_t$ refers to objective conditions shared at the relevant stage, although those conditions can affect agents differently. An agent may know some of them through available information. A researcher specifies which conditions matter and may only approximate them. Expectations about unresolved conditions belong in $M_{i,t}$. If a relevant condition resolves after selection but before realization, its realized value belongs in $F_t$. Conditions produced by modeled actions or interactions enter as realized outcomes and may become part of a later $F$.
 
 ### Perceived Feasible Set
 
@@ -202,7 +168,7 @@ A time horizon may range from immediate outcomes to consequences extending years
 
 ### Realized Outcome and System Outcome
 
-The realized result of agent actions and interactions encountering the objective feasible state of reality, which may include external effects. $O_{i,t}$ is the realized outcome associated with an agent's selected action (Model 5.2); $O_t$ is the system outcome of explicitly modeled interacting actions (Model 5.3).
+The realized result of agent actions and interactions encountering the objective feasible state of reality, which may include external effects. $O_{i,t}$ is the outcome for agent $i$ at $t$. It may follow from an action selected at that decision point or from an earlier action, such as a standing order that fills later. $O_t$ is the system outcome of explicitly modeled interacting actions (Model 5.3).
 
 ### External Effect
 
@@ -230,76 +196,31 @@ A condition in which the modeled agents’ actions and expectations are consiste
 
 ### Reality
 
-The objective world itself, whose conditions ultimately determine the consequences of actions, regardless of an agent's beliefs or expectations.
+The objective world itself, whose conditions constrain what selected actions can realize. Beliefs and expectations may change consequences through the actions they shape.
 
 Reality is not a TER variable. $F_t$ is TER's representation of reality's objectively realized conditions and constraints relevant at realization (see Objective Feasible State of Reality). TER does not assume that the evolution of reality is fundamentally deterministic or stochastic; such assumptions belong to the scientific and economic specification being studied.
 
 ## 4. Axioms
 
-The Theory of Economic Relativity rests on the following axioms.
+### Axiom 1: Agent Selection
 
-### Axiom 1: Agents act on information and beliefs
+An acting agent's decision process selects an action from its perceived feasible set. Selection uses permitted agent-side inputs, including available information as represented in the agent's components. The decision process has no direct access to $F_t$. It may use the agent's model of reality directly and may consult valuation. When used, valuation evaluates actions relative to the agent's objective, given its model of reality and relevant time horizon. Choice can be stochastic, habitual, or nonoptimizing.
 
-Decisions depend on an agent's information, beliefs, and model of reality, which may be incomplete or incorrect.
+### Axiom 2: Objective Realization
 
-### Axiom 2: Agents select among perceived feasible actions
+The reality function determines the realized consequences of selected actions under the objective conditions and constraints relevant to their realization. Its inputs are the selected actions and those objective conditions. Realization may differ from what an agent intended or expected and can produce external effects. Where actions jointly determine consequences, the same joint realization supplies the system outcome and the interaction-dependent agent outcomes.
 
-Agents select among the actions they perceive as available to attempt for the decision process at the time of decision. The perceived feasible set may differ from what reality ultimately allows to be realized.
+### Axiom 3: Dynamic Feedback
 
-### Axiom 3: Valuation is relative to objectives
+Realized outcomes may change later objective conditions and agent-side components, including those of other agents. Modeled actions change later objective conditions through their realized consequences. External shocks may change those conditions outside that pathway. An outcome can affect an agent's model of reality only through information available to that agent. The objective transition and agent-side updates are distinct.
 
-When valuation occurs, actions or their consequences are evaluated relative to the agent's objective, given its model of reality and relevant time horizon.
+### Axiom 4: State Persistence
 
-Evaluation need not be conscious, exhaustive, or perfectly optimizing.
-
-### Axiom 4: Agents select actions through a decision process
-
-The selected action is the action that results from the agent's decision process at that time from among its perceived feasible actions.
-
-The decision process may condition directly on the agent's model of reality and may use valuation when applicable. The selected action need not be objectively optimal or result from exhaustive comparison among alternatives.
-
-### Axiom 5: Actions contribute to outcomes and external effects
-
-Agent actions contribute to outcomes and may create external effects. Outcomes may also depend on interactions among agents and on the objective feasible state of reality.
-
-### Axiom 6: Actions can affect other agents
-
-Through the outcomes they contribute to, one agent's actions can change the information, incentives, or perceived feasible actions of other agents at later decision points or stages, and the objective feasible state of reality that subsequent actions encounter.
-
-### Axiom 7: Reality constrains consequences
-
-Agents make decisions according to their understanding of reality, but reality ultimately determines the consequences of those decisions.
-
-### Axiom 8: Infeasible continuation prevents persistence
-
-When continuation of an existing state becomes infeasible under reality's constraints, that state cannot persist unchanged.
-
-### Axiom 9: Realized outcomes may shape subsequent conditions
-
-Realized outcomes may alter subsequent conditions through their economically relevant consequences. The conditions that may change include the objective feasible state of reality and the objectives, models of reality, perceived feasible sets, valuations, time horizons, and decision processes that shape later decisions.
-
-### Axiom Map
-
-The axioms primarily supporting each formal component (Section 5) and each interpretive principle (Section 6).
-
-| Component | Primary supporting axioms |
-|---|---|
-| 5.1 Agent Decision Model | 1 ($M$), 2 ($\hat{F}$), 3 ($V$), 4 ($D$) |
-| 5.2 Action to Outcome Model | 2, 5, 7 |
-| 5.3 Multi Agent Model | 5, 6, 7 |
-| 5.4 State Persistence Constraint | 7, 8 |
-| 5.5 Dynamic Feedback Model | 1, 6, 7, 9 |
-| 5.6 Feedback Analysis and Stability | 5, 6, 7, 8, 9 |
-| 6.1 Agent Objective | 3, 4; Model 5.1 |
-| 6.2 Feasibility and Constraints | 1, 2, 4, 6, 7; Models 5.1, 5.2, 5.3 |
-| 6.3 Agent Model of Reality | 1, 2, 3, 7, 9; Models 5.1, 5.2, 5.5 |
-| 6.4 Action Selection | 1, 2, 3, 4, 7; Models 5.1, 5.2 |
-| 6.5 Outcomes and System Effects | 1, 5, 6, 7, 9; Models 5.2, 5.3, 5.5 |
-| 6.6 Persistence and Change Over Time | 1, 2, 5, 6, 7, 8, 9; Sections 5.3–5.6 |
+An existing system state can persist unchanged only while its continuation is objectively feasible.
 
 ## 5. Formal Architecture
 
-Variables and notation are defined in Section 3. The formal architecture has five components and one optional set of analytical methods:
+Section 3 defines the TER variables. The following models and constraint specify their relationships. Auxiliary objects used to describe individual specifications are not TER primitives.
 
 - **Model 5.1, Agent Decision Model:** how an agent selects an action.
 
@@ -311,193 +232,94 @@ Variables and notation are defined in Section 3. The formal architecture has fiv
 
 - **Model 5.5, Dynamic Feedback Model:** how realized outcomes may alter later conditions.
 
-- **Analysis 5.6, Feedback Analysis and Stability:** optional analytical methods, not a TER primitive or a required model.
+- **Analysis 5.6, Feedback Analysis and Stability:** optional analysis of a specified dynamic model.
+
+- **Section 5.7, Equilibrium Consistency:** optional conditions for a specified equilibrium concept.
 
 ### 5.1 Agent Decision Model
 
-The Agent Decision Model describes how a single agent selects an action. It is the fundamental decision model of Economic Relativity, upon which the broader framework builds.
+For each acting agent $i$, declare an action space $\mathcal A_{i,t}$ and a nonempty perceived feasible set $\hat F_{i,t}\subseteq \mathcal A_{i,t}$. The decision process $D_{i,t}$ maps admitted tuples of agent-side inputs to actions in $\mathcal A_{i,t}$, with the restriction
 
 $$
-
-C_{i,t}
-
-=
-
-D_{i,t}
-
-\left(
-
-\hat{F}_{i,t},
-
-M_{i,t},
-
-V_{i,t}(\cdot \mid G_{i,t}, M_{i,t}, H_{i,t})
-
-\right)
-
+C_{i,t}=D_{i,t}(\hat F_{i,t},M_{i,t},v_{i,t};u^D_{i,t})\in\hat F_{i,t}.
 $$
 
-Symbols are defined in Section 3. In this model:
+When valuation is used, $v_{i,t}=V_{i,t}(\cdot\mid G_{i,t},M_{i,t},H_{i,t})$ is the valuation on the declared action domain with the score space used by the specification. Omit $v_{i,t}$ where the decision process does not consult valuation. $G_{i,t}$ and $H_{i,t}$ condition valuation when used. $M_{i,t}$ may condition valuation and selection through distinct mechanisms.
 
-- $V_{i,t}$ = the valuation
+The draw $u^D_{i,t}$ is optional. A stochastic specification may provide a decision kernel directly, assigning probability one to the measurable perceived feasible set for each admitted choice context. Declare the law of any shared decision randomization and what each agent can observe. $D_{i,t}$ can use only the inputs available at selection through the agent's own components and permitted draws. Holding those inputs and the chosen rule fixed, varying a hidden realization condition leaves selection unchanged. The restriction is on the mechanism's inputs and does not assert statistical independence between choices and objective conditions.
 
-- $V_{i,t}(a \mid G_{i,t}, M_{i,t}, H_{i,t})$ = the value assigned to action $a$ relative to the objective, given the agent's model of reality and time horizon
-
-**Scope.** The selected action is the action that results from the agent's decision process. This does not require the agent to identify the objectively best action or exhaustively compare every alternative. TER does not require deterministic choice: a particular specification may define $D$ as deterministic or stochastic.
-
-**Boundary.** $F_t$ represents the objective conditions and constraints relevant to realization and therefore affects realized outcomes (Model 5.2), but it is not an input to $D_{i,t}$: the agent acts from $\hat{F}_{i,t}$ and does not require knowledge of $F_t$. Objective conditions represented in $F_t$ affect an agent's action selection only insofar as they are perceived or represented through agent-side components such as $M_{i,t}$ or $\hat{F}_{i,t}$. $F_t$ and $\hat{F}_{i,t}$ may differ. Agents may overlook available actions, incorrectly believe an action is possible, or discover new alternatives as information and constraints change.
-
-**Valuation.** When the decision process uses valuation, the time horizon determines which future consequences the agent considers relevant to that valuation.
-
-**Decision processes.** $D_{i,t}$ governs selection. It receives the agent's model of reality directly and may condition selection on that perceived state without invoking valuation. It may optimize over valuations, satisfice, apply a heuristic, follow habit, respond reflexively, select stochastically, or use another mechanism. Valuation is therefore a component of the architecture but need not be consulted for every selected action. $G_{i,t}$ and $H_{i,t}$ are not universal direct inputs to $D_{i,t}$; when valuation is used, they condition $V_{i,t}$.
-
-$M_{i,t}$ may therefore inform both valuation and selection: through $V_{i,t}$ when actions are evaluated, and directly through $D_{i,t}$ when selection depends on perceived state. These roles should remain distinct within a specification.
-
-Optimization remains one possible specification in which $D_{i,t}$ may use $M_{i,t}$ through valuation:
-
-$$
-
-D_{i,t}(\cdot)
-
-=
-
-\arg\max_{a \in \hat{F}_{i,t}}
-
-E[V_{i,t}(a \mid G_{i,t}, M_{i,t}, H_{i,t})]
-
-$$
+Optimization is one possible decision rule. For a scalar score $v_{i,t}(a)$, a maximizing rule selects an element of $\arg\max_{a\in\hat F_{i,t}}v_{i,t}(a)$. Specify conditions for a maximum and how selection resolves ties. If the score is an expectation of state-contingent consequences, specify the probability law represented in $M_{i,t}$ and conditions for the expectation to exist. A score already evaluated as an expectation enters the comparison directly. Habits, heuristics, satisficing, strategic rules, and other decision processes use the same selection boundary.
 
 ### 5.2 Action to Outcome Model
 
-The Action to Outcome Model describes how a selected action encounters reality and produces an outcome.
-
-An agent selects an action from its perceived feasible set:
+For an agent-level specification, declare the domain $\mathcal F_t$ of objective realization conditions and the outcome space $\mathcal Y_t$. The reality function $R$ maps admitted pairs $(c,f)$ in $\mathcal A_{i,t}\times\mathcal F_t$ to $\mathcal Y_t$:
 
 $$
-
-C_{i,t} \in \hat{F}_{i,t}
-
+O_{i,t}=R(C_{i,t},F_t).
 $$
 
-The selected action encounters the objective feasible state of reality relevant at its point of realization:
+Admitted inputs include attempts that can fail or partially execute. Record the original selected action and the outcome delivered by the mechanism. This model applies when other agents' actions are outside the scope of explicit joint determination at that stage. Earlier events caused by other agents may enter as objective conditions in $F_t$.
 
-$$
+Each specification states the relevant admissible inputs and outcome constraints, such as budgets, resource limits, or settlement rules. If $K_t(c,f,y)$ denotes the applicable constraints on a proposed outcome $y$, require $K_t(c,f,R(c,f))$ for every input pair admitted by the specification, including any pairs admitted for replay. Specify those constraints independently of the computed result. The symbol $K_t$ expresses a model-specific check.
 
-O_{i,t} = R(C_{i,t}, F_t)
+The stage index $t$ pairs the action with its realization conditions. Selection and realization can occur at different times. An objective draw that resolves by realization, such as a service order unknown at choice, can be recorded in $F_t$. At fixed selected actions and $F_t$, $R$ has no additional agent-side inputs. This boundary allows uncertainty in how the conditions arise.
 
-$$
-
-Symbols are defined in Section 3. Here $R(\cdot)$ is applied to agent $i$'s selected action and $F_t$.
-
-**Scope.** This model applies to an agent-level specification in which interactions with other agents are not explicitly modeled as joint determinants of the realized outcome at that decision point or stage. Relevant objective conditions created by other agents may still be represented through $F_t$.
-
-**Failure and partial execution.** An action in $\hat{F}_{i,t}$ is perceived as available to attempt, not guaranteed to succeed. When the selected action encounters the objective conditions and constraints represented by $F_t$ through $R$, it may succeed, partially execute, fail, or produce a different consequence than the agent expected; that realized result becomes part of the outcome.
-
-**Time.** TER uses the same index $t$ for a selected action and the objective state relevant to its realization, but this does not imply that the agent knows $F_t$ when selecting the action. Actions selected at later decision points are likewise realized against the objective state relevant when they are realized, which may reflect earlier outcomes through feedback (Model 5.5).
-
-**Reality and uncertainty.** $F_t$ represents the objectively realized state relevant when the selected action is realized, while $R$ maps the selected action and that realized state to the outcome. Uncertainty may resolve after selection but before realization; the realized condition then belongs to the relevant $F_t$, while the agent's prior expectations remain in $M$. TER does not assume that the evolution of reality is fundamentally deterministic or stochastic. A specification may model uncertainty in how later states arise without changing the distinction between the agent's beliefs in $M$ and the objective state represented by $F$.
+For a fixed-state counterfactual, first reproduce the factual outcome using the recorded actions and $F_t$. Change only the action or actions under study. For a stochastic specification, retain the realized inputs or the coupling required for that replay. A change to an earlier decision can alter later actions and conditions. Evaluate that path with the dynamic specification in Model 5.5.
 
 ### 5.3 Multi Agent Model
 
-The Multi Agent Model describes how the actions and interactions of multiple agents shape one another and produce system outcomes.
+For explicitly modeled interaction, declare the profile space $\mathcal C_t$ of included actions. In a finite model it is a subset of the product of the included agents' action spaces. Other population domains require the structure used by the specification, such as measurability and integrability for a continuum aggregate. Agents without a decision at a stage make no new selection. An explicit no-action may itself be selected where the specification requires it.
 
-At decision point $t$, the actions included in the modeled interaction encounter the same objective feasible state of reality, $F_t$, and their interaction produces the system outcome:
-
-$$
-
-O_t = R(C_{1,t}, C_{2,t}, \ldots, C_{n,t}, F_t)
+One joint $R$ maps admitted pairs in $\mathcal C_t\times\mathcal F_t$ to a joint realized result $Y_t$ in the declared outcome space $\mathcal Y_t$:
 
 $$
+Y_t=R(\mathbf C_t,F_t),\qquad
+O_t=P_{\mathrm{sys}}(Y_t),\qquad
+O_{i,t}=P_i(Y_t)\ \text{where an individual outcome is specified}.
+$$
 
-Symbols are defined in Section 3. Here $n$ is the number of explicitly modeled agents whose actions are included at decision point $t$, and $R(\cdot)$ is applied to those selected actions and $F_t$. A specification may represent an agent that does not act at that decision point by omitting its action from the interaction or by using an explicit no-action where the model requires one.
+Here $\mathbf C_t$ collects the included actions. $Y_t$ and the readouts $P_{\mathrm{sys}}$ and $P_i$ are specification notation. An individual readout can record a consequence to an agent without a new action, such as a fill of its standing order. The system outcome may be the full joint result or a coarser record. TER defines no general aggregation of individual outcomes into $O_t$. Where a reduction to Model 5.2 is claimed for an individual readout, it must be invariant to variations in companion actions at fixed $C_{i,t}$ and $F_t$ on the declared query domain. Then the readout can be written as a function of those two inputs.
 
-**Scope.** $O_t$ applies where interactions among multiple agents are explicitly modeled. TER does not define $O_t$ as an aggregation of the individual outcomes $O_{i,t}$.
-
-**Agent-level outcomes.** Where an agent-level realized outcome depends on contemporaneous or otherwise explicitly modeled interactions, that outcome should be derived from the same joint reality function that determines the system outcome. Where an agent-level outcome does not depend on those interactions at the chosen modeling scope, Model 5.2 may still be applied.
-
-**Interaction timing.** A multi-agent specification may represent contemporaneous, sequential, staged, asynchronous, or repeated interaction. The index $t$ refers to the relevant decision point or time in the specification. Where actions occur in an ordered sequence, later moves use later decision points so that each agent acts from the information and perceived feasible actions available then. Earlier actions may affect later selection through updated agent-side conditions such as $M$ or $\hat{F}$ rather than through direct access by $D$ to $F$.
-
-**One $F_t$.** Within the relevant decision point or stage, the actions included in the modeled interaction encounter the same $F_t$, although its conditions and constraints may matter differently to each action, depending on that action's circumstances.
-
-System outcomes may include external effects (Section 3). Interactions may also create opportunities that agents could not achieve independently, including cooperation, exchange, specialization, and institutions.
-
-**Later decision points.** Through the outcomes they produce, agents' actions can expand, restrict, or alter the opportunities available to others at later decision points or stages. Changes resulting from an interaction may be captured through the system outcome and represented in later states such as $F_{t+1}$ (Model 5.5). A multi-agent specification may represent feasibility constraints explicitly when they are relevant to the system outcome.
+The included actions encounter the same objective conditions, which may affect agents differently. Apply the outcome constraints in Model 5.2 to the joint result. Settlement may contain internal steps, such as serving an already fixed queue from one opening balance. When later agents act on information received during a sequence, represent those choices at later decision points. Joint consequences may include external effects and may create or restrict opportunities such as exchange, cooperation, and specialization.
 
 ### 5.4 State Persistence Constraint
 
-The State Persistence Constraint describes the boundary condition governing whether an existing system state can continue unchanged under reality's constraints.
+Let $s_t$ denote the system state whose persistence is being assessed, with equality evaluated on the economically relevant properties. Declare a nonempty set $\mathcal T_t$ of later times in the continuation interval. In Model 5.5, $S_t$ denotes the opening objective system state and $T_t$ denotes the objective transition rule.
 
-Here the state being evaluated is the existing system state (Section 3); $F_t$ is not that state but represents the objective conditions and constraints that determine whether its continuation is feasible.
-
-When continuation of an existing state is no longer feasible under reality's constraints, that state cannot persist unchanged:
+Write $\operatorname{CanContinue}_t(s_t;\mathcal T_t)$ for the feasibility of unchanged continuation over the interval. Evaluate it using the relevant objective conditions and constraints throughout that interval, specified independently of the proposed path. This evaluation can require conditions beyond those relevant to realization at $t$. Then
 
 $$
-
-\text{continuation of the existing state no longer feasible under reality's constraints}
-
-\Rightarrow
-
-\text{existing state cannot persist unchanged}
-
+\neg\operatorname{CanContinue}_t(s_t;\mathcal T_t)
+\quad\Longrightarrow\quad
+\neg\bigl(s_u=s_t\ \text{for every }u\in\mathcal T_t\bigr).
 $$
 
-The conditions preventing continuation may arise from agent actions and interactions, institutions, markets, physical conditions, external shocks, or other factors that affect what reality allows to persist or occur.
-
-An imbalance (Section 3) may persist, grow, diminish, or be resolved while the existing state remains feasible. Its presence does not by itself establish that the state cannot continue or predict when a change will occur; it may contribute to infeasible continuation, persist through it, or be unrelated to it, and imbalance by itself does not force correction.
-
-This constraint does not specify what state follows or the mechanism through which change occurs. Subsequent outcomes may emerge through agent decisions, interactions, external shocks, institutional processes, physical processes, and feedback represented elsewhere in TER. The resulting state may represent equilibrium, continued imbalance, instability, transformation, failure, or another outcome permitted by the conditions that follow.
+The implication restricts admissible paths, including in a stochastic specification. The transition mechanism determines what follows, including whether a state can recur after a change. An imbalance may persist, grow, diminish, or resolve while continuation remains feasible. An imbalance alone establishes neither infeasibility nor the timing or direction of change.
 
 ### 5.5 Dynamic Feedback Model
 
-The Dynamic Feedback Model describes how realized outcomes can alter subsequent conditions, including the elements shaping later decisions and the objective feasible state of reality.
+A dynamic specification declares its initial states, event order, observations, and transition rules. Let $S_t$ denote its opening objective system state and $B^-_{i,t}$ and $B^+_{i,t}$ collect the existing agent-side components $(G,M,\hat F,V,H,D)$ at selection and after the stage's updates. Let $Y_t$ denote the realized result, either the joint record from Model 5.3 or the agent outcome from Model 5.2. These symbols and the maps below describe the specification.
 
-Realized outcomes become part of the conditions shaping subsequent decisions. The feedback represented here is path dependent: later decisions reflect the consequences of prior outcomes, while the objective feasible state of reality relevant at each realization, which external shocks may change, also affects what is realized as the system evolves.
-
-In the relationships below, arrows indicate possible influence, not that every outcome necessarily changes every subsequent component. They are written from the system outcome $O_t$; in a single-agent specification, feedback may originate from $O_{i,t}$ instead. Realized outcomes may affect an agent's model of reality only through the information available to that agent. TER does not assume that agents observe the full system outcome or observe outcomes without error.
+An observation rule $\sigma^\pm_{i,t}$ maps the relevant dated event record $\mathscr E_{\le d^\pm_{i,t}}$ at delivery time $d^\pm_{i,t}$ into information $L^\pm_{i,t}$ available to agent $i$. Use a pre-choice delivery where one occurs, and post-event delivery for information that arrives later:
 
 $$
-
-O_t
-
-\rightarrow
-
-(G_{i,t+1}, M_{i,t+1}, \hat{F}_{i,t+1}, V_{i,t+1}, H_{i,t+1}, D_{i,t+1})
-
-\rightarrow
-
-C_{i,t+1}
-
+L^-_{i,t}=\sigma^-_{i,t}(\mathscr E_{\le d^-_{i,t}}),\qquad
+B^-_{i,t}=U^-_{i,t}(B^+_{i,t-1},L^-_{i,t}).
 $$
 
-$$
-
-O_t
-
-\rightarrow
-
-F_{t+1}
+Realization uses $F_t=\rho_t(S_t,\xi_t)$, where $\xi_t$ denotes any additional objective inputs resolved by realization. The objective transition and the later agent-side updates are
 
 $$
-
-For a single-agent specification, the next realized outcome remains:
-
+S_{t+1}=T_t(S_t,F_t,Y_t;\varepsilon_{t+1}),\qquad
+L^+_{i,t}=\sigma^+_{i,t}(\mathscr E_{\le d^+_{i,t}}),\qquad
+B^+_{i,t}=U^+_{i,t}(B^-_{i,t},L^+_{i,t}).
 $$
 
-O_{i,t+1}
+Declare the domains of the state and event records, the delivered information spaces, and the permitted inputs to each map. $\rho_t$ returns a condition in $\mathcal F_t$, $T_t$ returns a state in the declared space for $S_{t+1}$, and the update functions return agent-side tuples in their declared spaces. The first selection uses the initialized local state and any information then available. Specify stochastic maps by their kernels or by conditioning on declared draws, with their timing and dependence. The observation mechanism can use only events available to it at delivery. Agent-side updates use what the agent actually receives or otherwise has available, which can include own actions, noisy reports, and retained local state. Declared internal changes such as habituation can occur without observing the system outcome. A channel may be inactive, and a state may carry forward unchanged.
 
-=
+$Y_t$ records what happened. $S_{t+1}$ records the resulting objective state, with $\varepsilon_{t+1}$ representing any declared outside inputs. If a modeled action changes subsequent objective conditions, identify the realized event that transmits the effect. For example, acceptance of a limit order creates a standing instruction. The transition carries it forward, and a later joint realization can fill it against an incoming order. The fill is a later consequence of the recorded instruction. It does not create a new selection by the owner unless the owner actually makes one. An enforceable commitment may change later objective constraints. A perceived or nonbinding commitment may instead change agent-side components through the specified mechanisms.
 
-R(C_{i,t+1}, F_{t+1})
-
-$$
-
-Where interactions among agents are explicitly modeled, the next system outcome is $O_{t+1} = R(C_{1,t+1}, \ldots, C_{n,t+1}, F_{t+1})$. Any agent-level outcome that depends on those interactions is derived from that same joint reality function rather than from a separate single-agent application of $R$.
-
-Symbols are defined in Section 3, and $t+1$ denotes the next relevant decision point in the specification. The agent's next action, $C_{i,t+1}$, is selected through Model 5.1 with $t+1$ indices. $F_{t+1}$ represents the objective state relevant when that selected action is realized, but it is not an input to $D_{i,t+1}$; the agent selects using its agent-side components and encounters $F_{t+1}$ through the outcome model.
-
-**Sources of change in $F$.** Changes to $F_t$ resulting from agent actions and interactions are captured through realized outcomes, while external shocks, which originate outside the modeled action and outcome pathway, may also alter it independently.
-
-Experience may bring $\hat{F}_i$ closer to what reality allows to be realized, reveal previously unknown actions, change how alternatives are valued, or change how an agent makes decisions. Where $C_{i,t}$ is a commitment, contract, policy, or contingent strategy (see Selected Action), an enforceable commitment may alter later objective conditions and constraints represented in $F$, while a nonbinding, self-enforcing, or perceived commitment may instead shape $M$, $\hat{F}$, $V$, or $D$, depending on the specification.
+An outcome may affect the same agent, other agents, or later objective conditions through these paths. At the next relevant choice, Model 5.1 uses the updated agent-side components. The next realization uses the objective conditions then relevant.
 
 ### 5.6 Feedback Analysis and Stability
 
@@ -575,9 +397,21 @@ Many economic systems may be stochastic, nonlinear, discontinuous, strategic, pa
 
 Importantly, amplification alone does not imply instability or imbalance. Strong feedback may accompany productive growth, technological adoption, coordination, speculation, adaptation, or destabilization. Its economic significance depends on the underlying agents, conditions, interactions, constraints, and whether the resulting path remains feasible under reality's constraints.
 
+### 5.7 Equilibrium Consistency
+
+When a specification studies equilibrium, declare the candidate configurations and the conditions that define the source model's equilibrium concept. These can include feasibility, optimality against admitted deviations, or consistency of expectations with the law induced by the specified mechanisms. Each condition applies on the histories or information sets required by that concept. For example, an informative-price model may require beliefs conditional on the agent's signal and received price to match the corresponding law under the equilibrium price function. Solving the conditions simultaneously establishes consistency. Any price treated as observed when an agent selects must reach the agent through a specified pre-choice information path.
+
+For a declared candidate domain $\mathcal W$ and consistency predicates $Q_j$, the equilibrium set is
+
+$$
+\mathcal E=\{w\in\mathcal W: Q_j(w)\ \text{holds for every declared condition }j\}.
+$$
+
+It may be empty or contain several configurations. A single equilibrium prediction in the latter case requires a specified selection rule. When an institution clears submitted bids or schedules, its rule belongs in the joint $R$. An analyst can also solve simultaneous consistency conditions without specifying an institutional clearing rule or a path to equilibrium. Convergence, stability, optimization, and market clearing are properties to establish where relevant to the specification.
+
 ## 6. Consolidated Principles
 
-This section interprets the TER architecture through established economics. Definitions are in Section 3, formal models in Section 5, and the axioms each principle draws on in the Axiom Map (Section 4).
+This section interprets the TER architecture through established economics. Sections 3–5 give the definitions, axioms, and formal models.
 
 ### 6.1 Agent Objective
 
@@ -601,7 +435,7 @@ Interactions with other agents can also change what is feasible, through the out
 
 ### 6.3 Agent Model of Reality
 
-Agents make decisions according to their model of reality, $M_{i,t}$ (Section 3), which may differ from reality itself (Axiom 7). Information economics, expectations, behavioral economics, bounded rationality, and learning describe different aspects of how agents form, use, and update this model.
+Agents may use a model of reality, $M_{i,t}$ (Section 3), that differs from objective conditions (Axioms 1 and 2). Information economics, expectations, behavioral economics, bounded rationality, and learning describe different aspects of how agents form, use, and update this model.
 
 $M_{i,t}$ may inform valuation through $V_{i,t}$ and may also directly condition selection through $D_{i,t}$ (Model 5.1). Neither the agent's model of reality nor its perceived feasible set must perfectly correspond to reality.
 
@@ -615,7 +449,7 @@ Learning does not require convergence toward perfect knowledge. Agents may updat
 
 ### 6.4 Action Selection
 
-Different agents, or the same agent under different conditions, may use different decision processes (Section 3, Model 5.1). A decision process may condition directly on the agent's model of reality, may use valuation, or may use both for distinct roles, and the selected action need not be objectively optimal (Axiom 4).
+Different agents, or the same agent under different conditions, may use different decision processes (Section 3, Model 5.1). A decision process may condition directly on the agent's model of reality, may use valuation, or may use both for distinct roles, and the selected action need not be objectively optimal (Axiom 1).
 
 Marginal analysis remains an important special case of valuation. Agents may evaluate expected marginal benefits and marginal costs when assigning value to alternatives; $D_{i,t}$ may then optimize over those values or select through another mechanism.
 
@@ -685,7 +519,7 @@ This allows optimization, behavioral decision making, bounded rationality, heuri
 
 TER explicitly distinguishes an agent's model of reality from reality itself.
 
-Agents act according to their model of reality, $M_{i,t}$ (Section 3). This model may be incomplete or incorrect.
+An agent's model of reality, $M_{i,t}$ (Section 3), may shape decisions even when incomplete or incorrect.
 
 Economic consequences, however, remain constrained by reality.
 
@@ -715,7 +549,7 @@ The strength and structure of this feedback may vary (Section 5.6), and TER does
 
 ### 7.6 Agent Interaction Connects Microeconomic Decisions to System Outcomes
 
-TER extends the same architecture to interacting agents, whose actions can affect one another through the outcomes they produce (Axioms 5 and 6).
+TER extends the same architecture to interacting agents, whose actions can affect one another through the outcomes they produce (Axioms 2 and 3).
 
 In the Multi Agent Model (Model 5.3), interacting selected actions encounter the same $F_t$ to produce the system outcome $O_t$, which may in turn alter later conditions (Model 5.5).
 
@@ -889,4 +723,4 @@ Selected actions encounter the objective feasible state of reality and interact 
 
 Through these interactions, individual decisions contribute to markets, institutions, and broader economic outcomes. Complex system behavior may emerge that no individual agent intended or controls.
 
-Reality ultimately constrains what actions and conditions can persist (Axiom 8, Constraint 5.4). What follows depends on the particular agents, institutions, conditions, constraints, shocks, and interactions involved.
+Reality ultimately constrains what actions and conditions can persist (Axiom 4, Constraint 5.4). What follows depends on the particular agents, institutions, conditions, constraints, shocks, and interactions involved.
