@@ -1,11 +1,14 @@
 cff-version: 1.2.0
 message: >-
   If you use or discuss TER in research, software, teaching, or published
-  work, please cite this release.
+  work, please cite it using the metadata below.
 title: Theory of Economic Relativity
 type: software
 version: 0.6.0
-doi: 10.5281/zenodo.22711351
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.22711351
+    description: Project DOI covering all versions
 url: https://www.theoryofeconomicrelativity.com
 repository-code: https://github.com/RelativeEconomist/theory-of-economic-relativity
 license: MIT

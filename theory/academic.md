@@ -298,28 +298,28 @@ The implication restricts admissible paths, including in a stochastic specificat
 
 ### 5.5 Dynamic Feedback Model
 
-A dynamic specification declares its initial states, event order, observations, and transition rules. Let $S_t$ denote its opening objective system state and $B^-_{i,t}$ and $B^+_{i,t}$ collect the existing agent-side components $(G,M,\hat F,V,H,D)$ at selection and after the stage's updates. Let $Y_t$ denote the realized result, either the joint record from Model 5.3 or the agent outcome from Model 5.2. These symbols and the maps below describe the specification.
+A dynamic specification declares its initial states, event order, observations, and transition rules. Let $S_t$ denote its opening objective system state and $Y_t$ the realized result, either the joint record from Model 5.3 or the agent outcome from Model 5.2. For agent $i$ and event $e$, $B_i(e^-)$ and $B_i(e^+)$ collect the existing agent-side components $(G,M,\hat F,V,H,D)$ immediately before and after $e$. These symbols and the maps below describe the specification.
 
-An observation rule $\sigma^\pm_{i,t}$ maps the relevant dated event record $\mathscr E_{\le d^\pm_{i,t}}$ at delivery time $d^\pm_{i,t}$ into information $L^\pm_{i,t}$ available to agent $i$. Use a pre-choice delivery where one occurs, and post-event delivery for information that arrives later:
-
-$$
-L^-_{i,t}=\sigma^-_{i,t}(\mathscr E_{\le d^-_{i,t}}),\qquad
-B^-_{i,t}=U^-_{i,t}(B^+_{i,t-1},L^-_{i,t}).
-$$
-
-Realization uses $F_t=\rho_t(S_t,\xi_t)$, where $\xi_t$ denotes any additional objective inputs resolved by realization. The objective transition and the later agent-side updates are
+Realization uses $F_t=\rho_t(S_t,\xi_t)$, where $\xi_t$ denotes any additional objective inputs resolved by realization. The objective transition is
 
 $$
-S_{t+1}=T_t(S_t,F_t,Y_t;\varepsilon_{t+1}),\qquad
-L^+_{i,t}=\sigma^+_{i,t}(\mathscr E_{\le d^+_{i,t}}),\qquad
-B^+_{i,t}=U^+_{i,t}(B^-_{i,t},L^+_{i,t}).
+S_{t+1}=T_t(S_t,F_t,Y_t;\varepsilon_{t+1}).
 $$
 
-Declare the domains of the state and event records, the delivered information spaces, and the permitted inputs to each map. $\rho_t$ returns a condition in $\mathcal F_t$, $T_t$ returns a state in the declared space for $S_{t+1}$, and the update functions return agent-side tuples in their declared spaces. The first selection uses the initialized local state and any information then available. Specify stochastic maps by their kernels or by conditioning on declared draws, with their timing and dependence. The observation mechanism can use only events available to it at delivery. Agent-side updates use what the agent actually receives or otherwise has available, which can include own actions, noisy reports, and retained local state. Declared internal changes such as habituation can occur without observing the system outcome. A channel may be inactive, and a state may carry forward unchanged.
+Selections, deliveries, and local agent-side updates follow the declared event order $\prec$. When events share a timestamp, specify their order wherever it affects information availability. A delivery event $d$ gives agent $i$ a report $\ell_{i,d}$, which may have been generated earlier. Let $\mathscr E_{\prec d}$ denote the relevant events preceding $d$ that are available to the observation rule $\sigma_{i,d}$. An update event $e$ uses the local state immediately before $e$ and the declared information $L_{i,e}$ available to agent $i$ before the update. Reports can enter $L_{i,e}$ only after they have been delivered to that agent.
+
+$$
+\ell_{i,d}=\sigma_{i,d}(\mathscr E_{\prec d}),\qquad
+B_i(e^+)=U_{i,e}(B_i(e^-),L_{i,e}).
+$$
+
+Each agent's local state is initialized before its first event and carries forward unchanged between its update events. An update uses the current local state even when a report concerns an earlier stage, and it does not rewrite earlier states. At selection event $\tau_{i,t}$, Model 5.1 uses $B^-_{i,t}=B_i(\tau_{i,t}^-)$, so its agent-side components and permitted choice draws must be available at selection. For example, a receipt for an action taken at time 1 that arrives at time 3, after a second choice at time 2, can affect only choices that follow its update.
+
+Declare the domains of the state and event records, the delivered information spaces, and the permitted inputs to each map. $\rho_t$ returns a condition in $\mathcal F_t$, $T_t$ returns a state in the declared space for $S_{t+1}$, and the update functions return agent-side tuples in their declared spaces. Specify stochastic maps by their kernels or by conditioning on declared draws, with their timing and dependence. Available information can include the agent's own actions as well as delivered reports, and declared internal changes such as habituation can occur without observing the system outcome. A channel may be inactive.
 
 $Y_t$ records what happened. $S_{t+1}$ records the resulting objective state, with $\varepsilon_{t+1}$ representing any declared outside inputs. If a modeled action changes subsequent objective conditions, identify the realized event that transmits the effect. For example, acceptance of a limit order creates a standing instruction. The transition carries it forward, and a later joint realization can fill it against an incoming order. The fill is a later consequence of the recorded instruction. It does not create a new selection by the owner unless the owner actually makes one. An enforceable commitment may change later objective constraints. A perceived or nonbinding commitment may instead change agent-side components through the specified mechanisms.
 
-An outcome may affect the same agent, other agents, or later objective conditions through these paths. At the next relevant choice, Model 5.1 uses the updated agent-side components. The next realization uses the objective conditions then relevant.
+An outcome may affect the same agent, other agents, or later objective conditions through these paths. At the next relevant choice, Model 5.1 uses the local state available at that selection. The next realization uses the objective conditions then relevant.
 
 ### 5.6 Feedback Analysis and Stability
 

@@ -25,10 +25,14 @@ demonstrate feedback producing particular economic outcomes across
 multiple periods. This test isolates the ordering guarantee itself, using
 minimal local rules scoped to this file only.
 
+A delayed-receipt case carries the first receipt in objective state and
+delivers it after the second choice, so it can affect only the following
+choice.
+
 Out of scope
 ------------
 F_t. The local update rule changes an agent-side model_of_reality field
-only; no transition is declared.
+only; the delayed-receipt transition only carries the undelivered receipt.
 """
 
 import unittest
@@ -132,6 +136,44 @@ TWO_PERIOD_SCENARIO = ONE_PERIOD_SCENARIO.variant(
 )
 
 
+def carry_first_receipt(objective_state, reality, parameters):
+    """
+    Local transition: stores the first realized action, tagged with its
+    origin step, as an undelivered receipt.
+    """
+    if objective_state["step"] == 0:
+        objective_state["undelivered_receipt"] = {
+            "origin_step": 0,
+            "realized_action": reality.agent(AGENT.name)["realized_action"],
+        }
+
+    objective_state["step"] += 1
+    return objective_state
+
+
+def deliver_first_receipt_after_second_choice(
+    agents, actions, reality, objective_state, parameters
+):
+    """Local observation rule: delivers the receipt after the second choice."""
+    if objective_state["step"] != 2:
+        return {}
+
+    return {AGENT.name: objective_state["undelivered_receipt"]}
+
+
+DELAYED_RECEIPT_SCENARIO = ONE_PERIOD_SCENARIO.variant(
+    name="Feedback Ordering Contract (delayed receipt)",
+    description=(
+        "The first receipt reaches the agent only after its second "
+        "selection."
+    ),
+    periods=3,
+    initial_state={"step": 0},
+    transition=carry_first_receipt,
+    observation=deliver_first_receipt_after_second_choice,
+)
+
+
 class TestFeedbackOrderingContract(unittest.TestCase):
     TEST_NAME = "Framework: Feedback Ordering Contract"
 
@@ -167,4 +209,28 @@ class TestFeedbackOrderingContract(unittest.TestCase):
         self.assertEqual(
             [step.actions[AGENT.name] for step in result.trace],
             [LOW, LOW],
+        )
+
+    def test_delayed_receipt_changes_only_the_choice_after_delivery(self):
+        result = run_scenario(DELAYED_RECEIPT_SCENARIO)
+        first_step, second_step, _ = result.trace
+        expected_receipt = {
+            "origin_step": first_step.step,
+            "realized_action": first_step.reality.agent(AGENT.name)[
+                "realized_action"
+            ],
+        }
+
+        self.assertEqual(first_step.observations, {})
+        self.assertEqual(
+            first_step.objective_state["undelivered_receipt"],
+            expected_receipt,
+        )
+        self.assertEqual(
+            dict(second_step.observations[AGENT.name].data),
+            expected_receipt,
+        )
+        self.assertEqual(
+            [step.actions[AGENT.name] for step in result.trace],
+            [LOW, LOW, HIGH],
         )

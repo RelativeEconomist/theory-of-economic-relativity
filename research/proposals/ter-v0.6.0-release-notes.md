@@ -2,7 +2,7 @@
 
 ## v0.5.0 to v0.6.0
 
-The [canonical paper](../../theory/academic.md) now states the decision and realization boundaries as explicit restrictions. It specifies rule domains, model-specific constraint checks, joint outcome readouts, dated information delivery, and separate objective and agent-side transitions. It also distinguishes settlement under a market rule from equilibrium consistency analysis. [v0.5.0 baseline](https://github.com/RelativeEconomist/theory-of-economic-relativity/blob/cc9547d231ba29adbc3c834049af094c0db8a780/theory/academic.md) · [Methodology](../ter-methodology-notes.md)
+The [canonical paper](../../theory/academic.md) now states the decision and realization boundaries as explicit restrictions. It specifies rule domains, model-specific constraint checks, joint outcome readouts, dated information delivery, and separate objective and agent-side transitions. It also distinguishes settlement under a market rule from equilibrium consistency analysis. [v0.5.0 baseline](https://github.com/RelativeEconomist/theory-of-economic-relativity/blob/v0.5.0/theory/academic.md) · [Methodology](../ter-methodology-notes.md)
 
 | v0.5.0 axiom | Disposition in v0.6.0 |
 | --- | --- |
@@ -18,7 +18,7 @@ The [canonical paper](../../theory/academic.md) now states the decision and real
 
 **Formal changes.** A scalar score already evaluated as an expectation enters an optimizing rule directly. A state-contingent score requires a specified probability law. Conditional realization, observation, and transition equations use specification-level notation. All eleven named TER objects retain their roles. Constraint validation uses the model's own economic conditions. Fixed-state replay and rerunning a path after a policy change answer different questions.
 
-**Compatibility.** A complete finite staged model that already respects its objective constraints can retain its choice, realization, and update rules. Use its joint result for the outcome readouts and keep deliveries at their original times. With the same initial conditions and draws, each stage gives the same result, so induction preserves the trace. Missing information, transition, or constraint assumptions still require a specification.
+**Compatibility.** A complete finite staged model that respects its objective constraints can keep its mechanisms and use its joint result for the outcome readouts. Induction over the declared events preserves the trace if the restatement keeps the same initial states, draws, mechanisms, and ordering of local updates and selections, with equivalent information delivered at equivalent times. Missing information, transition, or constraint assumptions still require a specification.
 
 ## Unresolved theoretical issues
 
